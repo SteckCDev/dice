@@ -1,0 +1,24 @@
+version: "3.9"
+services:
+  database:
+    image: postgres
+    container_name: dice_database
+    volumes:
+      - ./.database:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    restart: always
+  cache:
+    image: redis/redis-stack
+    container_name: dice_cache
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+#    command: >
+#      --requirepass ${REDIS_PASSWORD}
+#    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    restart: always
