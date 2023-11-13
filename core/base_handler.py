@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from core.base_bot import TeleBotAPI
+from api_services import TeleBotAPI
 from settings import settings
 
 

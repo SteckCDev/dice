@@ -1,8 +1,8 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from telebot.apihelper import ApiTelegramException
 
-from core.base_bot import TeleBotAPI
+from api_services import TeleBotAPI
 from settings import settings
 from services.user import UserService
 from core.datetime import now
@@ -43,7 +43,7 @@ class AccessService:
     def terms_and_conditions(user_tg_id: int) -> bool:
         terms_accepted_at = UserService.get(user_tg_id).terms_accepted_at
 
-        return terms_accepted_at and terms_accepted_at + timedelta(days=TERMS_AGREEMENT_LASTS_DAYS) > now()
+        return terms_accepted_at and terms_accepted_at + timedelta(days=TERMS_AGREEMENT_LASTS_DAYS) > datetime.now()
 
     @staticmethod
     def agree_with_terms_and_conditions(user_tg_id: int) -> None:

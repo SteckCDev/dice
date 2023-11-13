@@ -1,5 +1,13 @@
 # 🎲 Dice Remastered
 
+## Deploy
+### ...
+### Run Postgres and Redis containers
+```shell
+docker-compose -f docker-compose.yml --env-file .dev.env up -d
+```
+### ...
+
 ## Abbreviations and aliases
 ### Common
 1. **TG** - *telegram*
@@ -14,11 +22,3 @@
 1. **BTC** - *bitcoin*
 2. **BTC wallet** - *bitcoin wallet address of any type: Legacy, SegWit, Native SegWit and Taproot*
 3. **Card details** - *16-digit bank card number*
-
-## Deploy
-### ...
-### Run Postgres and Redis containers
-```shell
-docker-compose -f docker-compose.yml --env-file .dev.env up -d
-```
-### ...

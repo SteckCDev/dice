@@ -1,5 +1,3 @@
-from telebot.types import Message
-
 from core.base_handler import BaseHandler
 from services import (
     AccessService,
@@ -10,14 +8,14 @@ from templates import Markups, Messages
 
 
 class PVBHandler(BaseHandler):
-    def __init__(self, msg: Message):
+    def __init__(self, chat_id: int, message_id: int, user_id: int):
         super().__init__()
 
-        self.chat_id = msg.chat.id
-        self.message_id = msg.message_id
+        self.chat_id = chat_id
+        self.message_id = message_id
 
-        self.user = UserService.get(msg.from_user.id)
-        self.user_cache = UserService.get_cache(msg.from_user.id)
+        self.user = UserService.get(user_id)
+        self.user_cache = UserService.get_cache(user_id)
 
     def _prepare(self) -> bool:
         if not AccessService.subscriptions(self.user.tg_id):

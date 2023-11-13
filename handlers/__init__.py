@@ -2,6 +2,8 @@ from handlers.admin import AdminHandler
 from handlers.balance import BalanceHandler
 from handlers.callback import CallbackHandler
 from handlers.lottery import LotteryHandler
+from handlers.private_dice import PrivateDiceHandler
+from handlers.private_text import PrivateTextHandler
 from handlers.profile import ProfileHandler
 from handlers.pvb import PVBHandler
 from handlers.pvpc import PVPCHandler

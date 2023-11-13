@@ -32,8 +32,8 @@ class Messages:
     top_five = f"{bold('🏆 Топ-5 игроков')}"
 
     force_to_subscribe = "🔔 Для взаимодействия с ботом необходимо состоять в следующих чатах:\n" \
-                     " 1. чат\n" \
-                     " 2. чат"
+                         " 1. чат\n" \
+                         " 2. чат"
 
     terms_and_conditions = f"{bold('📋 Внимательно прочитайте правила игры')}\n\n" \
                            f"1. Первое правило бойцовского клуба"
@@ -50,9 +50,15 @@ class Messages:
                           f"По причине проходящих на данный момент плановых технических работ, обработка этого вида " \
                           f"транзакции произойдёт не ранее, чем через 6 часов"
 
+    balance_not_enough = "❌ Недостаточно баланса"
+
     pvb_in_process = "🎲 Вы всё ещё в игре и трясёте кость в ладонях. Сначала закончите игру, бросив кубик"
 
-    dice_bot_throw = f"{bold('🎲 Бросьте кубик!')}"
+    pvb_bots_turn = bold("🤖 Бросает бот")
+
+    pvb_your_turn = bold("🎲 Бросьте кубик!")
+
+    pvb_non_direct = "🛑 Вход с намагниченными кубиками запрещён!"
 
     pvb_instruction = f"{bold('🤖 Игра с ботом - инструкция')}"
 
@@ -67,8 +73,8 @@ class Messages:
 
     @staticmethod
     def games(balance: int) -> str:
-        return f"<b>🎲 Выберите режим игры</b>\n\n" \
-               f"💵 Ваш баланс: <b>{balance}</b> RUB"
+        return f"{bold('🎲 Выберите режим игры')}\n\n" \
+               f"💵 Ваш баланс: {bold(balance)} RUB"
 
     @staticmethod
     def balance(balance: int, beta_balance: int) -> str:
@@ -82,6 +88,10 @@ class Messages:
                f"Бета-баланс: {bold(profile_scheme.beta_balance)}\n" \
                f"Дата регистрации: {bold(profile_scheme.joined_at)} (UTC)\n" \
                f"Всего игр: {bold(profile_scheme.games_count)}"
+
+    @staticmethod
+    def bet_out_of_limits(min_bet: int, max_bet: int) -> str:
+        return f"🔔 Сумма ставки должна быть в диапазоне между {min_bet} и {max_bet}"
 
     @staticmethod
     def transactions(balance: int, min_transaction: int, btc_min_withdrawal: int) -> str:
@@ -133,16 +143,9 @@ class Messages:
                f"{Messages.demo_mode_instruction}"
 
     @staticmethod
-    def pvb(balance: int, is_demo_mode: bool) -> str:
-        if is_demo_mode:
-            balance_caption = f"💴 Бета-баланс"
-            demo_caption = "<i>- демо-режим</i>"
-        else:
-            balance_caption = f"💵 Ваш баланс"
-            demo_caption = ""
-
-        return f"<b>🤖 Игра с ботом {demo_caption}</b>\n\n" \
-               f"{balance_caption}: <b>{balance}</b>"
+    def pvb(balance: int, beta_mode: bool) -> str:
+        return f"{bold('🤖 Игра с ботом')}{cursive(' - демо-режим') if beta_mode else ''}\n\n" \
+               f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(balance)}"
 
     @staticmethod
     def pvb_create(bots_turn_first: bool, beta_mode: bool, selected_balance: int, bet: int) -> str:
@@ -150,28 +153,21 @@ class Messages:
 
         return f"{bold('🤖 Игра с ботом')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
                f"{balance_emoji} Ваш баланс: {bold(selected_balance)}\n" \
-               f"{balance_emoji} Ставка: <b>{bet}</b>\n" \
+               f"{balance_emoji} Ставка: {bold(bet)}\n" \
                f"🔁 Первым {bold('бросает бот' if bots_turn_first else 'бросаете вы')}"
 
     @staticmethod
-    def dice_bot_result(is_demo_mode: bool, selected_balance: int, result: int, game_id: int) -> str:
-        if is_demo_mode:
-            demo_caption = " - <i>демо-режим</i>"
-            balance_caption = "💴 Бета-баланс"
+    def pvb_result(beta_mode: bool, selected_balance: int, player_won: bool | None, game_id: int) -> str:
+        if player_won is None:
+            result = "✌ Ничья! Сделайте ставку ещё раз"
+        elif player_won:
+            result = "🔥 Вы выиграли!"
         else:
-            demo_caption = ""
-            balance_caption = "💵 Ваш баланс"
+            result = "💀 Вы проиграли!"
 
-        if result == 1:
-            result_caption = "🔥 Вы выиграли!"
-        elif result == 0:
-            result_caption = "💀 Вы проиграли!"
-        else:
-            result_caption = "✌ Ничья! Сделайте ставку ещё раз"
-
-        return f"Игра #{game_id:03}{demo_caption}\n\n" \
-               f"{result_caption}\n" \
-               f"{balance_caption}: {selected_balance}"
+        return f"🎲 Игра #{game_id:03}{cursive(' - демо-режим') if beta_mode else ''}\n\n" \
+               f"{result}\n" \
+               f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(selected_balance)}"
 
     @staticmethod
     def dice_bot_mine(wins_percent: int) -> str:

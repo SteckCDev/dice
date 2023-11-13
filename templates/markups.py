@@ -7,28 +7,21 @@ from telebot.types import (
 
 from core.formatting.emojis import get_status_emoji, get_balance_emoji
 from settings import settings
-
-
-CPT_MENU = {
-    "games": "🎲 Игры",
-    "profile": "🙋‍ Профиль",
-    "lottery": "🎉 Розыгрыш",
-    "support": "🤖 Поддержка"
-}
+from templates.menu import Menu
 
 
 class Markups:
     navigation = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(
-        KeyboardButton(CPT_MENU["games"]),
-        KeyboardButton(CPT_MENU["profile"]),
-        KeyboardButton(CPT_MENU["lottery"]),
-        KeyboardButton(CPT_MENU["support"])
+        KeyboardButton(Menu.GAMES),
+        KeyboardButton(Menu.PROFILE),
+        KeyboardButton(Menu.LOTTERY),
+        KeyboardButton(Menu.SUPPORT)
     )
 
     games = InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("🤖 Игра с ботом", callback_data="dice-bot"),
-        InlineKeyboardButton("👥 Игра с соперником", callback_data="dice-p2p:1"),
-        InlineKeyboardButton("⚔ С соперником в чате", callback_data="dice-chat")
+        InlineKeyboardButton("🤖 Игра с ботом", callback_data="pvb"),
+        InlineKeyboardButton("👥 Игра с соперником", callback_data="pvp:1"),
+        InlineKeyboardButton("⚔ С соперником в чате", callback_data="pvpc")
     )
 
     lottery = InlineKeyboardMarkup().add(
@@ -46,7 +39,7 @@ class Markups:
     pvb = InlineKeyboardMarkup(row_width=2).add(
         InlineKeyboardButton("🎲 Создать", callback_data="pvb-create"),
         InlineKeyboardButton("📋 Мои игры", callback_data="pvb-history"),
-        InlineKeyboardButton("<< Назад", callback_data="dice-games"),
+        InlineKeyboardButton("<< Назад", callback_data="games"),
         InlineKeyboardButton("Инструкция", callback_data="pvb-instruction")
     )
 
@@ -60,7 +53,7 @@ class Markups:
     )
 
     try_too = InlineKeyboardMarkup().add(
-        InlineKeyboardButton("Попробовать тоже!", url=f"{settings.bot_url}?start=dicebot")
+        InlineKeyboardButton("Попробовать тоже!", url=f"{settings.bot_url}?start=pvb]")
     )
 
     terms_and_conditions = InlineKeyboardMarkup().add(
@@ -74,9 +67,9 @@ class Markups:
     )
 
     @staticmethod
-    def back_to(call_data: str) -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup(row_width=1).add(
-            InlineKeyboardButton("<< Назад", callback_data=call_data)
+    def back_to(path: str) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup().add(
+            InlineKeyboardButton("<< Назад", callback_data=path)
         )
 
     @staticmethod
@@ -174,8 +167,8 @@ class Markups:
     def pvb_create(bots_turn_first: bool) -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup(row_width=2).add(
             InlineKeyboardButton("🛑 Отменить", callback_data="pvb"),
-            InlineKeyboardButton(f"🔁 Первый {'бот' if bots_turn_first else 'я'}", callback_data="switch-pvb-turn"),
-            InlineKeyboardButton("🎲 Начать", callback_data=f"pvb-create-confirm")
+            InlineKeyboardButton(f"🔁 Первый {'бот' if bots_turn_first else 'я'}", callback_data="pvb-switch-turn"),
+            InlineKeyboardButton("🎲 Начать", callback_data=f"pvb-start")
         )
 
     @staticmethod

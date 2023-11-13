@@ -1,14 +1,12 @@
-from telebot.types import Message
-
 from core.base_handler import BaseHandler
 from templates import Markups, Messages
 
 
 class SupportHandler(BaseHandler):
-    def __init__(self, msg: Message):
+    def __init__(self, chat_id: int):
         super().__init__()
 
-        self.chat_id = msg.chat.id
+        self.chat_id = chat_id
 
     def _prepare(self) -> bool:
         return True

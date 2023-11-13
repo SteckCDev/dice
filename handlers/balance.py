@@ -1,5 +1,3 @@
-from telebot.types import Message
-
 from core.base_handler import BaseHandler
 from services import (
     UserService,
@@ -8,12 +6,12 @@ from templates import Messages
 
 
 class BalanceHandler(BaseHandler):
-    def __init__(self, msg: Message):
+    def __init__(self, chat_id: int, user_id: int):
         super().__init__()
 
-        self.chat_id = msg.chat.id
+        self.chat_id = chat_id
 
-        self.user = UserService.get(msg.from_user.id)
+        self.user = UserService.get(user_id)
 
     def _prepare(self) -> bool:
         return True

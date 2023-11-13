@@ -13,8 +13,8 @@ class PVBModel(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     player_tg_id: Mapped[int] = mapped_column(ForeignKey("users.tg_id"))
     player_won: Mapped[bool] = mapped_column(nullable=True)
-    player_dice: Mapped[int] = mapped_column(nullable=True)
-    bot_dice: Mapped[int] = mapped_column(nullable=True)
+    player_dice: Mapped[int]
+    bot_dice: Mapped[int]
     bet: Mapped[int]
     beta_mode: Mapped[bool] = mapped_column(default=False)
     status: Mapped[int] = mapped_column(default=0)
