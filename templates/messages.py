@@ -1,5 +1,5 @@
-from core.formatting.emojis import get_balance_emoji
-from core.formatting.html import (
+from common.formatting import get_balance_emoji
+from common.formatting.html import (
     nl,
     bold,
     cursive

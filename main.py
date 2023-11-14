@@ -1,11 +1,7 @@
-from threading import Thread
-from time import sleep
-from typing import NoReturn
-
 from telebot.types import Message, CallbackQuery
 
-from api_services import TeleBotAPI
-from handlers import (
+from infrastructure.api_services import TeleBotAPI
+from infrastructure.handlers import (
     AdminHandler,
     BalanceHandler,
     CallbackHandler,
@@ -18,22 +14,10 @@ from handlers import (
     StartHandler,
     SupportHandler,
 )
-from services import (
-    PVBService,
-    PVPService,
-    PVPCService,
-    PVPFService,
-    TransactionsService,
-)
 from settings import settings
 
 
 bot = TeleBotAPI(settings.bot_token)
-
-
-def background() -> NoReturn:
-    while True:
-        sleep(5)
 
 
 @bot.message_handler(commands=["admin"], chat_types=["private"])
@@ -73,7 +57,7 @@ def cmd_pvb(msg: Message):
 
 
 @bot.message_handler(commands=["pvp"], chat_types=["private"])
-def cmd_pvp(msg: Message):
+def cmd_pvp(_msg: Message):
     ...
 
 
@@ -110,12 +94,12 @@ def private_dice(msg: Message):
 
 
 @bot.message_handler(chat_types=["group", "supergroup"])
-def group_text(msg: Message):
+def group_text(_msg: Message):
     ...
 
 
 @bot.message_handler(content_types=["dice"], chat_types=["group", "supergroup"])
-def group_dice(msg: Message):
+def group_dice(_msg: Message):
     ...
 
 
@@ -130,12 +114,6 @@ def callback(call: CallbackQuery):
 
 
 if __name__ == "__main__":
-    background_thread = Thread(target=background)
-    background_thread.start()
-
-    for service in (PVBService, PVPService, PVPCService, PVPFService, TransactionsService):
-        service().enable()
-
     print("Starting polling")
 
     bot.infinity_polling()

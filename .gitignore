@@ -6,3 +6,6 @@ env/
 *.log
 
 .database/
+
+unused/
+test.py

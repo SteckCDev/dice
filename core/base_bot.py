@@ -4,12 +4,6 @@ from typing import Any
 
 class BaseBotAPI(ABC):
     @abstractmethod
-    def __init__(self):
-        self.message_handler = ...
-        self.callback_handler = ...
-        self.infinity_polling = ...
-
-    @abstractmethod
     def send_message(self, chat_id: int, text: str, markup: Any = None) -> int | None:
         ...
 
@@ -18,5 +12,9 @@ class BaseBotAPI(ABC):
         ...
 
     @abstractmethod
-    def get_chat_member(self, chat_id: int, user_tg_id: int) -> None:
+    def send_dice(self, chat_id: int) -> int | None:
+        ...
+
+    @abstractmethod
+    def is_user_subscribed(self, chat_id: int, user_tg_id: int) -> bool:
         ...
