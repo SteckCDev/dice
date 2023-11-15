@@ -1,0 +1,3 @@
+from infrastructure.repositories.config import MockConfigRepository
+from infrastructure.repositories.pvb import PostgresRedisPVBRepository
+from infrastructure.repositories.user import PostgresRedisUserRepository
