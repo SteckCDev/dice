@@ -47,6 +47,9 @@ class TeleBotAPI(BaseBotAPI):
 
         return message.message_id if isinstance(message, Message) else None
 
+    def answer_callback(self, call_id: int, text: str) -> None:
+        self.__bot.answer_callback_query(call_id, text)
+
     def send_dice(self, chat_id: int) -> int | None:
         return self.__bot.send_dice(chat_id).dice.value
 

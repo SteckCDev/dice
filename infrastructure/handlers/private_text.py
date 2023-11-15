@@ -1,12 +1,15 @@
-from infrastructure.base_handler import BaseHandler
-from core.types.mode import Mode
+from core.services import (
+    ConfigService,
+    UserService,
+)
+from core.types.game_mode import GameMode
+from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
 from infrastructure.handlers.lottery import LotteryHandler
 from infrastructure.handlers.profile import ProfileHandler
 from infrastructure.handlers.support import SupportHandler
-from services import (
-    AccessService,
-    ConfigService,
-    UserService,
+from infrastructure.repositories import (
+    MockConfigRepository,
+    PostgresRedisUserRepository,
 )
 from templates import (
     Markups,
@@ -15,69 +18,75 @@ from templates import (
 )
 
 
-class PrivateTextHandler(BaseHandler):
-    def __init__(self, user_id: int, text: str):
+class PrivateTextHandler(BaseTeleBotHandler):
+    def __init__(self, user_id: int, text: str) -> None:
         super().__init__()
 
+        self.user_id = user_id
         self.text = text
 
-        self.user = UserService.get(user_id)
-        self.user_cache = UserService.get_cache(user_id)
+        config_service = ConfigService(
+            repository=MockConfigRepository()
+        )
+        self.__user_service = UserService(
+            repository=PostgresRedisUserRepository(),
+            bot=self._bot,
+            config_service=config_service
+        )
 
-        self.__config = ConfigService().get()
+        self.config = config_service.get()
+        self.user_cache = self.__user_service.get_cache_by_tg_id(user_id)
 
     def __set_bet(self) -> None:
         bet = int(self.text)
 
-        if bet < self.__config.min_bet or bet > self.__config.max_bet:
+        if bet < self.config.min_bet or bet > self.config.max_bet:
             self._bot.send_message(
-                self.user.tg_id,
+                self.user_id,
                 Messages.bet_out_of_limits(
-                    self.__config.min_bet,
-                    self.__config.max_bet
+                    self.config.min_bet,
+                    self.config.max_bet
                 )
             )
             return
 
-        selected_balance = self.user.beta_balance if self.user_cache.beta_mode else self.user.balance
-
-        if bet > selected_balance:
+        if bet > self.__user_service.get_user_selected_balance(self.user_id):
             self._bot.send_message(
-                self.user.tg_id,
-                Messages.balance_not_enough
+                self.user_id,
+                Messages.balance_is_not_enough
             )
             return
 
-        if self.user_cache.mode == Mode.PVB:
+        if self.user_cache.mode == GameMode.PVB:
             self.user_cache.pvb_bet = bet
-            UserService.update_cache(self.user.tg_id, self.user_cache)
 
             self._bot.edit_message(
-                self.user.tg_id,
+                self.user_id,
                 self.user_cache.last_message_id,
                 Messages.pvb_create(
                     self.user_cache.pvb_bots_turn_first,
                     self.user_cache.beta_mode,
-                    self.user.beta_balance if self.user_cache.beta_mode else self.user.balance,
+                    self.__user_service.get_user_selected_balance(self.user_id),
                     self.user_cache.pvb_bet
                 ),
                 Markups.pvb_create(self.user_cache.pvb_bots_turn_first)
             )
         else:
             self.user_cache.pvp_bet = bet
-            UserService.update_cache(self.user.tg_id, self.user_cache)
+
+        self.__user_service.update_cache(self.user_cache)
 
     def _prepare(self) -> bool:
-        if not AccessService.subscriptions(self.user.tg_id):
+        if not self.__user_service.is_subscribed_to_chats(self.user_id):
             self._bot.send_message(
-                self.user.tg_id,
+                self.user_id,
                 Messages.force_to_subscribe
             )
             return False
 
         if self.user_cache.pvb_in_process:
             self._bot.send_message(
-                self.user.tg_id,
+                self.user_id,
                 Messages.pvb_in_process
             )
             return False
@@ -88,16 +97,19 @@ class PrivateTextHandler(BaseHandler):
         match self.text:
             case Menu.GAMES:
                 self._bot.send_message(
-                    self.user.tg_id,
-                    Messages.games(self.user.balance),
+                    self.user_id,
+                    Messages.games(
+                        self.__user_service.get_user_selected_balance(self.user_id),
+                        self.user_cache.beta_mode
+                    ),
                     Markups.games
                 )
             case Menu.PROFILE:
-                ProfileHandler(self.user.tg_id).handle()
+                ProfileHandler(self.user_id).handle()
             case Menu.LOTTERY:
-                LotteryHandler(self.user.tg_id).handle()
+                LotteryHandler(self.user_id).handle()
             case Menu.SUPPORT:
-                SupportHandler(self.user.tg_id).handle()
+                SupportHandler(self.user_id).handle()
 
         if self.text.isdigit():
             self.__set_bet()

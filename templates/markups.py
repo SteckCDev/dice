@@ -5,7 +5,7 @@ from telebot.types import (
     InlineKeyboardButton
 )
 
-from common.formatting import get_status_emoji, get_balance_emoji
+from common.formatting.emojis import get_status_emoji, get_balance_emoji
 from settings import settings
 from templates.menu import Menu
 

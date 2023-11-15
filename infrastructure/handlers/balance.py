@@ -1,17 +1,31 @@
-from infrastructure.base_handler import BaseHandler
-from services import (
+from core.services import (
+    ConfigService,
     UserService,
+)
+from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
+from infrastructure.repositories import (
+    MockConfigRepository,
+    PostgresRedisUserRepository,
 )
 from templates import Messages
 
 
-class BalanceHandler(BaseHandler):
-    def __init__(self, chat_id: int, user_id: int):
+class BalanceHandler(BaseTeleBotHandler):
+    def __init__(self, chat_id: int, user_id: int) -> None:
         super().__init__()
 
         self.chat_id = chat_id
 
-        self.user = UserService.get(user_id)
+        config_service = ConfigService(
+            repository=MockConfigRepository()
+        )
+        self.__user_service = UserService(
+            repository=PostgresRedisUserRepository(),
+            bot=self._bot,
+            config_service=config_service
+        )
+
+        self.user = self.__user_service.get_by_tg_id(user_id)
 
     def _prepare(self) -> bool:
         return True

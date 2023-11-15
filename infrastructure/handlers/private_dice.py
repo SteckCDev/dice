@@ -1,23 +1,44 @@
 from typing import Any
 
-from core.types.mode import Mode
-from infrastructure.base_handler import BaseHandler
-from services import (
+from core.services import (
+    ConfigService,
     PVBService,
     UserService,
+)
+from core.types.game_mode import GameMode
+from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
+from infrastructure.repositories import (
+    MockConfigRepository,
+    PostgresRedisPVBRepository,
+    PostgresRedisUserRepository,
 )
 from templates import Markups, Messages
 
 
-class PrivateDiceHandler(BaseHandler):
-    def __init__(self, user_id: int, forwarded_from: Any, user_dice: int):
+class PrivateDiceHandler(BaseTeleBotHandler):
+    def __init__(self, user_id: int, forwarded_from: Any, user_dice: int) -> None:
         super().__init__()
 
-        self.direct = forwarded_from is None
+        self.is_direct = forwarded_from is None
         self.user_dice = user_dice
 
-        self.user = UserService.get(user_id)
-        self.user_cache = UserService.get_cache(user_id)
+        config_service = ConfigService(
+            repository=MockConfigRepository()
+        )
+        self.__user_service = UserService(
+            repository=PostgresRedisUserRepository(),
+            bot=self._bot,
+            config_service=config_service
+        )
+        self.__pvb_service = PVBService(
+            repository=PostgresRedisPVBRepository(),
+            bot=self._bot,
+            config_service=config_service,
+            user_service=self.__user_service
+        )
+
+        self.user = self.__user_service.get_by_tg_id(user_id)
+        self.user_cache = self.__user_service.get_cache_by_tg_id(user_id)
 
     def __pvb_send_menu(self) -> None:
         self._bot.send_message(
@@ -30,12 +51,9 @@ class PrivateDiceHandler(BaseHandler):
         )
 
     def __pvb(self) -> None:
-        game = PVBService().finish_game(self.user, self.user_cache, self.user_dice)
+        game = self.__pvb_service.finish_game(self.user, self.user_cache, self.user_dice)
 
-        self.user = UserService.get(self.user.tg_id)
-        self.user_cache = UserService.get_cache(self.user.tg_id)
-
-        selected_balance = self.user.beta_balance if self.user_cache.beta_mode else self.user.balance
+        selected_balance = self.__user_service.get_user_selected_balance(self.user.tg_id)
 
         self._bot.send_message(
             self.user.tg_id,
@@ -62,24 +80,18 @@ class PrivateDiceHandler(BaseHandler):
         pass
 
     def _prepare(self) -> bool:
-        if not self.direct:
+        if not self.is_direct:
             self._bot.send_message(
                 self.user.tg_id,
                 Messages.pvb_non_direct
             )
             return False
 
-        # every check below is for PVB mode, so skip now if it's PVP
-        if self.user_cache.mode == Mode.PVP:
+        # check below is for PVB mode, so skip now if it's PVP
+        if self.user_cache.mode == GameMode.PVP:
             return True
 
         if not self.user_cache.pvb_in_process:
-            self.__pvb_send_menu()
-            return False
-
-        try:
-            PVBService().game_validate(self.user, self.user_cache)
-        except ValueError:
             self.__pvb_send_menu()
             return False
 
@@ -87,9 +99,9 @@ class PrivateDiceHandler(BaseHandler):
 
     def _process(self) -> None:
         match self.user_cache.mode:
-            case Mode.PVB:
+            case GameMode.PVB:
                 self.__pvb()
-            case Mode.PVP:
+            case GameMode.PVP:
                 self.__pvp()
             case _:
                 self.__pvb_send_menu()

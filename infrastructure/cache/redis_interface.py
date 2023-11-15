@@ -39,3 +39,6 @@ class RedisInterface:
         json_encoded = self.__client.json().get(key)
 
         return self.__json_decoder.decode(json_encoded)
+
+    def scan_match(self, pattern: str) -> int:
+        return self.__client.scan(match=pattern)

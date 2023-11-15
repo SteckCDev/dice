@@ -1,6 +1,6 @@
-class BetOutOfLimitsError(ValueError):
+class BalanceIsNotEnoughError(ValueError):
     pass
 
 
-class BalanceIsNotEnoughError(ValueError):
+class BetOutOfLimitsError(ValueError):
     pass

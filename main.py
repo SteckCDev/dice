@@ -1,6 +1,5 @@
 from telebot.types import Message, CallbackQuery
 
-from core.services.user import UserService
 from infrastructure.api_services import TeleBotAPI
 from infrastructure.handlers import (
     AdminHandler,
@@ -107,6 +106,7 @@ def group_dice(_msg: Message):
 @bot.callback_handler(func=lambda call: True)
 def callback(call: CallbackQuery):
     CallbackHandler(
+        call.id,
         call.data,
         call.message.chat.id,
         call.message.message_id,

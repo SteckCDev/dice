@@ -1,10 +1,11 @@
-from common.formatting import get_balance_emoji
+from datetime import datetime
+
+from common.formatting.emojis import get_balance_emoji
 from common.formatting.html import (
     nl,
     bold,
     cursive
 )
-from schemas import UserProfile
 
 
 class Messages:
@@ -50,7 +51,7 @@ class Messages:
                           f"По причине проходящих на данный момент плановых технических работ, обработка этого вида " \
                           f"транзакции произойдёт не ранее, чем через 6 часов"
 
-    balance_not_enough = "❌ Недостаточно баланса"
+    balance_is_not_enough = "❌ Недостаточно баланса"
 
     pvb_in_process = "🎲 Вы всё ещё в игре и трясёте кость в ладонях. Сначала закончите игру, бросив кубик"
 
@@ -72,9 +73,9 @@ class Messages:
                        f"Пожалуйста, обратитесь в поддержку"
 
     @staticmethod
-    def games(balance: int) -> str:
+    def games(selected_balance: int, beta_mode: bool) -> str:
         return f"{bold('🎲 Выберите режим игры')}\n\n" \
-               f"💵 Ваш баланс: {bold(balance)} RUB"
+               f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(selected_balance)} RUB"
 
     @staticmethod
     def balance(balance: int, beta_balance: int) -> str:
@@ -82,12 +83,12 @@ class Messages:
                f"💴 Бета-баланс: {bold(beta_balance)} RUB"
 
     @staticmethod
-    def profile(profile_scheme: UserProfile) -> str:
-        return f"Имя: {bold(profile_scheme.tg_name)}\n" \
-               f"Баланс: {bold(profile_scheme.balance)}\n" \
-               f"Бета-баланс: {bold(profile_scheme.beta_balance)}\n" \
-               f"Дата регистрации: {bold(profile_scheme.joined_at)} (UTC)\n" \
-               f"Всего игр: {bold(profile_scheme.games_count)}"
+    def profile(name: str, balance: int, beta_balance: int, joined_at: datetime, games_count: int) -> str:
+        return f"Имя: {bold(name)}\n" \
+               f"Баланс: {bold(balance)}\n" \
+               f"Бета-баланс: {bold(beta_balance)}\n" \
+               f"Дата регистрации: {bold(joined_at)} (UTC)\n" \
+               f"Всего игр: {bold(games_count)}"
 
     @staticmethod
     def bet_out_of_limits(min_bet: int, max_bet: int) -> str:

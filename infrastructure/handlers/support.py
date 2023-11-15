@@ -1,9 +1,9 @@
-from infrastructure.base_handler import BaseHandler
+from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
 from templates import Markups, Messages
 
 
-class SupportHandler(BaseHandler):
-    def __init__(self, chat_id: int):
+class SupportHandler(BaseTeleBotHandler):
+    def __init__(self, chat_id: int) -> None:
         super().__init__()
 
         self.chat_id = chat_id

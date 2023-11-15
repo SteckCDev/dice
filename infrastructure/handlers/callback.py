@@ -1,31 +1,49 @@
-from infrastructure.base_handler import BaseHandler
-from services import (
-    AccessService,
+from core.services import (
+    ConfigService,
     PVBService,
-    PVPService,
-    PVPCService,
-    PVPFService,
-    TransactionsService,
     UserService,
+)
+from core.types.game_mode import GameMode
+from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
+from infrastructure.repositories import (
+    MockConfigRepository,
+    PostgresRedisPVBRepository,
+    PostgresRedisUserRepository,
 )
 from settings import settings
 from templates import Markups, Messages
-from core.types.mode import Mode
 
 
-class CallbackHandler(BaseHandler):
-    def __init__(self, path: str, chat_id: int, message_id: int, user_id: int):
+class CallbackHandler(BaseTeleBotHandler):
+    def __init__(self, call_id: int, path: str, chat_id: int, message_id: int, user_id: int) -> None:
         super().__init__()
 
+        self.call_id = call_id
         self.path = path
         self.chat_id = chat_id
         self.message_id = message_id
 
-        self.user = UserService.get(user_id)
-        self.user_cache = UserService.get_cache(user_id)
+        config_service = ConfigService(
+            repository=MockConfigRepository()
+        )
+        self.__user_service = UserService(
+            repository=PostgresRedisUserRepository(),
+            bot=self._bot,
+            config_service=config_service
+        )
+        self.__pvb_service = PVBService(
+            repository=PostgresRedisPVBRepository(),
+            bot=self._bot,
+            config_service=config_service,
+            user_service=self.__user_service
+        )
+
+        self.config = config_service.get()
+        self.user = self.__user_service.get_by_tg_id(user_id)
+        self.user_cache = self.__user_service.get_cache_by_tg_id(user_id)
 
     def _prepare(self) -> bool:
-        if not AccessService.subscriptions(self.user.tg_id):
+        if not self.__user_service.is_subscribed_to_chats(self.user.tg_id):
             self._bot.send_message(
                 self.chat_id,
                 Messages.force_to_subscribe
@@ -46,14 +64,14 @@ class CallbackHandler(BaseHandler):
         
     def _process(self) -> None:
         if self.path.startswith("pvb"):
-            self.user_cache.mode = Mode.PVB
-            UserService.update_cache(self.user.tg_id, self.user_cache)
+            self.user_cache.mode = GameMode.PVB
+            self.__user_service.update_cache(self.user_cache)
         elif self.path.startswith("pvp"):
-            self.user_cache.mode = Mode.PVP
-            UserService.update_cache(self.user.tg_id, self.user_cache)
+            self.user_cache.mode = GameMode.PVP
+            self.__user_service.update_cache(self.user_cache)
 
         if self.path == "terms-accept":
-            AccessService.agree_with_terms_and_conditions(self.user.tg_id)
+            self.__user_service.agree_with_terms_and_conditions(self.user.tg_id)
 
             self._bot.edit_message(
                 self.chat_id,
@@ -71,13 +89,17 @@ class CallbackHandler(BaseHandler):
         elif self.path == "switch-beta":
             self.user_cache.beta_mode = not self.user_cache.beta_mode
 
-            UserService.update_cache(self.user.tg_id, self.user_cache)
+            self.__user_service.update_cache(self.user_cache)
 
             self._bot.edit_message(
                 self.chat_id,
                 self.message_id,
                 Messages.profile(
-                    UserService.get_profile(self.user.tg_id)
+                    self.user.tg_name,
+                    self.user.balance,
+                    self.user.beta_balance,
+                    self.user.joined_at,
+                    0
                 ),
                 Markups.profile(self.user_cache.beta_mode)
             )
@@ -107,11 +129,11 @@ class CallbackHandler(BaseHandler):
             )
 
             self.user_cache.last_message_id = self.message_id
-            UserService.update_cache(self.user.tg_id, self.user_cache)
+            self.__user_service.update_cache(self.user_cache)
 
         elif self.path == "pvb-switch-turn":
             self.user_cache.pvb_bots_turn_first = not self.user_cache.pvb_bots_turn_first
-            UserService.update_cache(self.user.tg_id, self.user_cache)
+            self.__user_service.update_cache(self.user_cache)
 
             self._bot.edit_message(
                 self.chat_id,
@@ -127,9 +149,12 @@ class CallbackHandler(BaseHandler):
 
         elif self.path == "pvb-start":
             try:
-                PVBService().start_game(self.user, self.user_cache)
-            except ValueError:
-                return
+                self.__pvb_service.start_game(self.user_cache)
+            except ValueError as exc:
+                self._bot.answer_callback(
+                    self.call_id,
+                    f"Ошибка: {exc}"
+                )
 
         elif self.path == "pvb-history":
             pass
@@ -143,36 +168,35 @@ class CallbackHandler(BaseHandler):
             )
 
         elif self.path == "admin-switch-pvb":
-            PVBService().toggle()
+            self.__pvb_service.toggle()
 
-        elif self.path == "admin-switch-pvp":
-            PVPService().toggle()
-
-        elif self.path == "admin-switch-pvpc":
-            PVPCService().toggle()
-
-        elif self.path == "admin-switch-pvpf":
-            PVPFService().toggle()
-
-        elif self.path == "admin-switch-transactions":
-            TransactionsService().toggle()
-
+        # elif self.path == "admin-switch-pvp":
+        #     self.__pvp_service.toggle()
         #
+        # elif self.path == "admin-switch-pvpc":
+        #     self.__pvpc_service.toggle()
         #
+        # elif self.path == "admin-switch-pvpf":
+        #     self.__pvpf_service.toggle()
         #
+        # elif self.path == "admin-switch-transactions":
+        #     self.__transactions_service.toggle()
 
         if self.path.startswith("admin-switch"):
             self._bot.edit_message(
                 settings.admin_tg_id,
                 self.message_id,
                 Messages.admin(
-                    UserService.users_since_launch()
+                    self.__user_service.get_cached_users_count()
                 ),
                 Markups.admin(
-                    *[
-                        service().status() for service in (
-                            PVBService, PVPService, PVPCService, PVPFService, TransactionsService
-                        )
-                    ]
+                    self.__pvb_service.get_status(),
+                    False,
+                    False,
+                    False,
+                    False
                 )
             )
+
+        # stop loading animation in telegram interface if this handler did no action
+        self._bot.answer_callback(self.call_id, "")

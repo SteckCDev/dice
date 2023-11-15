@@ -61,4 +61,4 @@ class PostgresRedisUserRepository(UserRepository):
         )
 
     def get_cached_users_count(self) -> int:
-        return 0
+        return self.__redis.scan_match(pattern=RedisKeys.USER_CACHE.format(user_tg_id="*"))

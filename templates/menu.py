@@ -1,7 +1,7 @@
-from enum import StrEnum
+from enum import Enum
 
 
-class Menu(StrEnum):
+class Menu(str, Enum):
     GAMES = "🎲 Игры"
     PROFILE = "🙋‍ Профиль"
     LOTTERY = "🎉 Розыгрыш"

@@ -12,6 +12,10 @@ class BaseBotAPI(ABC):
         ...
 
     @abstractmethod
+    def answer_callback(self, call_id: int, text: str) -> None:
+        ...
+
+    @abstractmethod
     def send_dice(self, chat_id: int) -> int | None:
         ...
 

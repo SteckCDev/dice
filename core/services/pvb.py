@@ -53,34 +53,35 @@ class PVBService:
         config = self.__config_service.get()
 
         if bet < config.min_bet or bet > config.max_bet:
-            raise BetOutOfLimitsError()
+            raise BetOutOfLimitsError(
+                Messages.bet_out_of_limits(config.min_bet, config.max_bet)
+            )
 
         if selected_balance < bet:
-            raise BalanceIsNotEnoughError()
+            raise BalanceIsNotEnoughError(Messages.balance_is_not_enough)
 
-    def start_game(self, tg_id: int) -> None:
-        user: UserDTO = self.__user_service.get_by_tg_id(tg_id)
-        user_selected_balance = self.__user_service.get_user_selected_balance(tg_id)
-        user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(tg_id)
-
-        self.__validate_game_conditions(user_cache.pvb_bet, user_selected_balance)
+    def start_game(self, user_cache: UserCacheDTO) -> None:
+        self.__validate_game_conditions(
+            user_cache.pvb_bet,
+            self.__user_service.get_user_selected_balance(user_cache.tg_id)
+        )
 
         user_cache.pvb_in_process = True
 
         if user_cache.pvb_bots_turn_first:
             self.__bot.send_message(
-                user.tg_id,
+                user_cache.tg_id,
                 Messages.pvb_bots_turn
             )
 
-            user_cache.pvb_bot_dice = self.__bot.send_dice(user.tg_id)
+            user_cache.pvb_bot_dice = self.__bot.send_dice(user_cache.tg_id)
 
             time.sleep(DICE_SPIN_ANIMATION_DURATION)
 
         self.__user_service.update_cache(user_cache)
 
         self.__bot.send_message(
-            user.tg_id,
+            user_cache.tg_id,
             Messages.pvb_your_turn
         )
 
