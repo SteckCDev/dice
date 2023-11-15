@@ -5,7 +5,6 @@ from sqlalchemy.types import Integer
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
-from common.datetime import now
 from infrastructure.database import Base
 
 
@@ -22,6 +21,6 @@ class PVPCModel(Base):
     bet: Mapped[int]
     rounds: Mapped[int]
     status: Mapped[int] = mapped_column(default=0)
-    created_at: Mapped[datetime] = mapped_column(default=now)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     started_at: Mapped[datetime] = mapped_column(nullable=True)
     finished_at: Mapped[datetime] = mapped_column(nullable=True)

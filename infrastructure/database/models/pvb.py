@@ -3,7 +3,6 @@ from datetime import datetime
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from common.datetime import now
 from infrastructure.database import Base
 
 
@@ -17,4 +16,4 @@ class PVBModel(Base):
     bot_dice: Mapped[int]
     bet: Mapped[int]
     beta_mode: Mapped[bool] = mapped_column(default=False)
-    created_at: Mapped[datetime] = mapped_column(default=now)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)

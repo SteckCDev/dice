@@ -40,3 +40,7 @@ class PostgresRedisPVBRepository(PVBRepository):
             pvb: PVBModel = db.get(PVBModel, _id)
 
         return PVBDTO(**pvb.__dict__)
+
+    def get_count_for_tg_id(self, tg_id: int) -> int:
+        with Session() as db:
+            return db.query(PVBModel).filter(PVBModel.player_tg_id == tg_id).count()

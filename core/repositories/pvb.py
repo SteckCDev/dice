@@ -22,3 +22,7 @@ class PVBRepository(ABC):
     @abstractmethod
     def get_by_id(self, _id: int) -> PVBDTO:
         ...
+
+    @abstractmethod
+    def get_count_for_tg_id(self, tg_id: int) -> int:
+        ...

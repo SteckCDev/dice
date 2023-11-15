@@ -49,6 +49,9 @@ class PVBService:
     def get_by_id(self, _id: int) -> PVBDTO:
         return self.__repo.get_by_id(_id)
 
+    def get_count_for_tg_id(self, tg_id: int) -> int:
+        return self.__repo.get_count_for_tg_id(tg_id)
+
     def __validate_game_conditions(self, bet: int, selected_balance: int) -> None:
         config = self.__config_service.get()
 

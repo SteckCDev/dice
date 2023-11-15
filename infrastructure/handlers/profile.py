@@ -1,10 +1,12 @@
 from core.services import (
     ConfigService,
+    PVBService,
     UserService,
 )
 from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
 from infrastructure.repositories import (
     MockConfigRepository,
+    PostgresRedisPVBRepository,
     PostgresRedisUserRepository,
 )
 from templates import Markups, Messages
@@ -23,6 +25,12 @@ class ProfileHandler(BaseTeleBotHandler):
             repository=PostgresRedisUserRepository(),
             bot=self._bot,
             config_service=config_service
+        )
+        self.__pvb_service = PVBService(
+            repository=PostgresRedisPVBRepository(),
+            bot=self._bot,
+            config_service=config_service,
+            user_service=self.__user_service
         )
 
         self.user = self.__user_service.get_by_tg_id(chat_id)
@@ -46,7 +54,7 @@ class ProfileHandler(BaseTeleBotHandler):
                 self.user.balance,
                 self.user.beta_balance,
                 self.user.joined_at,
-                0
+                self.__pvb_service.get_count_for_tg_id(self.user.tg_id)
             ),
             Markups.profile(
                 self.user_cache.beta_mode

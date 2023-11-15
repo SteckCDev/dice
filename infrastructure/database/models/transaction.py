@@ -4,7 +4,6 @@ from datetime import datetime
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from common.datetime import now
 from infrastructure.database import Base
 
 
@@ -23,5 +22,5 @@ class TransactionModel(Base):
     withdrawal_card_details: Mapped[str] = mapped_column(nullable=True)
     withdrawal_btc_wallet: Mapped[str] = mapped_column(nullable=True)
     status: Mapped[int]
-    created_at: Mapped[datetime] = mapped_column(default=now)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     processed_at: Mapped[datetime] = mapped_column(nullable=True)

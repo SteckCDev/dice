@@ -99,7 +99,7 @@ class CallbackHandler(BaseTeleBotHandler):
                     self.user.balance,
                     self.user.beta_balance,
                     self.user.joined_at,
-                    0
+                    self.__pvb_service.get_count_for_tg_id(self.user.tg_id)
                 ),
                 Markups.profile(self.user_cache.beta_mode)
             )
