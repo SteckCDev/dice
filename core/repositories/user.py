@@ -26,11 +26,11 @@ class UserRepository(ABC):
         ...
 
     @abstractmethod
-    def update_cache(self, dto: UserCacheDTO) -> None:
+    def get_cache_by_tg_id(self, tg_id: int) -> UserCacheDTO:
         ...
 
     @abstractmethod
-    def get_cache_by_tg_id(self, tg_id: int) -> UserCacheDTO:
+    def update_cache(self, dto: UserCacheDTO) -> None:
         ...
 
     @abstractmethod

@@ -1,5 +1,6 @@
 from telebot.types import Message, CallbackQuery
 
+from core.services.user import UserService
 from infrastructure.api_services import TeleBotAPI
 from infrastructure.handlers import (
     AdminHandler,

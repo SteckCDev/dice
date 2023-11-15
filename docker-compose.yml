@@ -6,10 +6,10 @@ services:
     volumes:
       - ./.database:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DATABASE=${POSTGRES_DATABASE}
+      - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE}
     ports:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     restart: always
@@ -18,7 +18,4 @@ services:
     container_name: dice_cache
     ports:
       - "${REDIS_PORT}:${REDIS_PORT}"
-#    command: >
-#      --requirepass ${REDIS_PASSWORD}
-#    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
     restart: always

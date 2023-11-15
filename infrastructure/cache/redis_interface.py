@@ -18,8 +18,13 @@ class RedisInterface:
     def set_bool(self, key: str, value: bool) -> None:
         self.__client.set(key, int(value))
 
-    def get_bool(self, key: str) -> bool:
-        return bool(int(self.__client.get(key)))
+    def get_bool(self, key: str) -> bool | None:
+        value = self.__client.get(key)
+
+        if value is None:
+            return
+
+        return bool(int(value))
 
     def add_one_to_set(self, key: str, value: Any) -> None:
         self.__client.sadd(key, value)

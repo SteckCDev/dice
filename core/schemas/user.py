@@ -37,6 +37,7 @@ class CreateUserDTO(BaseModel):
 
 
 class UpdateUserDTO(BaseModel):
+    tg_id: int
     tg_name: str
     balance: int
     beta_balance: int
