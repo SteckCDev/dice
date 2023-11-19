@@ -1,3 +1,10 @@
+from core.schemas.config import (
+    ConfigDTO
+)
+from core.schemas.user import (
+    UserDTO,
+    CreateUserDTO,
+)
 from core.services import (
     ConfigService,
     UserService,
@@ -11,21 +18,30 @@ from templates import Messages
 
 
 class BalanceHandler(BaseTeleBotHandler):
-    def __init__(self, chat_id: int, user_id: int) -> None:
+    def __init__(self, chat_id: int, user_id: int, user_name: str) -> None:
         super().__init__()
 
-        self.chat_id = chat_id
+        self.chat_id: int = chat_id
 
-        config_service = ConfigService(
+        config_service: ConfigService = ConfigService(
             repository=MockConfigRepository()
         )
-        self.__user_service = UserService(
+        self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),
             bot=self._bot,
             config_service=config_service
         )
 
-        self.user = self.__user_service.get_by_tg_id(user_id)
+        config: ConfigDTO = config_service.get()
+
+        self.user: UserDTO = self.__user_service.get_or_create(
+            CreateUserDTO(
+                tg_id=user_id,
+                tg_name=user_name,
+                balance=config.start_balance,
+                beta_balance=config.start_beta_balance
+            )
+        )
 
     def _prepare(self) -> bool:
         return True

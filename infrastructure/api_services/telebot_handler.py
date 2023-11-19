@@ -7,4 +7,4 @@ from settings import settings
 
 class BaseTeleBotHandler(BaseHandler, ABC):
     def __init__(self) -> None:
-        self._bot = TeleBotAPI(settings.bot_token)
+        self._bot: TeleBotAPI = TeleBotAPI(settings.bot_token)

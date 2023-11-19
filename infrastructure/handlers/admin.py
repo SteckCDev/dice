@@ -17,15 +17,15 @@ class AdminHandler(BaseTeleBotHandler):
     def __init__(self) -> None:
         super().__init__()
 
-        config_service = ConfigService(
+        config_service: ConfigService = ConfigService(
             repository=MockConfigRepository()
         )
-        self.__user_service = UserService(
+        self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),
             bot=self._bot,
             config_service=config_service
         )
-        self.__pvb_service = PVBService(
+        self.__pvb_service: PVBService = PVBService(
             repository=PostgresRedisPVBRepository(),
             bot=self._bot,
             config_service=config_service,

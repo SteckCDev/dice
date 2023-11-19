@@ -6,8 +6,8 @@ from core.base_bot import BaseBotAPI
 
 
 class TeleBotAPI(BaseBotAPI):
-    def __init__(self, bot_token: str):
-        self.__bot = TeleBot(
+    def __init__(self, bot_token: str) -> None:
+        self.__bot: TeleBot = TeleBot(
             token=bot_token,
             num_threads=2,
             parse_mode="html"

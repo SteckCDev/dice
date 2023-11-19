@@ -1,3 +1,5 @@
+from typing import NoReturn
+
 from telebot.types import Message, CallbackQuery
 
 from infrastructure.api_services import TeleBotAPI
@@ -17,7 +19,7 @@ from infrastructure.handlers import (
 from settings import settings
 
 
-bot = TeleBotAPI(settings.bot_token)
+bot: TeleBotAPI = TeleBotAPI(settings.bot_token)
 
 
 @bot.message_handler(commands=["admin"], chat_types=["private"])
@@ -38,13 +40,17 @@ def cmd_start(msg: Message):
 def cmd_balance(msg: Message):
     BalanceHandler(
         msg.chat.id,
-        msg.from_user.id
+        msg.from_user.id,
+        msg.from_user.username
     ).handle()
 
 
 @bot.message_handler(commands=["profile"], chat_types=["private"])
 def cmd_profile(msg: Message):
-    ProfileHandler(msg.chat.id).handle()
+    ProfileHandler(
+        msg.from_user.id,
+        msg.from_user.username
+    ).handle()
 
 
 @bot.message_handler(commands=["pvb"], chat_types=["private"])
@@ -79,8 +85,9 @@ def cmd_support(msg: Message):
 @bot.message_handler(chat_types=["private"])
 def private_text(msg: Message):
     PrivateTextHandler(
+        msg.text,
         msg.from_user.id,
-        msg.text
+        msg.from_user.username
     ).handle()
 
 
@@ -88,6 +95,7 @@ def private_text(msg: Message):
 def private_dice(msg: Message):
     PrivateDiceHandler(
         msg.from_user.id,
+        msg.from_user.username,
         msg.forward_from,
         msg.dice.value
     ).handle()
@@ -110,11 +118,19 @@ def callback(call: CallbackQuery):
         call.data,
         call.message.chat.id,
         call.message.message_id,
-        call.from_user.id
+        call.from_user.id,
+        call.from_user.username
     ).handle()
 
 
-if __name__ == "__main__":
-    print("Starting polling")
+def main() -> NoReturn:
+    def polling() -> NoReturn:
+        print("Starting polling")
 
-    bot.infinity_polling()
+        bot.infinity_polling()
+
+    polling()
+
+
+if __name__ == "__main__":
+    main()

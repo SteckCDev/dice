@@ -6,7 +6,7 @@ class PVPCHandler(BaseTeleBotHandler):
     def __init__(self, chat_id: int) -> None:
         super().__init__()
 
-        self.chat_id = chat_id
+        self.chat_id: int = chat_id
 
     def _prepare(self) -> bool:
         return True

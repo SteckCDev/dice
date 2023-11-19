@@ -2,5 +2,5 @@ from enum import Enum
 
 
 class GameMode(str, Enum):
-    PVB = "pvb"
-    PVP = "pvp"
+    PVB: str = "pvb"
+    PVP: str = "pvp"

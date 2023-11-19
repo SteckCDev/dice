@@ -1,8 +1,8 @@
 """Initial
 
-Revision ID: 976915b0740f
+Revision ID: 2d8577cd6c1c
 Revises: 
-Create Date: 2023-11-12 00:44:06.735460
+Create Date: 2023-11-19 00:43:42.098864
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '976915b0740f'
+revision: str = '2d8577cd6c1c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -36,12 +36,11 @@ def upgrade() -> None:
     op.create_table('games_pvb',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('player_tg_id', sa.Integer(), nullable=False),
-    sa.Column('player_won', sa.Boolean(), nullable=True),
-    sa.Column('player_dice', sa.Integer(), nullable=True),
-    sa.Column('bot_dice', sa.Integer(), nullable=True),
+    sa.Column('player_won', sa.Boolean(), nullable=False),
+    sa.Column('player_dice', sa.Integer(), nullable=False),
+    sa.Column('bot_dice', sa.Integer(), nullable=False),
     sa.Column('bet', sa.Integer(), nullable=False),
     sa.Column('beta_mode', sa.Boolean(), nullable=False),
-    sa.Column('status', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['player_tg_id'], ['users.tg_id'], ),
     sa.PrimaryKeyConstraint('id')

@@ -1,3 +1,9 @@
+from core.schemas.config import (
+    ConfigDTO,
+)
+from core.schemas.user import (
+    UserCacheDTO,
+)
 from core.services import (
     ConfigService,
     UserService,
@@ -19,26 +25,27 @@ from templates import (
 
 
 class PrivateTextHandler(BaseTeleBotHandler):
-    def __init__(self, user_id: int, text: str) -> None:
+    def __init__(self, text: str, user_id: int, user_name: str) -> None:
         super().__init__()
 
-        self.user_id = user_id
-        self.text = text
+        self.text: str = text
+        self.user_id: int = user_id
+        self.user_name: str = user_name
 
-        config_service = ConfigService(
+        config_service: ConfigService = ConfigService(
             repository=MockConfigRepository()
         )
-        self.__user_service = UserService(
+        self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),
             bot=self._bot,
             config_service=config_service
         )
 
-        self.config = config_service.get()
-        self.user_cache = self.__user_service.get_cache_by_tg_id(user_id)
+        self.config: ConfigDTO = config_service.get()
+        self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
     def __set_bet(self) -> None:
-        bet = int(self.text)
+        bet: int = int(self.text)
 
         if bet < self.config.min_bet or bet > self.config.max_bet:
             self._bot.send_message(
@@ -57,7 +64,7 @@ class PrivateTextHandler(BaseTeleBotHandler):
             )
             return
 
-        if self.user_cache.mode == GameMode.PVB:
+        if self.user_cache.game_mode == GameMode.PVB:
             self.user_cache.pvb_bet = bet
 
             self._bot.edit_message(
@@ -105,7 +112,7 @@ class PrivateTextHandler(BaseTeleBotHandler):
                     Markups.games
                 )
             case Menu.PROFILE:
-                ProfileHandler(self.user_id).handle()
+                ProfileHandler(self.user_id, self.user_name).handle()
             case Menu.LOTTERY:
                 LotteryHandler(self.user_id).handle()
             case Menu.SUPPORT:

@@ -9,6 +9,15 @@ class PostgresRedisUserRepository(UserRepository):
     def __init__(self) -> None:
         self.__redis = RedisInterface()
 
+    def __init_cache(self, tg_id: int) -> None:
+        initial_cache = UserCache(tg_id=tg_id)
+
+        self.__redis.set_json(
+            RedisKeys.USER_CACHE.format(user_tg_id=tg_id),
+            initial_cache.model_dump_json(),
+            nx=True
+        )
+
     def get_or_create(self, dto: CreateUserDTO) -> UserDTO:
         with Session() as db:
             user: UserModel | None = db.get(UserModel, dto.tg_id)
@@ -34,20 +43,9 @@ class PostgresRedisUserRepository(UserRepository):
             db.query(UserModel).filter(UserModel.tg_id == dto.tg_id).update(dto.model_dump())
             db.commit()
 
-    def init_cache(self, tg_id: int) -> UserCacheDTO:
-        initial_cache = UserCache(tg_id=tg_id)
-
-        self.__redis.set_json(
-            RedisKeys.USER_CACHE.format(user_tg_id=tg_id),
-            initial_cache.model_dump_json(),
-            nx=True
-        )
-
-        return UserCacheDTO(
-            **initial_cache.model_dump()
-        )
-
     def get_cache_by_tg_id(self, tg_id: int) -> UserCacheDTO:
+        self.__init_cache(tg_id)
+
         return UserCacheDTO(
             **self.__redis.get_json(
                 RedisKeys.USER_CACHE.format(user_tg_id=tg_id)

@@ -79,7 +79,7 @@ class Markups:
             InlineKeyboardButton("💳 Транзакции", callback_data="transactions-mine"),
             InlineKeyboardButton("📋 Топ-5 лучших", callback_data="top5"),
             InlineKeyboardButton(f"{get_balance_emoji(beta_mode)} Бета-режим", callback_data=f"switch-beta"),
-            InlineKeyboardButton("🛑 Закрыть", callback_data="hide")
+            # InlineKeyboardButton("🛑 Закрыть", callback_data="hide")
         )
 
     @staticmethod

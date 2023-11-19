@@ -1,3 +1,6 @@
+from core.schemas.user import (
+    UserCacheDTO,
+)
 from core.services import (
     ConfigService,
     PVBService,
@@ -13,34 +16,29 @@ from templates import Markups, Messages
 
 
 class PVBHandler(BaseTeleBotHandler):
-    def __init__(
-            self,
-            chat_id: int,
-            message_id: int,
-            user_id: int
-    ) -> None:
+    def __init__(self, chat_id: int, message_id: int, user_id: int) -> None:
         super().__init__()
 
-        self.chat_id = chat_id
-        self.message_id = message_id
-        self.user_id = user_id
+        self.chat_id: int = chat_id
+        self.message_id: int = message_id
+        self.user_id: int = user_id
 
-        config_service = ConfigService(
+        config_service: ConfigService = ConfigService(
             repository=MockConfigRepository()
         )
-        self.__user_service = UserService(
+        self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),
             bot=self._bot,
             config_service=config_service
         )
-        self.__pvb_service = PVBService(
+        self.__pvb_service: PVBService = PVBService(
             repository=PostgresRedisPVBRepository(),
             bot=self._bot,
             config_service=config_service,
             user_service=self.__user_service
         )
 
-        self.user_cache = self.__user_service.get_cache_by_tg_id(user_id)
+        self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
     def _prepare(self) -> bool:
         if not self.__user_service.is_subscribed_to_chats(self.user_id):

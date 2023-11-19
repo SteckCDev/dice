@@ -1,3 +1,11 @@
+from core.schemas.config import (
+    ConfigDTO,
+)
+from core.schemas.user import (
+    UserDTO,
+    CreateUserDTO,
+    UserCacheDTO,
+)
 from core.services import (
     ConfigService,
     PVBService,
@@ -15,32 +23,47 @@ from templates import Markups, Messages
 
 
 class CallbackHandler(BaseTeleBotHandler):
-    def __init__(self, call_id: int, path: str, chat_id: int, message_id: int, user_id: int) -> None:
+    def __init__(
+            self,
+            call_id: int,
+            path: str,
+            chat_id: int,
+            message_id: int,
+            user_id: int,
+            user_name: str
+    ) -> None:
         super().__init__()
 
-        self.call_id = call_id
-        self.path = path
-        self.chat_id = chat_id
-        self.message_id = message_id
+        self.call_id: int = call_id
+        self.path: str = path
+        self.chat_id: int = chat_id
+        self.message_id: int = message_id
 
-        config_service = ConfigService(
+        config_service: ConfigService = ConfigService(
             repository=MockConfigRepository()
         )
-        self.__user_service = UserService(
+        self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),
             bot=self._bot,
             config_service=config_service
         )
-        self.__pvb_service = PVBService(
+        self.__pvb_service: PVBService = PVBService(
             repository=PostgresRedisPVBRepository(),
             bot=self._bot,
             config_service=config_service,
             user_service=self.__user_service
         )
 
-        self.config = config_service.get()
-        self.user = self.__user_service.get_by_tg_id(user_id)
-        self.user_cache = self.__user_service.get_cache_by_tg_id(user_id)
+        config: ConfigDTO = config_service.get()
+        self.user: UserDTO = self.__user_service.get_or_create(
+            CreateUserDTO(
+                tg_id=user_id,
+                tg_name=user_name,
+                balance=config.start_balance,
+                beta_balance=config.start_beta_balance
+            )
+        )
+        self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
     def _prepare(self) -> bool:
         if not self.__user_service.is_subscribed_to_chats(self.user.tg_id):
@@ -63,11 +86,8 @@ class CallbackHandler(BaseTeleBotHandler):
         return True
         
     def _process(self) -> None:
-        if self.path.startswith("pvb"):
-            self.user_cache.mode = GameMode.PVB
-            self.__user_service.update_cache(self.user_cache)
-        elif self.path.startswith("pvp"):
-            self.user_cache.mode = GameMode.PVP
+        if self.path.startswith(("pvb", "pvp")):
+            self.user_cache.game_mode = GameMode.PVB if self.path.startswith("pvb") else GameMode.PVP
             self.__user_service.update_cache(self.user_cache)
 
         if self.path == "terms-accept":
@@ -153,7 +173,7 @@ class CallbackHandler(BaseTeleBotHandler):
             except ValueError as exc:
                 self._bot.answer_callback(
                     self.call_id,
-                    f"Ошибка: {exc}"
+                    str(exc)
                 )
 
         elif self.path == "pvb-history":

@@ -1,5 +1,6 @@
 import math
 import time
+from typing import Final
 
 from core.base_bot import BaseBotAPI
 from core.exceptions.pvb import (
@@ -7,6 +8,9 @@ from core.exceptions.pvb import (
     BalanceIsNotEnoughError,
 )
 from core.repositories.pvb import PVBRepository
+from core.schemas.config import (
+    ConfigDTO,
+)
 from core.schemas.pvb import (
     PVBDTO,
     CreatePVBDTO,
@@ -21,7 +25,7 @@ from core.services.user import UserService
 from templates.messages import Messages
 
 
-DICE_SPIN_ANIMATION_DURATION = 3
+DICE_SPIN_ANIMATION_DURATION: Final[int] = 3
 
 
 class PVBService:
@@ -32,10 +36,10 @@ class PVBService:
             config_service: ConfigService,
             user_service: UserService
     ) -> None:
-        self.__repo = repository
-        self.__bot = bot
-        self.__config_service = config_service
-        self.__user_service = user_service
+        self.__repo: PVBRepository = repository
+        self.__bot: BaseBotAPI = bot
+        self.__config_service: ConfigService = config_service
+        self.__user_service: UserService = user_service
 
     def toggle(self) -> bool:
         return self.__repo.toggle()
@@ -53,7 +57,7 @@ class PVBService:
         return self.__repo.get_count_for_tg_id(tg_id)
 
     def __validate_game_conditions(self, bet: int, selected_balance: int) -> None:
-        config = self.__config_service.get()
+        config: ConfigDTO = self.__config_service.get()
 
         if bet < config.min_bet or bet > config.max_bet:
             raise BetOutOfLimitsError(
@@ -99,6 +103,10 @@ class PVBService:
 
             user_cache.pvb_bot_dice = self.__bot.send_dice(user_cache.tg_id)
 
+            time.sleep(DICE_SPIN_ANIMATION_DURATION)
+
+        player_won: bool | None = None
+
         if user_cache.pvb_bot_dice > user_dice:
             player_won = False
 
@@ -110,17 +118,14 @@ class PVBService:
         elif user_cache.pvb_bot_dice < user_dice:
             player_won = True
 
-            winnings = math.floor(user_cache.pvb_bet / 100 * (100 - self.__config_service.get().pvb_fee))
+            winnings: int = math.floor(user_cache.pvb_bet / 100 * (100 - self.__config_service.get().pvb_fee))
 
             if user_cache.beta_mode:
                 user.beta_balance += winnings
             else:
                 user.balance += winnings
 
-        else:
-            player_won = None
-
-        game = self.__repo.create(
+        game: PVBDTO = self.__repo.create(
             CreatePVBDTO(
                 player_tg_id=user.tg_id,
                 player_won=player_won,

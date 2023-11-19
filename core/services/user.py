@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
+from typing import Final
 
+from core.base_bot import BaseBotAPI
 from core.repositories.user import UserRepository
 from core.schemas.user import (
     UserDTO,
@@ -8,31 +10,24 @@ from core.schemas.user import (
     UserCacheDTO,
 )
 from core.services.config import ConfigService
-from core.base_bot import BaseBotAPI
 
 
-TERMS_AGREEMENT_LASTS_DAYS = 14
+TERMS_AGREEMENT_LASTS_DAYS: Final[int] = 14
 
 
 class UserService:
     def __init__(self, repository: UserRepository, bot: BaseBotAPI, config_service: ConfigService) -> None:
-        self.__repo = repository
-        self.__bot = bot
-        self.__config_service = config_service
+        self.__repo: UserRepository = repository
+        self.__bot: BaseBotAPI = bot
+        self.__config_service: ConfigService = config_service
 
     def get_or_create(self, dto: CreateUserDTO) -> UserDTO:
-        self.__repo.init_cache(dto.tg_id)
-
         return self.__repo.get_or_create(dto)
 
     def get_by_tg_id(self, tg_id: int) -> UserDTO:
-        self.__repo.init_cache(tg_id)
-
         return self.__repo.get_by_tg_id(tg_id)
 
     def update(self, dto: UpdateUserDTO) -> None:
-        self.__repo.init_cache(dto.tg_id)
-
         self.__repo.update(dto)
 
     def update_cache(self, dto: UserCacheDTO) -> None:
@@ -64,7 +59,7 @@ class UserService:
         )
 
     def is_subscribed_to_chats(self, tg_id: int) -> bool:
-        required_chats = self.__config_service.get().required_chats
+        required_chats: list[int] | None = self.__config_service.get().required_chats
 
         if required_chats is None:
             return True
