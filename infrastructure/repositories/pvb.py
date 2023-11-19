@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Query
+
 from core.repositories.pvb import PVBRepository
 from core.schemas.pvb import PVBDTO, CreatePVBDTO
 from infrastructure.cache import RedisInterface, RedisKeys
@@ -44,3 +46,23 @@ class PostgresRedisPVBRepository(PVBRepository):
     def get_count_for_tg_id(self, tg_id: int) -> int:
         with Session() as db:
             return db.query(PVBModel).filter(PVBModel.player_tg_id == tg_id).count()
+
+    def get_count_for_tg_id_and_result(self, tg_id: int, player_won: bool | None) -> int:
+        with Session() as db:
+            return db.query(PVBModel).filter(
+                PVBModel.player_tg_id == tg_id,
+                PVBModel.player_won == player_won
+            ).count()
+
+    def get_last_5_for_tg_id(self, tg_id: int) -> list[PVBDTO] | None:
+        with Session() as db:
+            games: Query[PVBModel] = db.query(PVBModel).filter(
+                PVBModel.player_tg_id == tg_id
+            ).order_by(PVBModel.id.desc()).limit(5)
+
+            if games.count() == 0:
+                return
+
+            return [
+                PVBDTO(**game.__dict__) for game in games
+            ]

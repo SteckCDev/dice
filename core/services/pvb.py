@@ -56,6 +56,17 @@ class PVBService:
     def get_count_for_tg_id(self, tg_id: int) -> int:
         return self.__repo.get_count_for_tg_id(tg_id)
 
+    def get_last_5_for_tg_id(self, tg_id: int) -> list[PVBDTO] | None:
+        return self.__repo.get_last_5_for_tg_id(tg_id)
+
+    def get_wins_percent_for_tg_id(self, tg_id: int) -> int | float:
+        wins: int = self.__repo.get_count_for_tg_id_and_result(tg_id, True)
+        defeats: int = self.__repo.get_count_for_tg_id_and_result(tg_id, False)
+        total: int = wins + defeats
+
+        return 0 if total == 0 else 100 / total * wins
+
+
     def __validate_game_conditions(self, bet: int, selected_balance: int) -> None:
         config: ConfigDTO = self.__config_service.get()
 

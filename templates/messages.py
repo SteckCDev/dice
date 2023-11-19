@@ -144,7 +144,7 @@ class Messages:
 
     @staticmethod
     def pvb(balance: int, beta_mode: bool) -> str:
-        return f"{bold('🤖 Игра с ботом')}{cursive(' - демо-режим') if beta_mode else ''}\n\n" \
+        return f"{bold('🤖 Игра с ботом')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
                f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(balance)}"
 
     @staticmethod
@@ -165,13 +165,13 @@ class Messages:
         else:
             result = "💀 Вы проиграли!"
 
-        return f"🎲 Игра #{game_id:03}{cursive(' - демо-режим') if beta_mode else ''}\n\n" \
+        return f"🎲 Игра #{game_id:03}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
                f"{result}\n" \
                f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(selected_balance)}"
 
     @staticmethod
-    def dice_bot_mine(wins_percent: int) -> str:
-        return f"Ваш процент побед: <b>{wins_percent:.0f}%</b>"
+    def pvb_history(wins_percent: int) -> str:
+        return f"🎲 Ваш процент побед: <b>{wins_percent:.1f}%</b>"
 
     @staticmethod
     def dice_p2p(page: int, pages_total: int, games_total: int) -> str:

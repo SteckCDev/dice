@@ -26,3 +26,11 @@ class PVBRepository(ABC):
     @abstractmethod
     def get_count_for_tg_id(self, tg_id: int) -> int:
         ...
+
+    @abstractmethod
+    def get_count_for_tg_id_and_result(self, tg_id: int, player_won: bool | None) -> int:
+        ...
+
+    @abstractmethod
+    def get_last_5_for_tg_id(self, tg_id: int) -> list[PVBDTO] | None:
+        ...

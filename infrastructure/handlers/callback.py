@@ -1,6 +1,9 @@
 from core.schemas.config import (
     ConfigDTO,
 )
+from core.schemas.pvb import (
+    PVBDTO,
+)
 from core.schemas.user import (
     UserDTO,
     CreateUserDTO,
@@ -65,66 +68,8 @@ class CallbackHandler(BaseTeleBotHandler):
         )
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
-    def _prepare(self) -> bool:
-        if not self.__user_service.is_subscribed_to_chats(self.user.tg_id):
-            self._bot.send_message(
-                self.chat_id,
-                Messages.force_to_subscribe
-            )
-            return False
-
-        if self.user_cache.pvb_in_process:
-            self._bot.send_message(
-                self.chat_id,
-                Messages.pvb_in_process
-            )
-            return False
-
-        if "admin" in self.path and self.user.tg_id != settings.admin_tg_id:
-            return False
-
-        return True
-        
-    def _process(self) -> None:
-        if self.path.startswith(("pvb", "pvp")):
-            self.user_cache.game_mode = GameMode.PVB if self.path.startswith("pvb") else GameMode.PVP
-            self.__user_service.update_cache(self.user_cache)
-
-        if self.path == "terms-accept":
-            self.__user_service.agree_with_terms_and_conditions(self.user.tg_id)
-
-            self._bot.edit_message(
-                self.chat_id,
-                self.message_id,
-                Messages.terms_accepted()
-            )
-
-        elif self.path == "terms-reject":
-            self._bot.edit_message(
-                self.chat_id,
-                self.message_id,
-                Messages.terms_rejected()
-            )
-
-        elif self.path == "switch-beta":
-            self.user_cache.beta_mode = not self.user_cache.beta_mode
-
-            self.__user_service.update_cache(self.user_cache)
-
-            self._bot.edit_message(
-                self.chat_id,
-                self.message_id,
-                Messages.profile(
-                    self.user.tg_name,
-                    self.user.balance,
-                    self.user.beta_balance,
-                    self.user.joined_at,
-                    self.__pvb_service.get_count_for_tg_id(self.user.tg_id)
-                ),
-                Markups.profile(self.user_cache.beta_mode)
-            )
-
-        elif self.path == "pvb":
+    def __process_pvb(self) -> None:
+        if self.path == "pvb":
             self._bot.edit_message(
                 self.chat_id,
                 self.message_id,
@@ -177,7 +122,15 @@ class CallbackHandler(BaseTeleBotHandler):
                 )
 
         elif self.path == "pvb-history":
-            pass
+            wins_percent = self.__pvb_service.get_wins_percent_for_tg_id(self.user.tg_id)
+            games_pvb: list[PVBDTO] | None = self.__pvb_service.get_last_5_for_tg_id(self.user.tg_id)
+
+            self._bot.edit_message(
+                self.chat_id,
+                self.message_id,
+                Messages.pvb_history(wins_percent),
+                Markups.pvb_history(games_pvb)
+            )
 
         elif self.path == "pvb-instruction":
             self._bot.edit_message(
@@ -185,6 +138,84 @@ class CallbackHandler(BaseTeleBotHandler):
                 self.message_id,
                 Messages.pvb_instruction,
                 Markups.back_to("pvb")
+            )
+
+    def __process_pvp(self) -> None:
+        ...
+
+    def _prepare(self) -> bool:
+        if not self.__user_service.is_subscribed_to_chats(self.user.tg_id):
+            self._bot.send_message(
+                self.chat_id,
+                Messages.force_to_subscribe
+            )
+            return False
+
+        if self.user_cache.pvb_in_process:
+            self._bot.send_message(
+                self.chat_id,
+                Messages.pvb_in_process
+            )
+            return False
+
+        if "admin" in self.path and self.user.tg_id != settings.admin_tg_id:
+            return False
+
+        return True
+        
+    def _process(self) -> None:
+        if self.path.startswith(("pvb", "pvp")):
+            self.user_cache.game_mode = GameMode.PVB if self.path.startswith("pvb") else GameMode.PVP
+            self.__user_service.update_cache(self.user_cache)
+
+        if self.path.startswith("pvb"):
+            self.__process_pvb()
+        elif self.path.startswith("pvp"):
+            self.__process_pvp()
+
+        if self.path == "terms-accept":
+            self.__user_service.agree_with_terms_and_conditions(self.user.tg_id)
+
+            self._bot.edit_message(
+                self.chat_id,
+                self.message_id,
+                Messages.terms_accepted()
+            )
+
+        elif self.path == "terms-reject":
+            self._bot.edit_message(
+                self.chat_id,
+                self.message_id,
+                Messages.terms_rejected()
+            )
+
+        elif self.path == "switch-beta":
+            self.user_cache.beta_mode = not self.user_cache.beta_mode
+
+            self.__user_service.update_cache(self.user_cache)
+
+            self._bot.edit_message(
+                self.chat_id,
+                self.message_id,
+                Messages.profile(
+                    self.user.tg_name,
+                    self.user.balance,
+                    self.user.beta_balance,
+                    self.user.joined_at,
+                    self.__pvb_service.get_count_for_tg_id(self.user.tg_id)
+                ),
+                Markups.profile(self.user_cache.beta_mode)
+            )
+
+        elif self.path == "games":
+            self._bot.edit_message(
+                self.chat_id,
+                self.message_id,
+                Messages.games(
+                    self.__user_service.get_user_selected_balance(self.user.tg_id),
+                    self.user_cache.beta_mode
+                ),
+                Markups.games
             )
 
         elif self.path == "admin-switch-pvb":

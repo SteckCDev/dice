@@ -5,6 +5,7 @@ from telebot.types import (
     InlineKeyboardButton
 )
 
+from core.schemas.pvb import PVBDTO
 from common.formatting.emojis import get_status_emoji, get_balance_emoji
 from settings import settings
 from templates.menu import Menu
@@ -172,32 +173,36 @@ class Markups:
         )
 
     @staticmethod
-    def dice_bot_mine(games: list) -> InlineKeyboardMarkup:
+    def pvb_history(games_pvb: list[PVBDTO] | None) -> InlineKeyboardMarkup:
         markup = InlineKeyboardMarkup()
 
-        if len(games) == 0:
-            markup.add(InlineKeyboardButton("🔔 Вы ещё ни разу не сыграли", callback_data="None"))
-        else:
-            for game_id, bet, result, demo_mode in games:
-                if result == 1:
-                    sign = "✅"
-                elif result == 0:
-                    sign = "💀"
-                else:
-                    sign = "✌️"
+        if games_pvb is None:
+            markup.add(
+                InlineKeyboardButton(
+                    "🔔 Вы ещё ни разу не сыграли", callback_data="None"
+                ),
+                InlineKeyboardButton("<< Назад", callback_data="pvb")
+            )
+            return markup
 
-                if demo_mode == 1:
-                    demo_emoji = "💴"
-                else:
-                    demo_emoji = "💵"
+        for pvb in games_pvb:
+            if pvb.player_won is None:
+                sign = "🤝"
+            elif pvb.player_won:
+                sign = "💰"
+            else:
+                sign = "💀"
 
-                markup.add(
-                    InlineKeyboardButton(
-                        f"{sign} Игра #{game_id:03} | {demo_emoji} {bet}", callback_data="None"
-                    )
+            markup.add(
+                InlineKeyboardButton(
+                    f"{sign} Игра #{pvb.id:03} | {get_balance_emoji(pvb.beta_mode)} {pvb.bet}",
+                    callback_data="None"
                 )
+            )
 
-        markup.add(InlineKeyboardButton("<< Назад", callback_data="dice-bot"))
+        markup.add(
+            InlineKeyboardButton("<< Назад", callback_data="pvb")
+        )
 
         return markup
 
