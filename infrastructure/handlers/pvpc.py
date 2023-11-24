@@ -14,6 +14,6 @@ class PVPCHandler(BaseTeleBotHandler):
     def _process(self) -> None:
         self._bot.send_message(
             self.chat_id,
-            Messages.pvpc,
-            Markups.pvpc
+            Messages.pvpc(),
+            Markups.pvpc()
         )

@@ -12,6 +12,7 @@ from infrastructure.handlers import (
     PrivateTextHandler,
     ProfileHandler,
     PVBHandler,
+    PVPHandler,
     PVPCHandler,
     StartHandler,
     SupportHandler,
@@ -63,8 +64,11 @@ def cmd_pvb(msg: Message):
 
 
 @bot.message_handler(commands=["pvp"], chat_types=["private"])
-def cmd_pvp(_msg: Message):
-    ...
+def cmd_pvp(msg: Message):
+    PVPHandler(
+        msg.from_user.id,
+        msg.message_id
+    ).handle()
 
 
 @bot.message_handler(commands=["pvpc"], chat_types=["private"])

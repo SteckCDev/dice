@@ -1,3 +1,5 @@
+from typing import Callable
+
 from telebot import TeleBot
 from telebot.types import Message, ReplyKeyboardMarkup, InlineKeyboardMarkup
 from telebot.apihelper import ApiTelegramException
@@ -46,6 +48,15 @@ class TeleBotAPI(BaseBotAPI):
         )
 
         return message.message_id if isinstance(message, Message) else None
+
+    def get_edit_message_for_context(self, chat_id: int, message_id: int) -> Callable:
+        def edit_message_in_context(
+                text: str,
+                markup: ReplyKeyboardMarkup | InlineKeyboardMarkup | None = None
+        ) -> int | None:
+            return self.edit_message(chat_id, message_id, text, markup)
+
+        return edit_message_in_context
 
     def answer_callback(self, call_id: int, text: str) -> None:
         self.__bot.answer_callback_query(call_id, text)

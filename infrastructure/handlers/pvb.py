@@ -44,29 +44,29 @@ class PVBHandler(BaseTeleBotHandler):
         if not self.__user_service.is_subscribed_to_chats(self.user_id):
             self._bot.send_message(
                 self.chat_id,
-                Messages.force_to_subscribe
+                Messages.force_to_subscribe()
             )
             return False
 
         if not self.__user_service.is_terms_and_conditions_agreed(self.user_id):
             self._bot.send_message(
                 self.chat_id,
-                Messages.terms_and_conditions,
-                Markups.terms_and_conditions
+                Messages.terms_and_conditions(),
+                Markups.terms_and_conditions()
             )
             return False
 
         if self.user_cache.pvb_in_process:
             self._bot.send_message(
                 self.chat_id,
-                Messages.pvb_in_process
+                Messages.pvb_in_process()
             )
             return False
 
         if not self.__pvb_service.get_status():
             self._bot.send_message(
                 self.chat_id,
-                Messages.game_mode_disabled
+                Messages.game_mode_disabled()
             )
             return False
 
@@ -79,5 +79,5 @@ class PVBHandler(BaseTeleBotHandler):
                 self.__user_service.get_user_selected_balance(self.user_id),
                 self.user_cache.beta_mode
             ),
-            Markups.pvb
+            Markups.pvb()
         )

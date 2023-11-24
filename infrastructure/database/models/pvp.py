@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
+from core.states.pvp_status import PVPStatus
 from infrastructure.database import Base
 
 
@@ -11,13 +12,13 @@ class PVPModel(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     creator_tg_id: Mapped[int] = mapped_column(ForeignKey("users.tg_id"))
-    opponent_tg_id: Mapped[int] = mapped_column(ForeignKey("users.tg_id"))
+    opponent_tg_id: Mapped[int] = mapped_column(ForeignKey("users.tg_id"), nullable=True)
     winner_tg_id: Mapped[int] = mapped_column(nullable=True)
     creator_dice: Mapped[int] = mapped_column(nullable=True)
     opponent_dice: Mapped[int] = mapped_column(nullable=True)
     bet: Mapped[int]
     beta_mode: Mapped[bool] = mapped_column(default=False)
-    status: Mapped[int] = mapped_column(default=0)
+    status: Mapped[int] = mapped_column(default=PVPStatus.CREATED)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     started_at: Mapped[datetime] = mapped_column(nullable=True)
     finished_at: Mapped[datetime] = mapped_column(nullable=True)

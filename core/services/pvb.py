@@ -76,7 +76,7 @@ class PVBService:
             )
 
         if selected_balance < bet:
-            raise BalanceIsNotEnoughError(Messages.balance_is_not_enough)
+            raise BalanceIsNotEnoughError(Messages.balance_is_not_enough())
 
     def start_game(self, user_cache: UserCacheDTO) -> None:
         self.__validate_game_conditions(
@@ -89,7 +89,7 @@ class PVBService:
         if user_cache.pvb_bots_turn_first:
             self.__bot.send_message(
                 user_cache.tg_id,
-                Messages.pvb_bots_turn
+                Messages.pvb_bots_turn()
             )
 
             user_cache.pvb_bot_dice = self.__bot.send_dice(user_cache.tg_id)
@@ -100,7 +100,7 @@ class PVBService:
 
         self.__bot.send_message(
             user_cache.tg_id,
-            Messages.pvb_your_turn
+            Messages.pvb_your_turn()
         )
 
     def finish_game(self, user: UserDTO, user_cache: UserCacheDTO, user_dice: int) -> PVBDTO:
@@ -109,7 +109,7 @@ class PVBService:
         if not user_cache.pvb_bots_turn_first:
             self.__bot.send_message(
                 user_cache.tg_id,
-                Messages.pvb_bots_turn
+                Messages.pvb_bots_turn()
             )
 
             user_cache.pvb_bot_dice = self.__bot.send_dice(user_cache.tg_id)

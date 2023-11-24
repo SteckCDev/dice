@@ -1,7 +1,10 @@
 from sqlalchemy.orm import Query
 
 from core.repositories.pvb import PVBRepository
-from core.schemas.pvb import PVBDTO, CreatePVBDTO
+from core.schemas.pvb import (
+    PVBDTO,
+    CreatePVBDTO,
+)
 from infrastructure.cache import RedisInterface, RedisKeys
 from infrastructure.database import Session
 from infrastructure.database.models import PVBModel
@@ -12,9 +15,8 @@ class PostgresRedisPVBRepository(PVBRepository):
         self.__redis = RedisInterface()
 
     def toggle(self) -> bool:
-        state: bool | None = self.__redis.get_bool(RedisKeys.PVB_ACTIVE)
-
-        state = True if state is None else not state
+        cached_state: bool | None = self.__redis.get_bool(RedisKeys.PVB_ACTIVE)
+        state: bool = True if cached_state is None else not cached_state
 
         self.__redis.set_bool(RedisKeys.PVB_ACTIVE, state)
 

@@ -28,9 +28,9 @@ class PostgresRedisUserRepository(UserRepository):
             db.add(UserModel(**dto.model_dump()))
             db.commit()
 
-        return UserDTO(
-            **db.get(UserModel, dto.tg_id).__dict__
-        )
+            return UserDTO(
+                **db.get(UserModel, dto.tg_id).__dict__
+            )
 
     def get_by_tg_id(self, tg_id: int) -> UserDTO:
         with Session() as db:

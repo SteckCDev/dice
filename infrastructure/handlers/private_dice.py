@@ -16,7 +16,7 @@ from core.services import (
     PVBService,
     UserService,
 )
-from core.types.game_mode import GameMode
+from core.states.game_mode import GameMode
 from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
 from infrastructure.repositories import (
     MockConfigRepository,
@@ -67,7 +67,7 @@ class PrivateDiceHandler(BaseTeleBotHandler):
                 self.user.beta_balance if self.user_cache.beta_mode else self.user.balance,
                 self.user_cache.beta_mode
             ),
-            Markups.pvb
+            Markups.pvb()
         )
 
     def __pvb(self) -> None:
@@ -103,7 +103,7 @@ class PrivateDiceHandler(BaseTeleBotHandler):
         if not self.is_direct:
             self._bot.send_message(
                 self.user.tg_id,
-                Messages.pvb_non_direct
+                Messages.pvb_non_direct()
             )
             return False
 

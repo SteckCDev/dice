@@ -14,6 +14,6 @@ class SupportHandler(BaseTeleBotHandler):
     def _process(self) -> None:
         self._bot.send_message(
             self.chat_id,
-            Messages.support,
-            Markups.support
+            Messages.support(),
+            Markups.support()
         )

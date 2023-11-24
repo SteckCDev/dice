@@ -6,6 +6,7 @@ from infrastructure.handlers.private_dice import PrivateDiceHandler
 from infrastructure.handlers.private_text import PrivateTextHandler
 from infrastructure.handlers.profile import ProfileHandler
 from infrastructure.handlers.pvb import PVBHandler
+from infrastructure.handlers.pvp import PVPHandler
 from infrastructure.handlers.pvpc import PVPCHandler
 from infrastructure.handlers.start import StartHandler
 from infrastructure.handlers.support import SupportHandler
