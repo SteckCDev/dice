@@ -7,4 +7,4 @@ class PVPStatus(int, Enum):
     STARTED = 10
     FINISHED = 20
     CANCELED_BY_TTL = 30
-    CANCELED_BY_USER = 31
+    CANCELED_BY_CREATOR = 31

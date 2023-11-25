@@ -42,6 +42,7 @@ class CreatePVPDTO(BaseModel):
 
 
 class UpdatePVPDTO(BaseModel):
+    id: int
     winner_tg_id: int | None = None
     creator_dice: int | None = None
     opponent_dice: int | None = None

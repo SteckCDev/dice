@@ -131,7 +131,7 @@ class Messages:
         return f"🎲 Ваш процент побед: {bold(f'{wins_percent:.1f}%')}"
 
     @staticmethod
-    def pvp(available_pvp_games: int, page: int = 0) -> str:
+    def pvp(available_pvp_games: int, page: int = 1) -> str:
         if available_pvp_games == 0:
             return bold("🎲 На данный момент нет доступных игр")
 

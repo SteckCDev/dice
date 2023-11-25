@@ -12,10 +12,12 @@ services:
       - POSTGRES_DATABASE=${POSTGRES_DATABASE}
     ports:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
-    restart: always
+    restart: on-failure
   cache:
     image: redis/redis-stack
     container_name: dice_cache
+    volumes:
+      - ./.cache:/data
     ports:
       - "${REDIS_PORT}:${REDIS_PORT}"
-    restart: always
+    restart: on-failure

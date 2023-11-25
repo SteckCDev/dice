@@ -149,7 +149,7 @@ class CallbackHandler(BaseTeleBotHandler):
         if self.path_args[0] == "pvp":
             page = int(self.path_args[1]) if len(self.path_args) > 1 else 0
 
-            available_pvp_games = self.__pvp_service.get_all_for_status(self.user.tg_id, PVPStatus.CREATED)
+            available_pvp_games = self.__pvp_service.get_all_for_status(PVPStatus.CREATED)
 
             self.edit_message_in_context(
                 Messages.pvp(
@@ -182,10 +182,11 @@ class CallbackHandler(BaseTeleBotHandler):
         elif self.path_args[0] == "pvp-cancel":
             _id = int(self.path_args[1])
 
+            self.__pvp_service.cancel_by_creator(_id)
+
             self.edit_message_in_context(
-                Messages.pvp_cancel(
-                    _id
-                )
+                Messages.pvp_cancel(_id),
+                Markups.back_to("pvp")
             )
 
         elif self.path_args[0] == "pvp-create":

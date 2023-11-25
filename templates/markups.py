@@ -125,11 +125,11 @@ class Markups:
         if games_pvp is None:
             return InlineKeyboardMarkup(row_width=2).add(
                 InlineKeyboardButton("Создать", callback_data="pvp-create"),
-                InlineKeyboardButton("Обновить", callback_data=f"pvp:1"),
                 InlineKeyboardButton("Мои игры", callback_data="pvp-history"),
                 InlineKeyboardButton("Рейтинг", callback_data="pvp-rating"),
+                InlineKeyboardButton("Инструкция", callback_data="pvp-instruction"),
                 InlineKeyboardButton("<< Игры", callback_data="games"),
-                InlineKeyboardButton("Инструкция", callback_data="pvp-instruction")
+                InlineKeyboardButton("Обновить", callback_data=f"pvp:1")
             )
 
         pages_total: int = math.ceil(
@@ -165,7 +165,7 @@ class Markups:
 
         markup.add(
             InlineKeyboardButton("Создать", callback_data="pvp-create"),
-            InlineKeyboardButton("Обновить", callback_data=f"pvp:1")
+            InlineKeyboardButton("Мои игры", callback_data=f"pvp-history")
         )
 
         for i in range(page_fill_start, page_fill_end):
@@ -193,12 +193,12 @@ class Markups:
             )
 
         markup.add(
-            InlineKeyboardButton("Мои игры", callback_data=f"pvp-history"),
+            InlineKeyboardButton("Инструкция", callback_data=f"pvp-instruction"),
             InlineKeyboardButton("Рейтинг", callback_data=f"pvp-rating")
         )
         markup.add(
             InlineKeyboardButton("<< Игры", callback_data="games"),
-            InlineKeyboardButton("Инструкция", callback_data=f"pvp-instruction")
+            InlineKeyboardButton("Обновить", callback_data=f"pvp:1")
         )
 
         return markup

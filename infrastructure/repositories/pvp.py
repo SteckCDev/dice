@@ -8,6 +8,7 @@ from core.schemas.pvp import (
 from infrastructure.cache import RedisInterface, RedisKeys
 from infrastructure.database import Session
 from infrastructure.database.models import PVPModel
+from schemas.pvp import UpdatePVPDTO
 
 
 class PostgresRedisPVPRepository(PVPRepository):
@@ -45,7 +46,12 @@ class PostgresRedisPVPRepository(PVPRepository):
 
         return PVPDTO(**pvp.__dict__)
 
-    def get_all_for_status(self, tg_id: int, status: int) -> list[PVPDTO] | None:
+    def update(self, dto: UpdatePVPDTO) -> None:
+        with Session() as db:
+            db.query(PVPModel).filter(PVPModel.id == dto.id).update(dto.model_dump())
+            db.commit()
+
+    def get_all_for_status(self, status: int) -> list[PVPDTO] | None:
         with Session() as db:
             games: Query[PVPModel] = db.query(PVPModel).filter(
                 PVPModel.status == status

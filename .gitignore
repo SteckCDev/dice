@@ -5,6 +5,7 @@ env/
 .env
 *.log
 
+.cache/
 .database/
 
 unused/

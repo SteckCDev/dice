@@ -68,9 +68,7 @@ class PVPHandler(BaseTeleBotHandler):
         return True
 
     def _process(self) -> None:
-        available_pvp_games: list[PVPDTO] | None = self.__pvp_service.get_all_for_status(
-            self.user_id, PVPStatus.CREATED
-        )
+        available_pvp_games: list[PVPDTO] | None = self.__pvp_service.get_all_for_status(PVPStatus.CREATED)
 
         self._bot.send_message(
             self.user_id,

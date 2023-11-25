@@ -11,6 +11,7 @@ from core.schemas.config import ConfigDTO
 from core.schemas.pvp import (
     PVPDTO,
     CreatePVPDTO,
+    UpdatePVPDTO,
     PVPDetailsDTO,
 )
 from core.schemas.user import (
@@ -20,6 +21,7 @@ from core.schemas.user import (
 )
 from core.services.config import ConfigService
 from core.services.user import UserService
+from core.states.pvp_status import PVPStatus
 from templates.messages import Messages
 
 
@@ -51,8 +53,11 @@ class PVPService:
     def get_by_id(self, _id: int) -> PVPDTO:
         return self.__repo.get_by_id(_id)
 
-    def get_all_for_status(self, tg_id: int, status: int) -> list[PVPDTO] | None:
-        return self.__repo.get_all_for_status(tg_id, status)
+    def update(self, dto: UpdatePVPDTO) -> None:
+        self.__repo.update(dto)
+
+    def get_all_for_status(self, status: int) -> list[PVPDTO] | None:
+        return self.__repo.get_all_for_status(status)
 
     def get_details_for_id(self, _id: int) -> PVPDetailsDTO:
         game: PVPDTO = self.__repo.get_by_id(_id)
@@ -63,7 +68,7 @@ class PVPService:
 
         cancellation_unlocks_in: timedelta | None = None if (
                 now >= cancellation_available_at
-        ) else now - cancellation_available_at
+        ) else cancellation_available_at - now
 
         return PVPDetailsDTO(
             **game.model_dump(),
@@ -105,5 +110,28 @@ class PVPService:
                 creator_tg_id=user_cache.tg_id,
                 bet=user_cache.pvp_bet,
                 beta_mode=user_cache.beta_mode
+            )
+        )
+
+    def cancel_by_creator(self, pvp_id: int) -> None:
+        game: PVPDTO = self.__repo.get_by_id(pvp_id)
+        game.status = PVPStatus.CANCELED_BY_CREATOR
+
+        self.__repo.update(
+            UpdatePVPDTO(
+                **game.model_dump()
+            )
+        )
+
+        user: UserDTO = self.__user_service.get_by_tg_id(game.creator_tg_id)
+
+        if game.beta_mode:
+            user.beta_balance += game.bet
+        else:
+            user.balance += game.bet
+
+        self.__user_service.update(
+            UpdateUserDTO(
+                **user.model_dump()
             )
         )

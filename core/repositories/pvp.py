@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from core.schemas.pvp import (
     PVPDTO,
     CreatePVPDTO,
+    UpdatePVPDTO,
 )
 
 
@@ -24,5 +25,9 @@ class PVPRepository(ABC):
         ...
 
     @abstractmethod
-    def get_all_for_status(self, tg_id: int, status: int) -> list[PVPDTO] | None:
+    def update(self, dto: UpdatePVPDTO) -> None:
+        ...
+
+    @abstractmethod
+    def get_all_for_status(self, status: int) -> list[PVPDTO] | None:
         ...
