@@ -3,7 +3,7 @@ import time
 from typing import Final
 
 from core.base_bot import BaseBotAPI
-from core.exceptions.pvb import (
+from core.exceptions import (
     BetOutOfLimitsError,
     BalanceIsNotEnoughError,
 )
