@@ -31,7 +31,7 @@ from templates.messages import Messages
 
 TIME_UNTIL_CANCELLATION_AVAILABLE: Final[timedelta] = timedelta(minutes=10)
 TIME_FOR_CREATOR_TO_THROW: Final[timedelta] = timedelta(minutes=1)
-TTL_OF_CREATED: Final[timedelta] = timedelta(minutes=1)
+TTL_OF_CREATED: Final[timedelta] = timedelta(minutes=2)
 
 
 class PVPService:
@@ -258,7 +258,10 @@ class PVPService:
         return pvp
 
     def auto_finish_started_games(self) -> None:
-        games: list[PVPDTO] = self.__repo.get_all_for_status(PVPStatus.STARTED)
+        games: list[PVPDTO] | None = self.__repo.get_all_for_status(PVPStatus.STARTED)
+
+        if games is None:
+            return
 
         for pvp in games:
             if pvp.started_at + TIME_FOR_CREATOR_TO_THROW > datetime.now():
@@ -275,7 +278,10 @@ class PVPService:
             self.__end_game(pvp, creator, PVPStatus.FINISHED_BY_BOT)
 
     def auto_close_expired_games(self) -> None:
-        games: list[PVPDTO] = self.__repo.get_all_for_status(PVPStatus.CREATED)
+        games: list[PVPDTO] | None = self.__repo.get_all_for_status(PVPStatus.CREATED)
+
+        if games is None:
+            return
 
         for pvp in games:
             if pvp.created_at + TTL_OF_CREATED > datetime.now():

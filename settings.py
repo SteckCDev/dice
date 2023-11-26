@@ -33,5 +33,9 @@ class Settings(BaseSettings):
         return f"postgresql://{self.postgres_user}:{self.postgres_password}@" \
                f"{self.postgres_host}:{self.postgres_port}/{self.postgres_database}"
 
+    @property
+    def redis_dsn(self) -> str:
+        return f"redis://{self.redis_host}:{self.redis_port}"
+
 
 settings = Settings()

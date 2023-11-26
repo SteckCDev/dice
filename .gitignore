@@ -7,6 +7,7 @@ env/
 
 .cache/
 .database/
+.periodic/
 
 unused/
 test.py

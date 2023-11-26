@@ -4,6 +4,7 @@ from json import JSONDecoder
 from redis import Redis
 from redis.commands.json.path import Path
 
+from infrastructure.cache.redis_databases import RedisDatabase
 from settings import settings
 
 
@@ -11,7 +12,8 @@ class RedisInterface:
     def __init__(self):
         self.__client: Redis = Redis(
             host=settings.redis_host,
-            port=settings.redis_port
+            port=settings.redis_port,
+            db=RedisDatabase.APP.value
         )
         self.__json_decoder = JSONDecoder()
 

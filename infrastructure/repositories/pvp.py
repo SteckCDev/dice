@@ -8,8 +8,8 @@ from core.schemas.pvp import (
 from infrastructure.cache import RedisInterface, RedisKeys
 from infrastructure.database import Session
 from infrastructure.database.models import PVPModel
-from schemas.pvp import UpdatePVPDTO
-from states.pvp_status import PVPStatus
+from core.schemas.pvp import UpdatePVPDTO
+from core.states.pvp_status import PVPStatus
 
 
 class PostgresRedisPVPRepository(PVPRepository):
