@@ -5,6 +5,7 @@ from core.schemas.pvp import (
     CreatePVPDTO,
     UpdatePVPDTO,
 )
+from core.states.pvp_status import PVPStatus
 
 
 class PVPRepository(ABC):
@@ -30,4 +31,8 @@ class PVPRepository(ABC):
 
     @abstractmethod
     def get_all_for_status(self, status: int) -> list[PVPDTO] | None:
+        ...
+
+    @abstractmethod
+    def get_last_for_creator_and_status(self, tg_id: int, status: PVPStatus) -> PVPDTO:
         ...

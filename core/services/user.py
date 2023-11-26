@@ -55,7 +55,9 @@ class UserService:
         user.terms_accepted_at = datetime.now()
 
         self.__repo.update(
-            UpdateUserDTO(**user.model_dump())
+            UpdateUserDTO(
+                **user.model_dump()
+            )
         )
 
     def is_subscribed_to_chats(self, tg_id: int) -> bool:

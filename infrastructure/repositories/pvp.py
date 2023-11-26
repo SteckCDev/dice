@@ -9,6 +9,7 @@ from infrastructure.cache import RedisInterface, RedisKeys
 from infrastructure.database import Session
 from infrastructure.database.models import PVPModel
 from schemas.pvp import UpdatePVPDTO
+from states.pvp_status import PVPStatus
 
 
 class PostgresRedisPVPRepository(PVPRepository):
@@ -63,3 +64,12 @@ class PostgresRedisPVPRepository(PVPRepository):
             return [
                 PVPDTO(**game.__dict__) for game in games
             ]
+
+    def get_last_for_creator_and_status(self, tg_id: int, status: PVPStatus) -> PVPDTO | None:
+        with Session() as db:
+            pvp: PVPModel = db.query(PVPModel).filter(
+                PVPModel.creator_tg_id == tg_id,
+                PVPModel.status == status
+            ).order_by(PVPModel.id.desc()).first()
+
+            return None if pvp is None else PVPDTO(**pvp.__dict__)

@@ -76,7 +76,9 @@ class PVBService:
             )
 
         if selected_balance < bet:
-            raise BalanceIsNotEnoughError(Messages.balance_is_not_enough())
+            raise BalanceIsNotEnoughError(
+                Messages.balance_is_not_enough()
+            )
 
     def start_game(self, user_cache: UserCacheDTO) -> None:
         self.__validate_game_conditions(
@@ -151,7 +153,9 @@ class PVBService:
         user_cache.pvb_in_process = False
 
         self.__user_service.update(
-            UpdateUserDTO(**user.model_dump())
+            UpdateUserDTO(
+                **user.model_dump()
+            )
         )
         self.__user_service.update_cache(user_cache)
 

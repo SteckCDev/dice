@@ -43,12 +43,13 @@ class CreatePVPDTO(BaseModel):
 
 class UpdatePVPDTO(BaseModel):
     id: int
-    winner_tg_id: int | None = None
-    creator_dice: int | None = None
-    opponent_dice: int | None = None
+    opponent_tg_id: int | None
+    winner_tg_id: int | None
+    creator_dice: int | None
+    opponent_dice: int | None
     status: PVPStatus
-    started_at: datetime | None = None
-    finished_at: datetime | None = None
+    started_at: datetime | None
+    finished_at: datetime | None
 
 
 class PVPDetailsDTO(PVPDTO):

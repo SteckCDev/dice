@@ -1,10 +1,17 @@
 from typing import Any
 
+from core.exceptions import (
+    PVPNotFoundForUserError,
+)
 from core.schemas.config import (
     ConfigDTO,
 )
 from core.schemas.pvb import (
     PVBDTO,
+)
+from core.schemas.pvp import (
+    PVPDTO,
+    PVPDetailsDTO,
 )
 from core.schemas.user import (
     UserDTO,
@@ -14,6 +21,7 @@ from core.schemas.user import (
 from core.services import (
     ConfigService,
     PVBService,
+    PVPService,
     UserService,
 )
 from core.states.game_mode import GameMode
@@ -21,6 +29,7 @@ from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
 from infrastructure.repositories import (
     MockConfigRepository,
     PostgresRedisPVBRepository,
+    PostgresRedisPVPRepository,
     PostgresRedisUserRepository,
 )
 from templates import Markups, Messages
@@ -47,6 +56,12 @@ class PrivateDiceHandler(BaseTeleBotHandler):
             config_service=config_service,
             user_service=self.__user_service
         )
+        self.__pvp_service: PVPService = PVPService(
+            repository=PostgresRedisPVPRepository(),
+            bot=self._bot,
+            config_service=config_service,
+            user_service=self.__user_service
+        )
 
         config: ConfigDTO = config_service.get()
 
@@ -60,14 +75,14 @@ class PrivateDiceHandler(BaseTeleBotHandler):
         )
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
-    def __pvb_send_menu(self) -> None:
+    def __send_games_menu(self) -> None:
         self._bot.send_message(
             self.user.tg_id,
-            Messages.pvb(
-                self.user.beta_balance if self.user_cache.beta_mode else self.user.balance,
+            Messages.games(
+                self.__user_service.get_user_selected_balance(self.user.tg_id),
                 self.user_cache.beta_mode
             ),
-            Markups.pvb()
+            Markups.games()
         )
 
     def __pvb(self) -> None:
@@ -97,7 +112,58 @@ class PrivateDiceHandler(BaseTeleBotHandler):
         )
 
     def __pvp(self) -> None:
-        pass
+        try:
+            pvp: PVPDTO = self.__pvp_service.finish_game(self.user, self.user_dice)
+        except PVPNotFoundForUserError:
+            pass
+        except ValueError as exc:
+            self._bot.send_message(
+                self.user.tg_id,
+                str(exc)
+            )
+            return
+        else:
+            opponent: UserDTO = self.__user_service.get_by_tg_id(pvp.opponent_tg_id)
+
+            self._bot.send_message(
+                self.user.tg_id,
+                Messages.pvp_finished(pvp, self.user, opponent)
+            )
+            self._bot.send_message(
+                pvp.opponent_tg_id,
+                Messages.pvp_finished(pvp, opponent, self.user)
+            )
+            return
+
+        if self.user_cache.pvp_game_id is None:
+            self.__send_games_menu()
+            return
+
+        try:
+            pvp_details: PVPDetailsDTO = self.__pvp_service.join_game(self.user, self.user_cache, self.user_dice)
+        except ValueError as exc:
+            self._bot.send_message(
+                self.user.tg_id,
+                str(exc)
+            )
+        else:
+            self._bot.send_message(
+                self.user.tg_id,
+                Messages.pvp_join(
+                    pvp_details.id,
+                    pvp_details.beta_mode
+                )
+            )
+
+            self._bot.send_message(
+                pvp_details.creator_tg_id,
+                Messages.pvp_started(
+                    pvp_details.id,
+                    pvp_details.beta_mode,
+                    pvp_details.bet,
+                    self.user.tg_name
+                )
+            )
 
     def _prepare(self) -> bool:
         if not self.is_direct:
@@ -112,16 +178,21 @@ class PrivateDiceHandler(BaseTeleBotHandler):
             return True
 
         if not self.user_cache.pvb_in_process:
-            self.__pvb_send_menu()
+            self.__send_games_menu()
             return False
 
         return True
 
     def _process(self) -> None:
-        match self.user_cache.game_mode:
-            case GameMode.PVB:
-                self.__pvb()
-            case GameMode.PVP:
-                self.__pvp()
-            case _:
-                self.__pvb_send_menu()
+        if self.user_cache.game_mode == GameMode.PVB:
+            self.__pvb()
+        else:
+            self.__pvp()
+
+        # match self.user_cache.game_mode:
+        #     case GameMode.PVB:
+        #         self.__pvb()
+        #     case GameMode.PVP:  # because of this condition creator will not be able to finish game
+        #         self.__pvp()
+        #     case _:
+        #         self.__send_games_menu()

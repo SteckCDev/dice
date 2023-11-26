@@ -8,6 +8,7 @@ from common.formatting.html import (
     link,
 )
 from core.schemas.pvp import (
+    PVPDTO,
     PVPDetailsDTO,
 )
 from core.schemas.user import (
@@ -62,6 +63,16 @@ class Messages:
     @staticmethod
     def pvb_your_turn() -> str:
         return bold("🎲 Бросьте кубик!")
+
+    @staticmethod
+    def pvp_already_started(game_id: int, beta_mode: bool) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"❌ К игре уже присоединились, выберите другую"
+
+    @staticmethod
+    def pvp_creator_late(game_id: int, beta_mode: bool) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"⌛ Время вышло, бот бросил кость за вас"
 
     @staticmethod
     def force_to_subscribe() -> str:
@@ -190,6 +201,33 @@ class Messages:
         return f"{bold(f'🎲 Игра #{game_id:03} создана!')} " \
                f"{cursive(' - бета-режим') if user_cache.beta_mode else ''}\n\n" \
                f"{get_balance_emoji(user_cache.beta_mode)} Ставка: {bold(user_cache.pvp_bet)}"
+
+    @staticmethod
+    def pvp_join(game_id: int, beta_mode: bool) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"Ждём бросок игрока минуту, иначе бот бросит кость за него"
+
+    @staticmethod
+    def pvp_started(game_id: int, beta_mode: bool, bet: int, opponent_tg_name: str) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"🤙 Соперник: {bold(opponent_tg_name)}\n" \
+               f"{get_balance_emoji(beta_mode)} Ставка: {bold(bet)}\n\n" \
+               f"Бросьте кость или это сделает бот!"
+
+    @staticmethod
+    def pvp_finished(pvp: PVPDTO, user: UserDTO, opponent: UserDTO) -> str:
+        opponent_dice = pvp.creator_dice if opponent.tg_id == pvp.creator_tg_id else pvp.opponent_dice
+
+        if pvp.winner_tg_id is None:
+            result: str = "✌ Ничья!"
+        else:
+            result: str = "🔥 Вы выиграли!" if pvp.winner_tg_id == user.tg_id else "💀 Вы проиграли!"
+
+        return f"{bold(f'🎲 Игра #{pvp.id:03}')}{cursive(' - бета-режим') if pvp.beta_mode else ''}\n\n" \
+               f"🤙 {opponent.tg_name} выбросил {bold(opponent_dice)}\n" \
+               f"{result}\n" \
+               f"{get_balance_emoji(pvp.beta_mode)} Ваш баланс: " \
+               f"{bold(user.beta_balance if pvp.beta_mode else user.balance)}"
 
     @staticmethod
     def pvpc() -> str:

@@ -172,6 +172,9 @@ class CallbackHandler(BaseTeleBotHandler):
         elif self.path_args[0] == "pvp-details":
             _id = int(self.path_args[1])
 
+            self.user_cache.pvp_game_id = _id
+            self.__user_service.update_cache(self.user_cache)
+
             pvp_details = self.__pvp_service.get_details_for_id(_id)
 
             self.edit_message_in_context(
