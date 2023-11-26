@@ -84,6 +84,9 @@ class CallbackHandler(BaseTeleBotHandler):
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
     def __process_pvb(self) -> None:
+        self.user_cache.game_mode = GameMode.PVB
+        self.__user_service.update_cache(self.user_cache)
+
         if self.path_args[0] == "pvb":
             self.edit_message_in_context(
                 Messages.pvb(
@@ -146,6 +149,9 @@ class CallbackHandler(BaseTeleBotHandler):
             )
 
     def __process_pvp(self) -> None:
+        self.user_cache.game_mode = GameMode.PVP
+        self.__user_service.update_cache(self.user_cache)
+
         if self.path_args[0] == "pvp":
             page = int(self.path_args[1]) if len(self.path_args) > 1 else 0
 
@@ -229,42 +235,44 @@ class CallbackHandler(BaseTeleBotHandler):
                 Markups.back_to("pvp")
             )
 
-    def _prepare(self) -> bool:
-        if not self.__user_service.is_subscribed_to_chats(self.user.tg_id):
-            self._bot.send_message(
-                self.chat_id,
-                Messages.force_to_subscribe()
-            )
-            return False
-
-        if self.user_cache.pvb_in_process:
-            self._bot.send_message(
-                self.chat_id,
-                Messages.pvb_in_process()
-            )
-            return False
-
-        if "admin" in self.path and self.user.tg_id != settings.admin_tg_id:
-            return False
-
-        return True
-        
-    def _process(self) -> None:
-        if self.path.startswith(("pvb", "pvp")) and self.path != "pvpc":
-            self.user_cache.game_mode = GameMode.PVB if self.path.startswith("pvb") else GameMode.PVP
-            self.__user_service.update_cache(self.user_cache)
-
+    def __process_pvpc(self) -> None:
         if self.path == "pvpc":
             self._bot.send_message(
                 self.chat_id,
                 Messages.pvpc(),
                 Markups.pvpc()
             )
-        elif self.path.startswith("pvb"):
-            self.__process_pvb()
-        elif self.path.startswith("pvp"):
-            self.__process_pvp()
 
+    def __process_admin_switches(self) -> None:
+        if self.path == "admin-switch-pvb":
+            self.__pvb_service.toggle()
+
+        elif self.path == "admin-switch-pvp":
+            self.__pvp_service.toggle()
+
+        # elif self.path == "admin-switch-pvpc":
+        #     self.__pvpc_service.toggle()
+        #
+        # elif self.path == "admin-switch-pvpf":
+        #     self.__pvpf_service.toggle()
+        #
+        # elif self.path == "admin-switch-transactions":
+        #     self.__transactions_service.toggle()
+
+        self.edit_message_in_context(
+            Messages.admin(
+                self.__user_service.get_cached_users_count()
+            ),
+            Markups.admin(
+                self.__pvb_service.get_status(),
+                self.__pvp_service.get_status(),
+                False,
+                False,
+                False
+            )
+        )
+
+    def __process_misc(self) -> None:
         if self.path == "terms-accept":
             self.__user_service.agree_with_terms_and_conditions(self.user.tg_id)
 
@@ -311,34 +319,37 @@ class CallbackHandler(BaseTeleBotHandler):
                 Markups.games()
             )
 
-        elif self.path == "admin-switch-pvb":
-            self.__pvb_service.toggle()
-
-        elif self.path == "admin-switch-pvp":
-            self.__pvp_service.toggle()
-
-        # elif self.path == "admin-switch-pvpc":
-        #     self.__pvpc_service.toggle()
-        #
-        # elif self.path == "admin-switch-pvpf":
-        #     self.__pvpf_service.toggle()
-        #
-        # elif self.path == "admin-switch-transactions":
-        #     self.__transactions_service.toggle()
-
-        if self.path.startswith("admin-switch"):
-            self.edit_message_in_context(
-                Messages.admin(
-                    self.__user_service.get_cached_users_count()
-                ),
-                Markups.admin(
-                    self.__pvb_service.get_status(),
-                    False,
-                    False,
-                    False,
-                    False
-                )
+    def _prepare(self) -> bool:
+        if not self.__user_service.is_subscribed_to_chats(self.user.tg_id):
+            self._bot.send_message(
+                self.chat_id,
+                Messages.force_to_subscribe()
             )
+            return False
+
+        if self.user_cache.pvb_in_process:
+            self._bot.send_message(
+                self.chat_id,
+                Messages.pvb_in_process()
+            )
+            return False
+
+        if "admin" in self.path and self.user.tg_id != settings.admin_tg_id:
+            return False
+
+        return True
+        
+    def _process(self) -> None:
+        if self.path.startswith("pvb"):
+            self.__process_pvb()
+        elif self.path.startswith("pvpc"):
+            self.__process_pvpc()
+        elif self.path.startswith("pvp"):
+            self.__process_pvp()
+        elif self.path.startswith("admin-switch"):
+            self.__process_admin_switches()
+        else:
+            self.__process_misc()
 
         # stop loading animation in telegram interface if this handler did no action
         self._bot.answer_callback(self.call_id, "")
