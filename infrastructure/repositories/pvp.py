@@ -52,7 +52,7 @@ class PostgresRedisPVPRepository(PVPRepository):
             db.query(PVPModel).filter(PVPModel.id == dto.id).update(dto.model_dump())
             db.commit()
 
-    def get_all_for_status(self, status: int) -> list[PVPDTO] | None:
+    def get_all_for_status(self, status: PVPStatus) -> list[PVPDTO] | None:
         with Session() as db:
             games: Query[PVPModel] = db.query(PVPModel).filter(
                 PVPModel.status == status

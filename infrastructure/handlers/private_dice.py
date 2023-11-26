@@ -113,7 +113,7 @@ class PrivateDiceHandler(BaseTeleBotHandler):
 
     def __pvp(self) -> None:
         try:
-            pvp: PVPDTO = self.__pvp_service.finish_game(self.user, self.user_dice)
+            self.__pvp_service.finish_game(self.user, self.user_dice)
         except PVPNotFoundForUserError:
             pass
         except ValueError as exc:
@@ -123,16 +123,6 @@ class PrivateDiceHandler(BaseTeleBotHandler):
             )
             return
         else:
-            opponent: UserDTO = self.__user_service.get_by_tg_id(pvp.opponent_tg_id)
-
-            self._bot.send_message(
-                self.user.tg_id,
-                Messages.pvp_finished(pvp, self.user, opponent)
-            )
-            self._bot.send_message(
-                pvp.opponent_tg_id,
-                Messages.pvp_finished(pvp, opponent, self.user)
-            )
             return
 
         if self.user_cache.pvp_game_id is None:

@@ -31,6 +31,7 @@ from templates.messages import Messages
 
 TIME_UNTIL_CANCELLATION_AVAILABLE: Final[timedelta] = timedelta(minutes=10)
 TIME_FOR_CREATOR_TO_THROW: Final[timedelta] = timedelta(minutes=1)
+TTL_OF_CREATED: Final[timedelta] = timedelta(minutes=1)
 
 
 class PVPService:
@@ -184,28 +185,18 @@ class PVPService:
 
         return pvp_details
 
-    def finish_game(self, creator: UserDTO, creator_dice: int) -> PVPDTO:
-        pvp: PVPDTO | None = self.__repo.get_last_for_creator_and_status(creator.tg_id, PVPStatus.STARTED)
-
-        if pvp is None:
-            raise PVPNotFoundForUserError()
-
-        if pvp.status != PVPStatus.STARTED:
-            raise PVPCreatorLate(
-                Messages.pvp_creator_late(pvp.id, pvp.beta_mode)
-            )
-
+    def __end_game(self, pvp: PVPDTO, creator: UserDTO, final_status: PVPStatus) -> None:
         config: ConfigDTO = self.__config_service.get()
 
         opponent: UserDTO = self.__user_service.get_by_tg_id(pvp.opponent_tg_id)
 
         winnings: int = math.floor(pvp.bet * 2 / 100 * (100 - config.pvp_fee))
 
-        if creator_dice > pvp.opponent_dice:
+        if pvp.creator_dice > pvp.opponent_dice:
             creator_balance_correction = winnings
             opponent_balance_correction = 0
             winner_tg_id = creator.tg_id
-        elif creator_dice < pvp.opponent_dice:
+        elif pvp.creator_dice < pvp.opponent_dice:
             creator_balance_correction = 0
             opponent_balance_correction = winnings
             winner_tg_id = opponent.tg_id
@@ -221,8 +212,7 @@ class PVPService:
             creator.balance += creator_balance_correction
             opponent.balance += opponent_balance_correction
 
-        pvp.status = PVPStatus.FINISHED
-        pvp.creator_dice = creator_dice
+        pvp.status = final_status
         pvp.winner_tg_id = winner_tg_id
 
         self.__user_service.update(
@@ -241,4 +231,82 @@ class PVPService:
             )
         )
 
+        self.__bot.send_message(
+            creator.tg_id,
+            Messages.pvp_finished(pvp, creator, opponent)
+        )
+        self.__bot.send_message(
+            opponent.tg_id,
+            Messages.pvp_finished(pvp, opponent, creator)
+        )
+
+    def finish_game(self, creator: UserDTO, creator_dice: int) -> PVPDTO:
+        pvp: PVPDTO | None = self.__repo.get_last_for_creator_and_status(creator.tg_id, PVPStatus.STARTED)
+
+        if pvp is None:
+            raise PVPNotFoundForUserError()
+
+        if pvp.status != PVPStatus.STARTED:
+            raise PVPCreatorLate(
+                Messages.pvp_creator_late(pvp.id, pvp.beta_mode)
+            )
+
+        pvp.creator_dice = creator_dice
+
+        self.__end_game(pvp, creator, PVPStatus.FINISHED)
+
         return pvp
+
+    def auto_finish_started_games(self) -> None:
+        games: list[PVPDTO] = self.__repo.get_all_for_status(PVPStatus.STARTED)
+
+        for pvp in games:
+            if pvp.started_at + TIME_FOR_CREATOR_TO_THROW > datetime.now():
+                continue
+
+            pvp.creator_dice = self.__bot.send_dice(pvp.creator_tg_id)
+            self.__bot.send_message(
+                pvp.creator_tg_id,
+                Messages.pvp_creator_late(pvp.id, pvp.beta_mode)
+            )
+
+            creator: UserDTO = self.__user_service.get_by_tg_id(pvp.creator_tg_id)
+
+            self.__end_game(pvp, creator, PVPStatus.FINISHED_BY_BOT)
+
+    def auto_close_expired_games(self) -> None:
+        games: list[PVPDTO] = self.__repo.get_all_for_status(PVPStatus.CREATED)
+
+        for pvp in games:
+            if pvp.created_at + TTL_OF_CREATED > datetime.now():
+                continue
+
+            creator: UserDTO = self.__user_service.get_by_tg_id(pvp.creator_tg_id)
+
+            if pvp.beta_mode:
+                creator.beta_balance += pvp.bet
+            else:
+                creator.balance += pvp.bet
+
+            pvp.status = PVPStatus.CANCELED_BY_TTL
+
+            self.__user_service.update(
+                UpdateUserDTO(
+                    **creator.model_dump()
+                )
+            )
+            self.__repo.update(
+                UpdatePVPDTO(
+                    **pvp.model_dump()
+                )
+            )
+
+            self.__bot.send_message(
+                creator.tg_id,
+                Messages.pvp_expired(
+                    pvp.id,
+                    pvp.beta_mode,
+                    pvp.bet,
+                    TTL_OF_CREATED
+                )
+            )

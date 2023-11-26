@@ -1,5 +1,5 @@
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from common.formatting.emojis import get_balance_emoji
 from common.formatting.html import (
@@ -73,6 +73,13 @@ class Messages:
     def pvp_creator_late(game_id: int, beta_mode: bool) -> str:
         return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
                f"⌛ Время вышло, бот бросил кость за вас"
+
+    @staticmethod
+    def pvp_expired(game_id: int, beta_mode: bool, bet: int, ttl: timedelta) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"⌛ Истекло время ожидания - {ttl.seconds // 3600} часов, " \
+               f"ставка закрыта, баланс восстановлен\n" \
+               f"{get_balance_emoji(beta_mode)} Ставка: {bold(bet)}"
 
     @staticmethod
     def force_to_subscribe() -> str:

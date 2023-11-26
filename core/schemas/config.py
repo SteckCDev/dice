@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from pydantic import BaseModel
 
 
@@ -9,6 +11,7 @@ class Config(BaseModel):
     max_bet: int = 20_000
     pvb_fee: int = 3
     pvp_fee: int = 3
+    pvp_expires_in: timedelta = timedelta(minutes=1)
 
 
 class ConfigDTO(BaseModel):
@@ -19,3 +22,4 @@ class ConfigDTO(BaseModel):
     max_bet: int
     pvb_fee: int
     pvp_fee: int
+    pvp_expires_in: timedelta
