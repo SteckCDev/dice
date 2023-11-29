@@ -1,8 +1,10 @@
 import json
+import time
 from typing import Final, NoReturn
 
 import uvicorn
 from fastapi import FastAPI
+from telebot.apihelper import ApiTelegramException
 from telebot.types import Message, CallbackQuery, Update
 
 from infrastructure.api_services.telebot import TeleBotAPI
@@ -56,7 +58,7 @@ def process_webhook(update: dict) -> None:
         LAST_UPDATE = update
         bot.send_message(
             settings.admin_tg_id,
-            str(update)
+            f"📌 Update\n\n{update}"
         )
         print(update, "\n\n\n")
         print(json.dumps(update))
@@ -176,13 +178,30 @@ def callback(call: CallbackQuery) -> None:
 
 def main() -> NoReturn:
     def webhook() -> NoReturn:
-        bot.remove_webhook()
+        removal_retries: int = 10
+        setting_retries: int = 10
 
-        bot.set_webhook(
-            host=settings.webhook_host,
-            port=settings.webhook_port,
-            path=WEBHOOK_PATH
-        )
+        while removal_retries > 0:
+            try:
+                bot.remove_webhook()
+                break
+            except ApiTelegramException as exc:
+                print(f"{removal_retries}. {exc}")
+                removal_retries -= 1
+                time.sleep(1)
+
+        while setting_retries > 0:
+            try:
+                bot.set_webhook(
+                    host=settings.webhook_host,
+                    port=settings.webhook_port,
+                    path=WEBHOOK_PATH
+                )
+                break
+            except ApiTelegramException as exc:
+                print(f"{setting_retries}. {exc}")
+                setting_retries -= 1
+                time.sleep(1)
 
         uvicorn.run(
             app=fastapi_app,
