@@ -1,3 +1,4 @@
+import json
 from typing import Final, NoReturn
 
 import uvicorn
@@ -23,6 +24,7 @@ from settings import settings
 
 
 WEBHOOK_PATH: Final[str] = f"/{settings.bot_token}/"
+LAST_UPDATE: dict = {}
 
 fastapi_app: FastAPI = FastAPI(
     docs_url=None,
@@ -38,13 +40,30 @@ bot: TeleBotAPI = TeleBotAPI(
 @fastapi_app.get("/test")
 def test_endpoint() -> dict:
     return {
-        "result": "success"
+        "result": "success",
+        "last_update": LAST_UPDATE
     }
 
 
 @fastapi_app.post("/{BOT_TOKEN}/")
 def process_webhook(update: dict) -> None:
+    global LAST_UPDATE
+
     if update:
+        #
+        #
+        #
+        LAST_UPDATE = update
+        bot.send_message(
+            settings.admin_tg_id,
+            str(update)
+        )
+        print(update, "\n\n\n")
+        print(json.dumps(update))
+        #
+        #
+        #
+
         update: Update = Update.de_json(update)
         bot.process_new_updates([update])
     else:
