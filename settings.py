@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     class Config:
         env_file: str = ENV_PRODUCTION if isfile(ENV_PRODUCTION) else ENV_DEVELOPMENT
 
+    local_environment: bool
+
     postgres_host: str
     postgres_port: str
     postgres_user: str
@@ -22,6 +24,10 @@ class Settings(BaseSettings):
     redis_port: str
     redis_user: str | None = None
     redis_password: str | None = None
+
+    webhook_host: str
+    webhook_port: int
+    webhook_listen: str
 
     bot_token: str
     max_threads: int

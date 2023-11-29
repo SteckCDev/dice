@@ -1,4 +1,4 @@
-from typing import Callable, Final
+from typing import Callable, Final, Any
 
 from telebot import TeleBot
 from telebot.apihelper import ApiTelegramException
@@ -16,6 +16,23 @@ class TeleBotAPI(AbstractBotAPI):
             token=bot_token,
             num_threads=max_threads,
             parse_mode=PARSE_MODE
+        )
+
+    def set_webhook(self, host: str, port: int | str = 443, path: str = "/") -> None:
+        protocol = "https" if port in (443, 8443) else "http"
+        base_url = f"{protocol}://{host}:{port}"
+        webhook_url = base_url + path
+
+        self.__bot.set_webhook(
+            url=webhook_url
+        )
+
+    def remove_webhook(self) -> None:
+        self.__bot.remove_webhook()
+
+    def process_new_updates(self, updates: list[Any]) -> None:
+        self.__bot.process_new_updates(
+            updates=updates
         )
 
     @property

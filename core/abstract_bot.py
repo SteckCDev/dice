@@ -4,6 +4,18 @@ from typing import Any, Callable
 
 class AbstractBotAPI(ABC):
     @abstractmethod
+    def set_webhook(self, host: str, port: int | str = 443, path: str = "/") -> None:
+        ...
+
+    @abstractmethod
+    def remove_webhook(self) -> None:
+        ...
+
+    @abstractmethod
+    def process_new_updates(self, updates: list[Any]) -> None:
+        ...
+
+    @abstractmethod
     def message_handler(self) -> Callable:
         ...
 

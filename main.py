@@ -1,6 +1,8 @@
-from typing import NoReturn
+from typing import Final, NoReturn
 
-from telebot.types import Message, CallbackQuery
+import uvicorn
+from fastapi import FastAPI
+from telebot.types import Message, CallbackQuery, Update
 
 from infrastructure.api_services.telebot import TeleBotAPI
 from infrastructure.handlers import (
@@ -20,19 +22,42 @@ from infrastructure.handlers import (
 from settings import settings
 
 
+WEBHOOK_PATH: Final[str] = f"/{settings.bot_token}/"
+
+fastapi_app: FastAPI = FastAPI(
+    docs_url=None,
+    redoc_url=None
+)
+
 bot: TeleBotAPI = TeleBotAPI(
     bot_token=settings.bot_token,
     max_threads=settings.max_threads
 )
 
 
+@fastapi_app.get("/test")
+def test_endpoint() -> dict:
+    return {
+        "result": "success"
+    }
+
+
+@fastapi_app.post("/{BOT_TOKEN}/")
+def process_webhook(update: dict) -> None:
+    if update:
+        update: Update = Update.de_json(update)
+        bot.process_new_updates([update])
+    else:
+        return
+
+
 @bot.message_handler(commands=["admin"], chat_types=["private"])
-def cmd_admin(_msg: Message):
+def cmd_admin(_msg: Message) -> None:
     AdminHandler().handle()
 
 
 @bot.message_handler(commands=["start"], chat_types=["private"])
-def cmd_start(msg: Message):
+def cmd_start(msg: Message) -> None:
     StartHandler(
         msg.chat.id,
         msg.from_user.id,
@@ -41,7 +66,7 @@ def cmd_start(msg: Message):
 
 
 @bot.message_handler(commands=["balance"], chat_types=["private"])
-def cmd_balance(msg: Message):
+def cmd_balance(msg: Message) -> None:
     BalanceHandler(
         msg.chat.id,
         msg.from_user.id,
@@ -50,7 +75,7 @@ def cmd_balance(msg: Message):
 
 
 @bot.message_handler(commands=["profile"], chat_types=["private"])
-def cmd_profile(msg: Message):
+def cmd_profile(msg: Message) -> None:
     ProfileHandler(
         msg.from_user.id,
         msg.from_user.username or msg.from_user.first_name
@@ -58,7 +83,7 @@ def cmd_profile(msg: Message):
 
 
 @bot.message_handler(commands=["pvb"], chat_types=["private"])
-def cmd_pvb(msg: Message):
+def cmd_pvb(msg: Message) -> None:
     PVBHandler(
         msg.chat.id,
         msg.message_id,
@@ -67,7 +92,7 @@ def cmd_pvb(msg: Message):
 
 
 @bot.message_handler(commands=["pvp"], chat_types=["private"])
-def cmd_pvp(msg: Message):
+def cmd_pvp(msg: Message) -> None:
     PVPHandler(
         msg.from_user.id,
         msg.message_id
@@ -75,22 +100,22 @@ def cmd_pvp(msg: Message):
 
 
 @bot.message_handler(commands=["pvpc"], chat_types=["private"])
-def cmd_pvpc(msg: Message):
+def cmd_pvpc(msg: Message) -> None:
     PVPCHandler(msg.chat.id).handle()
 
 
 @bot.message_handler(commands=["lottery"], chat_types=["private"])
-def cmd_lottery(msg: Message):
+def cmd_lottery(msg: Message) -> None:
     LotteryHandler(msg.chat.id).handle()
 
 
 @bot.message_handler(commands=["support"], chat_types=["private"])
-def cmd_support(msg: Message):
+def cmd_support(msg: Message) -> None:
     SupportHandler(msg.chat.id).handle()
 
 
 @bot.message_handler(chat_types=["private"])
-def private_text(msg: Message):
+def private_text(msg: Message) -> None:
     PrivateTextHandler(
         msg.text,
         msg.from_user.id,
@@ -99,7 +124,7 @@ def private_text(msg: Message):
 
 
 @bot.message_handler(content_types=["dice"], chat_types=["private"])
-def private_dice(msg: Message):
+def private_dice(msg: Message) -> None:
     PrivateDiceHandler(
         msg.from_user.id,
         msg.from_user.username or msg.from_user.first_name,
@@ -109,17 +134,17 @@ def private_dice(msg: Message):
 
 
 @bot.message_handler(chat_types=["group", "supergroup"])
-def group_text(_msg: Message):
+def group_text(_msg: Message) -> None:
     ...
 
 
 @bot.message_handler(content_types=["dice"], chat_types=["group", "supergroup"])
-def group_dice(_msg: Message):
+def group_dice(_msg: Message) -> None:
     ...
 
 
 @bot.callback_handler(func=lambda call: True)
-def callback(call: CallbackQuery):
+def callback(call: CallbackQuery) -> None:
     CallbackHandler(
         call.id,
         call.data,
@@ -131,12 +156,30 @@ def callback(call: CallbackQuery):
 
 
 def main() -> NoReturn:
+    def webhook() -> NoReturn:
+        bot.remove_webhook()
+
+        bot.set_webhook(
+            host=settings.webhook_host,
+            port=settings.webhook_port,
+            path=WEBHOOK_PATH
+        )
+
+        uvicorn.run(
+            app=fastapi_app,
+            host=settings.webhook_listen,
+            port=settings.webhook_port
+        )
+
     def polling() -> NoReturn:
         print("Starting polling")
 
         bot.infinity_polling()
 
-    polling()
+    if settings.local_environment:
+        polling()
+    else:
+        webhook()
 
 
 if __name__ == "__main__":
