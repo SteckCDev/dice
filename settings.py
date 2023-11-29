@@ -10,7 +10,7 @@ ENV_PRODUCTION: Final[str] = ".env"
 
 class Settings(BaseSettings):
     class Config:
-        env_file: str = ENV_DEVELOPMENT if isfile(ENV_DEVELOPMENT) else ENV_PRODUCTION
+        env_file: str = ENV_PRODUCTION if isfile(ENV_PRODUCTION) else ENV_DEVELOPMENT
 
     postgres_host: str
     postgres_port: str
