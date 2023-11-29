@@ -176,9 +176,6 @@ def main() -> NoReturn:
         return False
 
     def webhook() -> NoReturn:
-        webhook_removed: bool = request_with_retrial(
-            bot.remove_webhook
-        )
         webhook_set: bool = request_with_retrial(
             bot.set_webhook,
             host=settings.webhook_host,
@@ -186,7 +183,7 @@ def main() -> NoReturn:
             path=WEBHOOK_PATH
         )
 
-        if not webhook_removed or not webhook_set:
+        if not webhook_set:
             exit(-1)
 
         uvicorn.run(
@@ -202,6 +199,8 @@ def main() -> NoReturn:
         except ApiTelegramException as exc:
             print(f"Polling start failed: {exc}")
             exit(-1)
+
+    request_with_retrial(bot.remove_webhook)
 
     if settings.local_environment:
         polling()
