@@ -4,6 +4,7 @@ from typing import Final, NoReturn
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from telebot.apihelper import ApiTelegramException
 from telebot.types import Message, CallbackQuery, Update
 
@@ -49,7 +50,7 @@ def test_endpoint() -> dict:
 
 
 @fastapi_app.post("/{BOT_TOKEN}/")
-def process_webhook(raw_update: str) -> None:
+def process_webhook(raw_update: dict) -> JSONResponse:
     global LAST_UPDATE
     global WAY
 
@@ -60,8 +61,11 @@ def process_webhook(raw_update: str) -> None:
         print(f"{update=}")
         print(f"{type(update)=}")
         bot.process_new_updates([update])
-    else:
-        return
+
+    return JSONResponse(
+        content={"status": "OK"},
+        status_code=200
+    )
 
 
 @bot.message_handler(commands=["admin"], chat_types=["private"])
