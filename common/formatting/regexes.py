@@ -1,5 +1,0 @@
-AMOUNT_REGEX = "^[0-9]*[.,]?[0-9]+$"
-BTC_WALLET_REGEX = "^(?=.*[0-9])(?=.*[a-zA-Z])[\da-zA-Z]{27,50}$"
-XMR_WALLET_REGEX = "^4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}$"
-CARD_REGEX = "(\d{4}([ ]|)\d{4}([ ]|)\d{4}([ ]|)\d{4})"
-PHONE_REGEX = "^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$"

@@ -1,21 +1,34 @@
+from typing import Callable, Final
+
 from telebot import TeleBot
-from telebot.types import Message, ReplyKeyboardMarkup, InlineKeyboardMarkup
 from telebot.apihelper import ApiTelegramException
+from telebot.types import Message, ReplyKeyboardMarkup, InlineKeyboardMarkup
 
-from core.base_bot import BaseBotAPI
+from core.abstract_bot import AbstractBotAPI
 
 
-class TeleBotAPI(BaseBotAPI):
-    def __init__(self, bot_token: str) -> None:
+PARSE_MODE: Final[str] = "html"
+
+
+class TeleBotAPI(AbstractBotAPI):
+    def __init__(self, bot_token: str, max_threads: int) -> None:
         self.__bot: TeleBot = TeleBot(
             token=bot_token,
-            num_threads=2,
-            parse_mode="html"
+            num_threads=max_threads,
+            parse_mode=PARSE_MODE
         )
 
-        self.message_handler = self.__bot.message_handler
-        self.callback_handler = self.__bot.callback_query_handler
-        self.infinity_polling = self.__bot.infinity_polling
+    @property
+    def message_handler(self) -> Callable:
+        return self.__bot.message_handler
+
+    @property
+    def callback_handler(self) -> Callable:
+        return self.__bot.callback_query_handler
+
+    @property
+    def infinity_polling(self) -> Callable:
+        return self.__bot.infinity_polling
 
     def send_message(
             self,
@@ -47,6 +60,15 @@ class TeleBotAPI(BaseBotAPI):
 
         return message.message_id if isinstance(message, Message) else None
 
+    def get_edit_message_for_context(self, chat_id: int, message_id: int) -> Callable:
+        def edit_message_in_context(
+                text: str,
+                markup: ReplyKeyboardMarkup | InlineKeyboardMarkup | None = None
+        ) -> int | None:
+            return self.edit_message(chat_id, message_id, text, markup)
+
+        return edit_message_in_context
+
     def answer_callback(self, call_id: int, text: str) -> None:
         self.__bot.answer_callback_query(call_id, text)
 
@@ -57,7 +79,7 @@ class TeleBotAPI(BaseBotAPI):
         try:
             self.__bot.get_chat_member(chat_id, user_tg_id)
         except ApiTelegramException as exc:
-            if exc.result_json["description"] == "Bad Request: user not found":
+            if exc.result_json.get("description") == "Bad Request: user not found":
                 return False
 
         return True

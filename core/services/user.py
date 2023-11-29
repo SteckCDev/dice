@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Final
 
-from core.base_bot import BaseBotAPI
-from core.repositories.user import UserRepository
+from core.abstract_bot import AbstractBotAPI
+from core.repositories import UserRepository
 from core.schemas.user import (
     UserDTO,
     CreateUserDTO,
@@ -16,15 +16,15 @@ TERMS_AGREEMENT_LASTS_DAYS: Final[int] = 14
 
 
 class UserService:
-    def __init__(self, repository: UserRepository, bot: BaseBotAPI, config_service: ConfigService) -> None:
+    def __init__(self, repository: UserRepository, bot: AbstractBotAPI, config_service: ConfigService) -> None:
         self.__repo: UserRepository = repository
-        self.__bot: BaseBotAPI = bot
+        self.__bot: AbstractBotAPI = bot
         self.__config_service: ConfigService = config_service
 
     def get_or_create(self, dto: CreateUserDTO) -> UserDTO:
         return self.__repo.get_or_create(dto)
 
-    def get_by_tg_id(self, tg_id: int) -> UserDTO:
+    def get_by_tg_id(self, tg_id: int) -> UserDTO | None:
         return self.__repo.get_by_tg_id(tg_id)
 
     def update(self, dto: UpdateUserDTO) -> None:
@@ -55,7 +55,9 @@ class UserService:
         user.terms_accepted_at = datetime.now()
 
         self.__repo.update(
-            UpdateUserDTO(**user.model_dump())
+            UpdateUserDTO(
+                **user.model_dump()
+            )
         )
 
     def is_subscribed_to_chats(self, tg_id: int) -> bool:

@@ -1,7 +1,7 @@
-from infrastructure.database.models.pvb import PVBModel
-from infrastructure.database.models.pvp import PVPModel
-from infrastructure.database.models.pvpc import PVPCModel
-from infrastructure.database.models.transaction import TransactionModel
-from infrastructure.database.models.user import UserModel
+from .pvb import PVBModel
+from .pvp import PVPModel
+from .pvpc import PVPCModel
+from .transaction import TransactionModel
+from .user import UserModel
 
 from infrastructure.database import Base

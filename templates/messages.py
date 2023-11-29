@@ -1,85 +1,100 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from common.formatting.emojis import get_balance_emoji
-from common.formatting.html import (
+from core.schemas.pvp import (
+    PVPDTO,
+    PVPDetailsDTO,
+)
+from core.schemas.user import (
+    UserDTO,
+    UserCacheDTO,
+)
+from .formatting.emojis import get_balance_emoji
+from .formatting.html import (
     bold,
-    cursive
+    cursive,
+    link,
 )
 
 
 class Messages:
-    trigger_words = {
-        "слово": "сообщение",
-        "второе слово": "второе сообщение"
-    }
-
-    start = f"{bold('Рады приветствовать в Дайс 👋')}\n\n" \
-            f"🎲 Кубик крутится - кэш мутится\n\n" \
-            f"- {bold('/balance')} - текущий баланс\n" \
-            f"- {bold('/profile')} - основное меню\n" \
-            f"- {bold('/pvb')} - игра с ботом\n" \
-            f"- {bold('/pvp')} - игра с соперником\n" \
-            f"- {bold('/pvpc')} - игра с соперником в чате\n" \
-            f"- {bold('/lottery')} - розыгрыши\n" \
-            f"- {bold('/support')} - поддержка"
-
-    lottery = "🎉 Для участия в розыгрышах вступите в чат"
-    support = "🤖 Если у вас возникли вопросы, обратитесь в нашу поддержку"
-    pvpc = "⚔ Для игры с соперником в чате, вступите в наш чат"
-
-    my_transactions = f"{bold('💰 Ваши последние 5 транзакций')}"
-
-    top_five = f"{bold('🏆 Топ-5 игроков')}"
-
-    force_to_subscribe = "🔔 Для взаимодействия с ботом необходимо состоять в следующих чатах:\n" \
-                         " 1. чат\n" \
-                         " 2. чат"
-
-    terms_and_conditions = f"{bold('📋 Внимательно прочитайте правила игры')}\n\n" \
-                           f"1. Первое правило бойцовского клуба"
-
-    demo_mode_instruction = ""
-
-    game_mode_disabled = f"🔧 На данный момент этот режим находится на {bold('плановых технических работах')}, " \
-                         f"возвращайтесь позже"
-
-    deposit_sleeping = f"🔧 На данный момент создание транзакций штатно приостановлено " \
-                       f"по причине {bold('плановых ежедневных технических работ')}, возвращайтесь позже"
-
-    withdrawal_sleeping = f"{bold('Обратите внимание!')}\n" \
-                          f"По причине проходящих на данный момент плановых технических работ, обработка этого вида " \
-                          f"транзакции произойдёт не ранее, чем через 6 часов"
-
-    balance_is_not_enough = "❌ Недостаточно баланса"
-
-    pvb_in_process = "🎲 Вы всё ещё в игре и трясёте кость в ладонях. Сначала закончите игру, бросив кубик"
-
-    pvb_bots_turn = bold("🤖 Бросает бот")
-
-    pvb_your_turn = bold("🎲 Бросьте кубик!")
-
-    pvb_non_direct = "🛑 Вход с намагниченными кубиками запрещён!"
-
-    pvb_instruction = f"{bold('🤖 Игра с ботом - инструкция')}"
-
-    dice_p2p_instruction = "🎲 Вы можете, либо присоединиться к существующей игре, либо создать свою\n" \
-                           "- Если в существующую игру вступает игрок и бросает кубик, " \
-                           "у создателя игры есть минута чтобы бросить кубик в ответ, иначе это сделает бот\n" \
-                           "- Если игру не приняли в течение 72 часов, она автоматически закрывается " \
-                           "и ставка зачисляется обратно на баланс создателя"
-
-    technical_issues = f"{bold('🔧 Технические неполадки')}\n\n" \
-                       f"Пожалуйста, обратитесь в поддержку"
-
     @staticmethod
-    def games(selected_balance: int, beta_mode: bool) -> str:
-        return f"{bold('🎲 Выберите режим игры')}\n\n" \
-               f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(selected_balance)} RUB"
+    def start() -> str:
+        return f"{bold('Рады приветствовать в Дайс 👋')}\n\n" \
+               f"{cursive('🎲 Кубик крутится - кэш мутится')}\n\n" \
+               f"- {bold('/balance')} - текущий баланс\n" \
+               f"- {bold('/profile')} - основное меню\n" \
+               f"- {bold('/pvb')} - игра с ботом\n" \
+               f"- {bold('/pvp')} - игра с соперником\n" \
+               f"- {bold('/pvpc')} - игра с соперником в чате\n" \
+               f"- {bold('/lottery')} - розыгрыши\n" \
+               f"- {bold('/support')} - поддержка"
 
     @staticmethod
     def balance(balance: int, beta_balance: int) -> str:
         return f"💵 Ваш баланс: {bold(balance)} RUB\n" \
                f"💴 Бета-баланс: {bold(beta_balance)} RUB"
+
+    @staticmethod
+    def game_mode_disabled() -> str:
+        return f"🔧 На данный момент этот режим находится на {bold('плановых технических работах')}, " \
+               f"возвращайтесь позже"
+
+    @staticmethod
+    def balance_is_not_enough() -> str:
+        return "❌ Недостаточно баланса"
+
+    @staticmethod
+    def bet_out_of_limits(min_bet: int, max_bet: int) -> str:
+        return f"🔔 Сумма ставки должна быть в диапазоне между {min_bet} и {max_bet}"
+
+    @staticmethod
+    def pvb_in_process() -> str:
+        return "🎲 Вы всё ещё в игре и трясёте кость в ладонях. Сначала закончите игру, бросив кубик"
+
+    @staticmethod
+    def pvb_non_direct() -> str:
+        return "🛑 Вход с намагниченными кубиками запрещён!"
+
+    @staticmethod
+    def pvb_bots_turn() -> str:
+        return bold("🤖 Бросает бот")
+
+    @staticmethod
+    def pvb_your_turn() -> str:
+        return bold("🎲 Бросьте кубик!")
+
+    @staticmethod
+    def pvp_join_rejected(game_id: int, beta_mode: bool) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"❌ Вы не можете играть сами с собой в этом режиме"
+
+    @staticmethod
+    def pvp_already_started(game_id: int, beta_mode: bool) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"❌ К игре уже присоединились, выберите другую"
+
+    @staticmethod
+    def pvp_creator_late(game_id: int, beta_mode: bool) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"⌛ Время вышло, бот бросил кость за вас"
+
+    @staticmethod
+    def pvp_expired(game_id: int, beta_mode: bool, bet: int, ttl: timedelta) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"⌛ Истекло время ожидания - {ttl.seconds // 3600} часов, " \
+               f"ставка закрыта, баланс восстановлен\n" \
+               f"{get_balance_emoji(beta_mode)} Ставка: {bold(bet)}"
+
+    @staticmethod
+    def force_to_subscribe() -> str:
+        return f"🔔 Для взаимодействия с ботом необходимо состоять в следующих чатах:\n" \
+               f" 1. {link('первый чат', 'https://google.com')}\n" \
+               f" 2. {link('второй чат', 'https://google.com')}"
+
+    @staticmethod
+    def games(selected_balance: int, beta_mode: bool) -> str:
+        return f"{bold('🎲 Выберите режим игры')}\n\n" \
+               f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(selected_balance)} RUB"
 
     @staticmethod
     def profile(name: str, balance: int, beta_balance: int, joined_at: datetime, games_count: int) -> str:
@@ -90,62 +105,26 @@ class Messages:
                f"Всего игр: {bold(games_count)}"
 
     @staticmethod
-    def bet_out_of_limits(min_bet: int, max_bet: int) -> str:
-        return f"🔔 Сумма ставки должна быть в диапазоне между {min_bet} и {max_bet}"
+    def lottery() -> str:
+        return "🎉 Для участия в розыгрышах вступите в чат"
 
     @staticmethod
-    def transactions(balance: int, min_transaction: int, btc_min_withdrawal: int) -> str:
-        return f"<b>💰 Пополнение и вывод</b>\n\n" \
-               f"💵 Баланс: <b>{balance}</b>\n\n" \
-               f"Сумма любой операции не должна быть ниже <b>{min_transaction} RUB</b>\n" \
-               f"Сумма вывода на биткоин-кошелёк не должна быть ниже <b>{btc_min_withdrawal}</b>"
+    def support() -> str:
+        return "🤖 Если у вас возникли вопросы, обратитесь в нашу поддержку"
 
     @staticmethod
-    def transaction_details(
-            method: str, transaction_id: int, requested_at: str, details: str, bank: str,
-            amount: int, btc_equivalent: float, fee: int
-    ) -> str:
-        if method == "btc":
-            method_caption = "на BTC-кошелёк"
-            invoice_caption = f"{(btc_equivalent / 100) * (100 - fee):.7f} BTC"
-            details_caption = f"🪙 Эквивалент: <b>{btc_equivalent}</b>\n" \
-                              f"🪙 Кошелёк: <b>{details}</b>"
-        else:
-            method_caption = "на банковскую карту"
-            invoice_caption = f"{(amount / 100) * (100 - fee):.0f} RUB"
-            details_caption = f"💳 Банк: <b>{bank}</b>\n" \
-                              f"💳 Реквизиты: <b>{details}</b>"
-
-        return f"<b>💵 Транзакция #{transaction_id:03} - вывод</b>\n\n" \
-               f"📅 Дата и время: <b>{requested_at}</b>\n" \
-               f"💰 Способ получения: <b>{method_caption}</b>\n" \
-               f"💰 Сумма: <b>{amount} RUB</b>\n" \
-               f"💰 Комиссия: <b>{fee}%</b>\n" \
-               f"💰 Сумма к получению: <b>{invoice_caption}</b>\n" \
-               f"{details_caption}"
-
-    @staticmethod
-    def player(name: str, games_total: int, position: int, winnings: int) -> str:
-        return f"🥇 <b>Рейтинговый игрок</b>\n\n" \
-               f"🙋‍ Имя: <b>{name}</b>\n" \
-               f"🎲 Всего игр: <b>{games_total}</b>\n" \
-               f"🏆 Место в рейтинге: <b>{position}</b>\n" \
-               f"💵 Общая сумма выигрыша: <b>{winnings}</b>"
-
-    @staticmethod
-    def demo(user_balance: int, user_beta_balance: int, is_demo_mode: bool) -> str:
-        caption = "💴 Вы в <b>демо</b>-режиме" if is_demo_mode else "💵 Вы в <b>обычном</b> режиме"
-
-        return f"🎲 Демо-режим с бета-балансом\n\n" \
-               f"💵 Настоящий баланс: <b>{user_balance}</b>\n" \
-               f"💴 Бета-баланс: <b>{user_beta_balance}</b>\n\n" \
-               f"{caption}\n\n" \
-               f"{Messages.demo_mode_instruction}"
+    def terms_and_conditions() -> str:
+        return f"{bold('📋 Внимательно прочитайте правила игры')}\n\n" \
+               f"1. Первое правило бойцовского клуба"
 
     @staticmethod
     def pvb(balance: int, beta_mode: bool) -> str:
         return f"{bold('🤖 Игра с ботом')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
                f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(balance)}"
+
+    @staticmethod
+    def pvb_instruction() -> str:
+        return f"{bold('🤖 Игра с ботом - инструкция')}"
 
     @staticmethod
     def pvb_create(bots_turn_first: bool, beta_mode: bool, selected_balance: int, bet: int) -> str:
@@ -170,218 +149,98 @@ class Messages:
                f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(selected_balance)}"
 
     @staticmethod
-    def pvb_history(wins_percent: int) -> str:
-        return f"🎲 Ваш процент побед: <b>{wins_percent:.1f}%</b>"
+    def pvb_history(wins_percent: float) -> str:
+        return f"🎲 Ваш процент побед: {bold(f'{wins_percent:.1f}%')}"
 
     @staticmethod
-    def dice_p2p(page: int, pages_total: int, games_total: int) -> str:
-        if pages_total == 0:
-            return "<b>🎲 На данный момент нет доступных игр</b>"
-        else:
-            return f"<b>🎲 Доступно {games_total}</b> игр\n\n" \
-                   f"📋 Страница: <b>{page} / {pages_total}</b>"
+    def pvp(available_pvp_games_count: int, pages_total: int, page: int = 1) -> str:
+        if available_pvp_games_count == 0:
+            return bold("🎲 На данный момент нет доступных игр")
+
+        return f"{bold(f'🎲 Доступно {available_pvp_games_count} игр')}\n\n" \
+               f"📋 Страница: {bold(f'{page} / {pages_total}')}"
 
     @staticmethod
-    def dice_p2p_details(
-            game_id: int, selected_balance: int, bet: int, creator_name: str,
-            is_demo_mode: bool, is_owner: bool, is_balance_enough: bool, minutes_before_cancel: int
-    ) -> str:
-        if is_demo_mode:
-            demo_caption = " - <i>демо-режим</i>"
-            balance_emoji = "💴"
-            balance_caption = f"💴 Бета-баланс"
-        else:
-            demo_caption = ""
-            balance_emoji = "💵"
-            balance_caption = f"💵 Ваш баланс"
+    def pvp_instruction() -> str:
+        return "🎲 Вы можете, либо присоединиться к существующей игре, либо создать свою\n" \
+               "- Если в существующую игру вступает игрок и бросает кубик, " \
+               "у создателя игры есть минута чтобы бросить кубик в ответ, иначе это сделает бот\n" \
+               "- Если игру не приняли в течение 72 часов, она автоматически закрывается " \
+               "и ставка зачисляется обратно на баланс создателя"
 
-        if is_owner:
+    @staticmethod
+    def pvp_details(user: UserDTO, pvp_details: PVPDetailsDTO) -> str:
+        if user.tg_id == pvp_details.creator_tg_id:
             cancel_caption = ""
 
-            if minutes_before_cancel != 0:
-                cancel_caption = f"<i>Игру можно будет отменить через {minutes_before_cancel} минут</i>"
+            if pvp_details.cancellation_unlocks_in:
+                cancel_caption = f"Игру можно будет отменить через " \
+                                 f"{pvp_details.cancellation_unlocks_in.seconds // 60} минут"
 
-            return f"<b>🎲 Игра #{game_id:03}{demo_caption} - <b>Ваша</b></b>\n\n" \
-                   f"{balance_emoji} Сумма ставки: <b>{bet}</b>\n\n" \
+            return f"🎲 Игра #{pvp_details.id:03}{cursive(' - бета-режим') if pvp_details.beta_mode else ''} {bold('[Ваша]')}\n\n" \
+                   f"{get_balance_emoji(pvp_details.beta_mode)} Ставка: {bold(pvp_details.bet)}\n\n" \
                    f"{cancel_caption}"
+
+        balance_for_mode = user.beta_balance if pvp_details.beta_mode else user.balance
+
+        if balance_for_mode >= pvp_details.bet:
+            join_caption = bold("Чтобы вступить в игру бросьте кость")
         else:
-            if is_balance_enough:
-                caption = "<b>Чтобы вступить в игру бросьте кость</b>"
-            else:
-                caption = "<b>У вас недостаточно баланса чтобы присоединиться к игре</b>"
+            join_caption = bold("У вас недостаточно баланса чтобы присоединиться к игре")
 
-            return f"<b>🎲 Игра #{game_id:03}{demo_caption}</b>\n\n" \
-                   f"🤙 Соперник: <b>{creator_name}\n</b>\n" \
-                   f"{balance_caption}: <b>{selected_balance}</b>\n" \
-                   f"{balance_emoji} Сумма ставки: <b>{bet}</b>\n\n" \
-                   f"{caption}"
+        return f"🎲 Игра #{pvp_details.id:03}" \
+               f"{cursive(' - бета-режим') if pvp_details.beta_mode else ''} {bold(' [Ваша]')}\n\n" \
+               f"🤙 Соперник: {bold(pvp_details.creator_name)}\n\n" \
+               f"{get_balance_emoji(pvp_details.beta_mode)}: {bold(balance_for_mode)}\n" \
+               f"{get_balance_emoji(pvp_details.beta_mode)} Сумма ставки: {bold(pvp_details.bet)}\n\n" \
+               f"{join_caption}"
 
     @staticmethod
-    def dice_p2p_cancel(game_id: int) -> str:
-        return f"<b>✅ Игра #{game_id:03} успешно отменена, баланс восстановлен</b>"
+    def pvp_cancel(game_id: int) -> str:
+        return bold(f'✅ Игра #{game_id:03} успешно отменена, баланс восстановлен')
 
     @staticmethod
-    def withdrawal(balance: int, is_transactions_sleeping: bool) -> str:
-        caption = Messages.withdrawal_sleeping if is_transactions_sleeping else ""
-
-        return f"<b>Вывод средств</b>\n\n" \
-               f"💵 Баланс: <b>{balance}</b>\n\n" \
-               f"Выберите удобный способ вывода средств\n\n" \
-               f"{caption}"
+    def pvp_create(user_cache: UserCacheDTO, min_bet: int, max_bet: int) -> str:
+        return f"{bold('👥 Игра с соперником')} {cursive(' - бета-режим') if user_cache.beta_mode else ''}\n\n" \
+               f"{get_balance_emoji(user_cache.beta_mode)} Ставка: {bold(user_cache.pvp_bet)}\n\n" \
+               f"{cursive(f'Введите сумму ставки от {min_bet} RUB до {max_bet} RUB')}"
 
     @staticmethod
-    def withdrawal_amount(
-            is_amount_enough: bool, method: str, balance: int, withdrawal: int, btc_equivalent: float,
-            card_fee: int, btc_fee: int, highest_lower_limit: int
-    ) -> str:
-        if is_amount_enough:
-            caption = ""
+    def pvp_confirm(game_id: int, user_cache: UserCacheDTO) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03} создана!')} " \
+               f"{cursive(' - бета-режим') if user_cache.beta_mode else ''}\n\n" \
+               f"{get_balance_emoji(user_cache.beta_mode)} Ставка: {bold(user_cache.pvp_bet)}"
+
+    @staticmethod
+    def pvp_join(game_id: int, beta_mode: bool) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"Ждём бросок игрока минуту, иначе бот бросит кость за него"
+
+    @staticmethod
+    def pvp_started(game_id: int, beta_mode: bool, bet: int, opponent_tg_name: str) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"🤙 Соперник: {bold(opponent_tg_name)}\n" \
+               f"{get_balance_emoji(beta_mode)} Ставка: {bold(bet)}\n\n" \
+               f"Бросьте кость или это сделает бот!"
+
+    @staticmethod
+    def pvp_finished(pvp: PVPDTO, user: UserDTO, opponent: UserDTO) -> str:
+        opponent_dice = pvp.creator_dice if opponent.tg_id == pvp.creator_tg_id else pvp.opponent_dice
+
+        if pvp.winner_tg_id is None:
+            result: str = "✌ Ничья!"
         else:
-            caption = f"<i>Чтобы продолжить укажите сумму вывода не менее {highest_lower_limit} RUB</i>"
+            result: str = "🔥 Вы выиграли!" if pvp.winner_tg_id == user.tg_id else "💀 Вы проиграли!"
 
-        if method == "card":
-            return f"<b>Вывод средств</b>\n\n" \
-                   f"💵 Баланс: <b>{balance}</b>\n" \
-                   f"💵 Сумма вывода: <b>{withdrawal}</b>\n" \
-                   f"💳 Комиссия: <b>{card_fee}%</b>\n\n" \
-                   f"{caption}"
-        else:
-            if btc_equivalent == -1:
-                return Messages.technical_issues
-            else:
-                return f"<b>Вывод средств</b>\n\n" \
-                       f"💵 Баланс: <b>{balance}</b>\n" \
-                       f"💵 Сумма вывода: <b>{withdrawal}</b>\n" \
-                       f"🪙 Эквивалент в BTC: <b>{btc_equivalent}</b>\n" \
-                       f"🪙 Комиссия: <b>{btc_fee}%</b>\n\n" \
-                       f"{caption}"
+        return f"{bold(f'🎲 Игра #{pvp.id:03}')}{cursive(' - бета-режим') if pvp.beta_mode else ''}\n\n" \
+               f"🤙 {opponent.tg_name} выбросил {bold(opponent_dice)}\n" \
+               f"{result}\n" \
+               f"{get_balance_emoji(pvp.beta_mode)} Ваш баланс: " \
+               f"{bold(user.beta_balance if pvp.beta_mode else user.balance)}"
 
     @staticmethod
-    def withdrawal_bank(bank: str, details: str) -> str:
-        if bank == "" and details != "":
-            bank = "не указан"
-            caption = "<i>Чтобы продолжить укажите банк</i>"
-        elif details == "" and bank != "":
-            details = "не указаны"
-            caption = "<i>Чтобы продолжить укажите реквизиты</i>"
-        elif bank == "" and details == "":
-            bank = "не указан"
-            details = "не указаны"
-            caption = "<i>Чтобы продолжить укажите банк и реквизиты, введя их поочереди, двумя сообщениями</i>"
-        else:
-            caption = "Если хотите изменить данные - просто напишите их по очереди"
-
-        return f"<b>Вывод средств</b>\n\n" \
-               f"🏦 Банк: <b>{bank}</b>\n" \
-               f"💳 Реквизиты: <b>{details}</b>\n\n" \
-               f"{caption}"
-
-    @staticmethod
-    def deposit(balance: int) -> str:
-        return f"<b>Пополнение баланса</b>\n\n" \
-               f"💵 Баланс: <b>{balance}</b>\n\n" \
-               f"Выберите удобный способ пополнения баланса"
-
-    @staticmethod
-    def deposit_amount(is_amount_enough: bool, method: str, balance: int, deposit: int, btc_equivalent: float) -> str:
-        caption = "" if is_amount_enough else "<i>Чтобы продолжить укажите сумму пополнения</i>"
-
-        if method == "card":
-            return f"<b>Пополнение баланса</b>\n\n" \
-                   f"💵 Баланс: <b>{balance}</b>\n" \
-                   f"💵 Сумма пополнения: <b>{deposit}</b>\n\n" \
-                   f"{caption}"
-        else:
-            if btc_equivalent == -1:
-                return Messages.technical_issues
-            else:
-                return f"<b>Пополнение баланса</b>\n\n" \
-                       f"💵 Баланс: <b>{balance}</b>\n" \
-                       f"💵 Сумма пополнения: <b>{deposit}</b>\n" \
-                       f"🪙 Эквивалент в BTC: <b>{btc_equivalent}</b>\n\n" \
-                       f"{caption}"
-
-    @staticmethod
-    def deposit_amount_confirm(method: str, btc_equivalent: float, amount: int) -> str:
-        if method == "card":
-            return f"<b>Пополнение баланса</b>\n\n" \
-                   f"Вы подтверждаете, что хотите пополнить баланс на сумму <b>{amount} RUB</b>?"
-        else:
-            if btc_equivalent == -1:
-                return Messages.technical_issues
-            else:
-                return f"<b>Пополнение баланса</b>\n\n" \
-                       f"Вы подтверждаете, что хотите пополнить баланс на сумму " \
-                       f"<b>{amount} RUB ({btc_equivalent} BTC)</b>?"
-
-    @staticmethod
-    def deposit_confirm(method: str, btc_equivalent: float, amount: int, details: str, wallet: str) -> str:
-        if method == "card":
-            return f"Отлично! Переведите <code>{amount}</code> RUB на следующие реквизиты:\n" \
-                   f"<code>{details}</code>"
-        else:
-            if btc_equivalent == -1:
-                return Messages.technical_issues
-            else:
-                return f"Отлично! Переведите <code>{btc_equivalent}</code> BTC на следующие реквизиты:\n" \
-                       f"<code>{wallet}</code>"
-
-    @staticmethod
-    def confirmation(transaction_type: str, transaction_id: int) -> str:
-        if transaction_type == "withdrawal":
-            caption = "Если пополнения не произошло - обратитесь в поддержку\n\n" \
-                      "Удачной игры 🎲"
-        else:
-            caption = "Благодарим, что выбрали нас 🤝"
-
-        return f"<b>⏳ Транзакция #{transaction_id:03} " \
-               f"принята и будет обработана в ближайшее время</b>\n\n" \
-               f"Статус можно проверить на вкладке <b>«Транзакции»</b> в профиле.\n" \
-               f"{caption}"
-
-    @staticmethod
-    def admin_withdrawal_confirm(
-            method: str, transaction_id: int, requested_at: str, user_id: int, name: str,
-            wallet: str, details: str, bank: str, amount: int, btc_equivalent: float, fee: int
-    ) -> str:
-        if method == "btc":
-            method_caption = "на BTC-кошелёк"
-            invoice_caption = f"{(btc_equivalent / 100) * (100 - fee):.7f} BTC"
-            details_caption = f"🪙 Эквивалент: <b>{btc_equivalent}</b>\n" \
-                              f"🪙 Кошелёк: <b>{wallet}</b>"
-        else:
-            method_caption = "на банковскую карту"
-            invoice_caption = f"{(amount / 100) * (100 - fee):.0f} RUB"
-            details_caption = f"💳 Банк: <b>{bank}</b>\n" \
-                              f"💳 Реквизиты: <b>{details}</b>"
-
-        return f"<b>💵 Транзакция #{transaction_id:03} - вывод</b>\n\n" \
-               f"🙋‍ Пользователь: <a href='tg://user?id={user_id}'>{name}</a> | {user_id}\n" \
-               f"📅 Дата и время: <b>{requested_at}</b>\n" \
-               f"💰 Способ получения: <b>{method_caption}</b>\n" \
-               f"💰 Сумма: <b>{amount} RUB</b>\n" \
-               f"💰 Комиссия: <b>{fee}%</b>\n" \
-               f"💰 Сумма к переводу: <b>{invoice_caption}</b>\n" \
-               f"{details_caption}"
-
-    @staticmethod
-    def admin_deposit_confirm(
-            method: str, transaction_id: int, requested_at: str, user_id: int, name: str,
-            amount: int, btc_equivalent: float
-    ) -> str:
-        if method == "btc":
-            method_caption = "через BTC-кошелёк"
-            details_caption = f"🪙 Эквивалент: <b>{btc_equivalent}</b>\n"
-        else:
-            method_caption = "банковской картой"
-            details_caption = ""
-
-        return f"<b>💵 Транзакция #{transaction_id:03} - пополнение</b>\n\n" \
-               f"🙋‍ Пользователь: <a href='tg://user?id={user_id}'>{name}</a> | {user_id}\n" \
-               f"📅 Дата и время: <b>{requested_at}</b>\n" \
-               f"💰 Способ оплаты: <b>{method_caption}</b>\n" \
-               f"💰 Сумма: <b>{amount} RUB</b>\n" \
-               f"{details_caption}"
+    def pvpc() -> str:
+        return "⚔ Для игры с соперником в чате, вступите в наш чат"
 
     @staticmethod
     def terms_accepted() -> str:
@@ -394,7 +253,7 @@ class Messages:
     @staticmethod
     def admin(users_since_launch: int) -> str:
         return f"{bold('🎲 Дайс / Админ-панель')}\n\n" \
-               f"🙋 Пользователей с момента запуска: <b>{bold(users_since_launch)}</b>\n\n" \
+               f"🙋 Пользователей с момента запуска: {bold(users_since_launch)}\n\n" \
                f"{bold('Доступные команды:')} " \
                f"реквизиты, баланс, чат, комиссия (бот, p2p, чат, банк, биткоин), ставка (минимум, максимум), " \
                f"транзакция (минимум, биткоин), оповещение (сумма, период), сумма, период\n\n" \

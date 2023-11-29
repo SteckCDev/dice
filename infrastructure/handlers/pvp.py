@@ -1,27 +1,32 @@
+import math
+
+from core.schemas.pvp import (
+    PVPDTO,
+)
 from core.schemas.user import (
     UserCacheDTO,
 )
 from core.services import (
     ConfigService,
-    PVBService,
+    PVPService,
     UserService,
 )
+from core.states import PVPStatus
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     MockConfigRepository,
-    PostgresRedisPVBRepository,
+    PostgresRedisPVPRepository,
     PostgresRedisUserRepository,
 )
 from templates import Markups, Messages
 
 
-class PVBHandler(BaseTeleBotHandler):
-    def __init__(self, chat_id: int, message_id: int, user_id: int) -> None:
+class PVPHandler(BaseTeleBotHandler):
+    def __init__(self, user_id: int, message_id: int) -> None:
         super().__init__()
 
-        self.chat_id: int = chat_id
-        self.message_id: int = message_id
         self.user_id: int = user_id
+        self.message_id: int = message_id
 
         config_service: ConfigService = ConfigService(
             repository=MockConfigRepository()
@@ -31,8 +36,8 @@ class PVBHandler(BaseTeleBotHandler):
             bot=self._bot,
             config_service=config_service
         )
-        self.__pvb_service: PVBService = PVBService(
-            repository=PostgresRedisPVBRepository(),
+        self.__pvp_service: PVPService = PVPService(
+            repository=PostgresRedisPVPRepository(),
             bot=self._bot,
             config_service=config_service,
             user_service=self.__user_service
@@ -43,29 +48,21 @@ class PVBHandler(BaseTeleBotHandler):
     def _prepare(self) -> bool:
         if not self.__user_service.is_subscribed_to_chats(self.user_id):
             self._bot.send_message(
-                self.chat_id,
+                self.user_id,
                 Messages.force_to_subscribe()
-            )
-            return False
-
-        if not self.__user_service.is_terms_and_conditions_agreed(self.user_id):
-            self._bot.send_message(
-                self.chat_id,
-                Messages.terms_and_conditions(),
-                Markups.terms_and_conditions()
             )
             return False
 
         if self.user_cache.pvb_in_process:
             self._bot.send_message(
-                self.chat_id,
+                self.user_id,
                 Messages.pvb_in_process()
             )
             return False
 
-        if not self.__pvb_service.get_status():
+        if not self.__pvp_service.get_status():
             self._bot.send_message(
-                self.chat_id,
+                self.user_id,
                 Messages.game_mode_disabled()
             )
             return False
@@ -73,11 +70,19 @@ class PVBHandler(BaseTeleBotHandler):
         return True
 
     def _process(self) -> None:
+        available_pvp_games: list[PVPDTO] | None = self.__pvp_service.get_all_for_status(PVPStatus.CREATED)
+        available_pvp_games_count = len(available_pvp_games) if available_pvp_games else 0
+        pages_total = math.ceil(available_pvp_games_count / 5)
+
         self._bot.send_message(
-            self.chat_id,
-            Messages.pvb(
-                self.__user_service.get_user_selected_balance(self.user_id),
-                self.user_cache.beta_mode
+            self.user_id,
+            Messages.pvp(
+                available_pvp_games_count,
+                pages_total
             ),
-            Markups.pvb()
+            Markups.pvp(
+                self.user_id,
+                available_pvp_games,
+                pages_total
+            )
         )

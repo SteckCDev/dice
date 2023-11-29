@@ -2,7 +2,7 @@ from typing import NoReturn
 
 from telebot.types import Message, CallbackQuery
 
-from infrastructure.api_services import TeleBotAPI
+from infrastructure.api_services.telebot import TeleBotAPI
 from infrastructure.handlers import (
     AdminHandler,
     BalanceHandler,
@@ -12,6 +12,7 @@ from infrastructure.handlers import (
     PrivateTextHandler,
     ProfileHandler,
     PVBHandler,
+    PVPHandler,
     PVPCHandler,
     StartHandler,
     SupportHandler,
@@ -19,7 +20,10 @@ from infrastructure.handlers import (
 from settings import settings
 
 
-bot: TeleBotAPI = TeleBotAPI(settings.bot_token)
+bot: TeleBotAPI = TeleBotAPI(
+    bot_token=settings.bot_token,
+    max_threads=settings.max_threads
+)
 
 
 @bot.message_handler(commands=["admin"], chat_types=["private"])
@@ -32,7 +36,7 @@ def cmd_start(msg: Message):
     StartHandler(
         msg.chat.id,
         msg.from_user.id,
-        msg.from_user.username
+        msg.from_user.username or msg.from_user.first_name
     ).handle()
 
 
@@ -41,7 +45,7 @@ def cmd_balance(msg: Message):
     BalanceHandler(
         msg.chat.id,
         msg.from_user.id,
-        msg.from_user.username
+        msg.from_user.username or msg.from_user.first_name
     ).handle()
 
 
@@ -49,7 +53,7 @@ def cmd_balance(msg: Message):
 def cmd_profile(msg: Message):
     ProfileHandler(
         msg.from_user.id,
-        msg.from_user.username
+        msg.from_user.username or msg.from_user.first_name
     ).handle()
 
 
@@ -63,8 +67,11 @@ def cmd_pvb(msg: Message):
 
 
 @bot.message_handler(commands=["pvp"], chat_types=["private"])
-def cmd_pvp(_msg: Message):
-    ...
+def cmd_pvp(msg: Message):
+    PVPHandler(
+        msg.from_user.id,
+        msg.message_id
+    ).handle()
 
 
 @bot.message_handler(commands=["pvpc"], chat_types=["private"])
@@ -87,7 +94,7 @@ def private_text(msg: Message):
     PrivateTextHandler(
         msg.text,
         msg.from_user.id,
-        msg.from_user.username
+        msg.from_user.username or msg.from_user.first_name
     ).handle()
 
 
@@ -95,7 +102,7 @@ def private_text(msg: Message):
 def private_dice(msg: Message):
     PrivateDiceHandler(
         msg.from_user.id,
-        msg.from_user.username,
+        msg.from_user.username or msg.from_user.first_name,
         msg.forward_from,
         msg.dice.value
     ).handle()
@@ -119,7 +126,7 @@ def callback(call: CallbackQuery):
         call.message.chat.id,
         call.message.message_id,
         call.from_user.id,
-        call.from_user.username
+        call.from_user.username or call.from_user.first_name
     ).handle()
 
 

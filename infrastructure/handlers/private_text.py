@@ -1,3 +1,5 @@
+import html
+
 from core.schemas.config import (
     ConfigDTO,
 )
@@ -8,11 +10,8 @@ from core.services import (
     ConfigService,
     UserService,
 )
-from core.types.game_mode import GameMode
-from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
-from infrastructure.handlers.lottery import LotteryHandler
-from infrastructure.handlers.profile import ProfileHandler
-from infrastructure.handlers.support import SupportHandler
+from core.states import GameMode
+from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     MockConfigRepository,
     PostgresRedisUserRepository,
@@ -22,6 +21,9 @@ from templates import (
     Menu,
     Messages,
 )
+from .lottery import LotteryHandler
+from .profile import ProfileHandler
+from .support import SupportHandler
 
 
 class PrivateTextHandler(BaseTeleBotHandler):
@@ -30,7 +32,7 @@ class PrivateTextHandler(BaseTeleBotHandler):
 
         self.text: str = text
         self.user_id: int = user_id
-        self.user_name: str = user_name
+        self.user_name: str = html.escape(user_name)
 
         config_service: ConfigService = ConfigService(
             repository=MockConfigRepository()
@@ -60,24 +62,12 @@ class PrivateTextHandler(BaseTeleBotHandler):
         if bet > self.__user_service.get_user_selected_balance(self.user_id):
             self._bot.send_message(
                 self.user_id,
-                Messages.balance_is_not_enough
+                Messages.balance_is_not_enough()
             )
             return
 
         if self.user_cache.game_mode == GameMode.PVB:
             self.user_cache.pvb_bet = bet
-
-            self._bot.edit_message(
-                self.user_id,
-                self.user_cache.last_message_id,
-                Messages.pvb_create(
-                    self.user_cache.pvb_bots_turn_first,
-                    self.user_cache.beta_mode,
-                    self.__user_service.get_user_selected_balance(self.user_id),
-                    self.user_cache.pvb_bet
-                ),
-                Markups.pvb_create(self.user_cache.pvb_bots_turn_first)
-            )
         else:
             self.user_cache.pvp_bet = bet
 
@@ -87,14 +77,14 @@ class PrivateTextHandler(BaseTeleBotHandler):
         if not self.__user_service.is_subscribed_to_chats(self.user_id):
             self._bot.send_message(
                 self.user_id,
-                Messages.force_to_subscribe
+                Messages.force_to_subscribe()
             )
             return False
 
         if self.user_cache.pvb_in_process:
             self._bot.send_message(
                 self.user_id,
-                Messages.pvb_in_process
+                Messages.pvb_in_process()
             )
             return False
 
@@ -109,7 +99,7 @@ class PrivateTextHandler(BaseTeleBotHandler):
                         self.__user_service.get_user_selected_balance(self.user_id),
                         self.user_cache.beta_mode
                     ),
-                    Markups.games
+                    Markups.games()
                 )
             case Menu.PROFILE:
                 ProfileHandler(self.user_id, self.user_name).handle()

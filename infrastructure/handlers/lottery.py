@@ -1,4 +1,4 @@
-from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
+from infrastructure.api_services.telebot import BaseTeleBotHandler
 from templates import Markups, Messages
 
 
@@ -14,6 +14,6 @@ class LotteryHandler(BaseTeleBotHandler):
     def _process(self) -> None:
         self._bot.send_message(
             self.chat_id,
-            Messages.lottery,
-            Markups.lottery
+            Messages.lottery(),
+            Markups.lottery()
         )

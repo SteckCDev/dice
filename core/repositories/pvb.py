@@ -20,7 +20,7 @@ class PVBRepository(ABC):
         ...
 
     @abstractmethod
-    def get_by_id(self, _id: int) -> PVBDTO:
+    def get_by_id(self, _id: int) -> PVBDTO | None:
         ...
 
     @abstractmethod
