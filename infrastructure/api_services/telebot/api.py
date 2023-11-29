@@ -14,8 +14,8 @@ class TeleBotAPI(AbstractBotAPI):
     def __init__(self, bot_token: str, max_threads: int) -> None:
         self.__bot: TeleBot = TeleBot(
             token=bot_token,
-            num_threads=max_threads,
-            parse_mode=PARSE_MODE
+            threaded=False,
+            parse_mode=PARSE_MODE,
         )
 
     def set_webhook(self, host: str, port: int | str = 443, path: str = "/") -> None:

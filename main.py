@@ -27,8 +27,6 @@ from settings import settings
 
 
 WEBHOOK_PATH: Final[str] = f"/{settings.bot_token}/"
-LAST_UPDATE: dict = {}
-WAY: bool = True
 
 fastapi_app: FastAPI = FastAPI(
     docs_url=None,
@@ -45,21 +43,16 @@ bot: TeleBotAPI = TeleBotAPI(
 def test_endpoint() -> dict:
     return {
         "result": "success",
-        "last_update": LAST_UPDATE
     }
 
 
 @fastapi_app.post("/{BOT_TOKEN}/")
 def process_webhook(raw_update: dict) -> JSONResponse:
-    global LAST_UPDATE
-    global WAY
-
     if raw_update:
-        LAST_UPDATE = raw_update
-
         update: Update = Update.de_json(raw_update)
-        print(f"{update=}")
-        print(f"{type(update)=}")
+
+        print(f"{update.message.text=}")
+
         bot.process_new_updates([update])
 
     return JSONResponse(
