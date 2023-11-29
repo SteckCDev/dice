@@ -27,6 +27,7 @@ from settings import settings
 
 WEBHOOK_PATH: Final[str] = f"/{settings.bot_token}/"
 LAST_UPDATE: dict = {}
+WAY: bool = True
 
 fastapi_app: FastAPI = FastAPI(
     docs_url=None,
@@ -48,25 +49,16 @@ def test_endpoint() -> dict:
 
 
 @fastapi_app.post("/{BOT_TOKEN}/")
-def process_webhook(update: dict) -> None:
+def process_webhook(raw_update: str) -> None:
     global LAST_UPDATE
+    global WAY
 
-    if update:
-        #
-        #
-        #
-        LAST_UPDATE = update
-        bot.send_message(
-            settings.admin_tg_id,
-            f"📌 Update\n\n{update}"
-        )
-        print(update, "\n\n\n")
-        print(json.dumps(update))
-        #
-        #
-        #
+    if raw_update:
+        LAST_UPDATE = raw_update
 
-        update: Update = Update.de_json(update)
+        update: Update = Update.de_json(raw_update)
+        print(f"{update=}")
+        print(f"{type(update)=}")
         bot.process_new_updates([update])
     else:
         return
