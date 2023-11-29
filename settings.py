@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     webhook_listen: str
 
     bot_token: str
+    threaded: bool
     max_threads: int
     admin_tg_id: int
 

@@ -1,6 +1,5 @@
-import json
 import time
-from typing import Final, NoReturn
+from typing import Callable, Final, NoReturn
 
 import uvicorn
 from fastapi import FastAPI
@@ -26,7 +25,7 @@ from infrastructure.handlers import (
 from settings import settings
 
 
-WEBHOOK_PATH: Final[str] = f"/{settings.bot_token}/"
+WEBHOOK_PATH: Final[str] = f"/update/"
 
 fastapi_app: FastAPI = FastAPI(
     docs_url=None,
@@ -35,24 +34,15 @@ fastapi_app: FastAPI = FastAPI(
 
 bot: TeleBotAPI = TeleBotAPI(
     bot_token=settings.bot_token,
-    max_threads=settings.max_threads
+    max_threads=settings.max_threads,
+    threaded=settings.threaded
 )
 
 
-@fastapi_app.get("/test")
-def test_endpoint() -> dict:
-    return {
-        "result": "success",
-    }
-
-
-@fastapi_app.post("/{BOT_TOKEN}/")
+@fastapi_app.post(WEBHOOK_PATH)
 def process_webhook(raw_update: dict) -> JSONResponse:
     if raw_update:
         update: Update = Update.de_json(raw_update)
-
-        print(f"{update.message.text=}")
-
         bot.process_new_updates([update])
 
     return JSONResponse(
@@ -166,31 +156,33 @@ def callback(call: CallbackQuery) -> None:
 
 
 def main() -> NoReturn:
+    def request_with_retrial(to_request: Callable, *args, **kwargs) -> bool:
+        retries_left: int = 5
+
+        while retries_left > 0:
+            try:
+                to_request(*args, **kwargs)
+                return True
+            except ApiTelegramException as exc:
+                print(f"Attempt {retries_left} ({to_request}): {exc}")
+                retries_left -= 1
+                time.sleep(1)
+
+        return False
+
     def webhook() -> NoReturn:
-        removal_retries: int = 10
-        setting_retries: int = 10
+        webhook_removed: bool = request_with_retrial(
+            bot.remove_webhook
+        )
+        webhook_set: bool = request_with_retrial(
+            bot.set_webhook,
+            host=settings.webhook_host,
+            port=settings.webhook_port,
+            path=WEBHOOK_PATH
+        )
 
-        while removal_retries > 0:
-            try:
-                bot.remove_webhook()
-                break
-            except ApiTelegramException as exc:
-                print(f"{removal_retries}. {exc}")
-                removal_retries -= 1
-                time.sleep(1)
-
-        while setting_retries > 0:
-            try:
-                bot.set_webhook(
-                    host=settings.webhook_host,
-                    port=settings.webhook_port,
-                    path=WEBHOOK_PATH
-                )
-                break
-            except ApiTelegramException as exc:
-                print(f"{setting_retries}. {exc}")
-                setting_retries -= 1
-                time.sleep(1)
+        if not webhook_removed or not webhook_set:
+            exit(-1)
 
         uvicorn.run(
             app=fastapi_app,
@@ -199,9 +191,11 @@ def main() -> NoReturn:
         )
 
     def polling() -> NoReturn:
-        print("Starting polling")
-
-        bot.infinity_polling()
+        try:
+            bot.infinity_polling()
+        except ApiTelegramException as exc:
+            print(f"Polling start failed ({bot.infinity_polling}): {exc}")
+            exit(-1)
 
     if settings.local_environment:
         polling()
