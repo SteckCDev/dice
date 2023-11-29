@@ -34,7 +34,7 @@ fastapi_app: FastAPI = FastAPI(
 
 #
 # while using webhooks, 'threaded' set to False makes sense on some free ...aaS
-# else case processing down unable
+# else case request processing unable
 # https://www.pythonanywhere.com/forums/topic/9562/
 #
 bot: TeleBotAPI = TeleBotAPI(
@@ -197,9 +197,10 @@ def main() -> NoReturn:
 
     def polling() -> NoReturn:
         try:
+            bot.remove_webhook()
             bot.infinity_polling()
         except ApiTelegramException as exc:
-            print(f"Polling start failed ({bot.infinity_polling}): {exc}")
+            print(f"Polling start failed: {exc}")
             exit(-1)
 
     if settings.local_environment:
