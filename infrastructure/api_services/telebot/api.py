@@ -11,9 +11,9 @@ PARSE_MODE: Final[str] = "html"
 
 
 class TeleBotAPI(AbstractBotAPI):
-    def __init__(self, bot_token: str, max_threads: int = 2, threaded: bool = True) -> None:
+    def __init__(self, api_token: str, max_threads: int = 2, threaded: bool = True) -> None:
         self.__bot: TeleBot = TeleBot(
-            token=bot_token,
+            token=api_token,
             num_threads=max_threads,
             threaded=threaded,
             parse_mode=PARSE_MODE,

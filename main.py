@@ -25,21 +25,26 @@ from infrastructure.handlers import (
 from settings import settings
 
 
-WEBHOOK_PATH: Final[str] = f"/update/"
+WEBHOOK_PATH: Final[str] = f"/{settings.api_token}/"
 
 fastapi_app: FastAPI = FastAPI(
     docs_url=None,
     redoc_url=None
 )
 
+#
+# while using webhooks, 'threaded' set to False makes sense on some free ...aaS
+# else case processing down unable
+# https://www.pythonanywhere.com/forums/topic/9562/
+#
 bot: TeleBotAPI = TeleBotAPI(
-    bot_token=settings.bot_token,
+    api_token=settings.api_token,
     max_threads=settings.max_threads,
     threaded=settings.threaded
 )
 
 
-@fastapi_app.post(WEBHOOK_PATH)
+@fastapi_app.post("/{API_TOKEN}/")
 def process_webhook(raw_update: dict) -> JSONResponse:
     if raw_update:
         update: Update = Update.de_json(raw_update)

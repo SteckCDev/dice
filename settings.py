@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     webhook_port: int
     webhook_listen: str
 
-    bot_token: str
+    api_token: str
     threaded: bool
     max_threads: int
     admin_tg_id: int

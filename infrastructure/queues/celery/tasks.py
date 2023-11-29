@@ -17,7 +17,7 @@ from .instance import celery_instance
 
 
 bot: TeleBotAPI = TeleBotAPI(
-    bot_token=settings.bot_token,
+    api_token=settings.api_token,
     max_threads=settings.max_threads
 )
 config_service: ConfigService = ConfigService(
