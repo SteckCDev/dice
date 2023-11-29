@@ -2,7 +2,7 @@ from typing import Final
 
 from celery import Celery
 
-from infrastructure.cache.redis_databases import RedisDatabase
+from infrastructure.cache.redis import RedisDatabase
 from settings import settings
 
 

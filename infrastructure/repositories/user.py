@@ -1,19 +1,27 @@
-from core.repositories.user import UserRepository
-from core.schemas.user import UserDTO, CreateUserDTO, UpdateUserDTO, UserCache, UserCacheDTO
-from infrastructure.cache import RedisInterface, RedisKeys
+from typing import Type
+
+from core.repositories import UserRepository
+from core.schemas.user import (
+    UserDTO,
+    CreateUserDTO,
+    UpdateUserDTO,
+    UserCache,
+    UserCacheDTO,
+)
+from infrastructure.cache.redis import RedisKey, redis_instance
 from infrastructure.database import Session
 from infrastructure.database.models import UserModel
 
 
 class PostgresRedisUserRepository(UserRepository):
     def __init__(self) -> None:
-        self.__redis = RedisInterface()
+        self.__redis = redis_instance
 
     def __init_cache(self, tg_id: int) -> None:
         initial_cache = UserCache(tg_id=tg_id)
 
         self.__redis.set_json(
-            RedisKeys.USER_CACHE.format(user_tg_id=tg_id),
+            RedisKey.USER_CACHE_TEMPLATE.format(user_tg_id=tg_id),
             initial_cache.model_dump_json(),
             nx=True
         )
@@ -32,9 +40,9 @@ class PostgresRedisUserRepository(UserRepository):
                 **db.get(UserModel, dto.tg_id).__dict__
             )
 
-    def get_by_tg_id(self, tg_id: int) -> UserDTO:
+    def get_by_tg_id(self, tg_id: int) -> UserDTO | None:
         with Session() as db:
-            user: UserModel = db.get(UserModel, tg_id)
+            user: Type[UserModel] = db.get(UserModel, tg_id)
 
         return UserDTO(**user.__dict__)
 
@@ -48,15 +56,15 @@ class PostgresRedisUserRepository(UserRepository):
 
         return UserCacheDTO(
             **self.__redis.get_json(
-                RedisKeys.USER_CACHE.format(user_tg_id=tg_id)
+                RedisKey.USER_CACHE_TEMPLATE.format(user_tg_id=tg_id)
             )
         )
 
     def update_cache(self, dto: UserCacheDTO) -> None:
         self.__redis.set_json(
-            RedisKeys.USER_CACHE.format(user_tg_id=dto.tg_id),
+            RedisKey.USER_CACHE_TEMPLATE.format(user_tg_id=dto.tg_id),
             dto.model_dump_json()
         )
 
     def get_cached_users_count(self) -> int:
-        return self.__redis.scan_match(pattern=RedisKeys.USER_CACHE.format(user_tg_id="*"))
+        return self.__redis.scan_match(pattern=RedisKey.USER_CACHE_TEMPLATE.format(user_tg_id="*"))

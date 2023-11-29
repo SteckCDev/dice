@@ -1,3 +1,4 @@
+import html
 from typing import Any
 
 from core.exceptions import (
@@ -10,7 +11,6 @@ from core.schemas.pvb import (
     PVBDTO,
 )
 from core.schemas.pvp import (
-    PVPDTO,
     PVPDetailsDTO,
 )
 from core.schemas.user import (
@@ -24,8 +24,8 @@ from core.services import (
     PVPService,
     UserService,
 )
-from core.states.game_mode import GameMode
-from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
+from core.states import GameMode
+from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     MockConfigRepository,
     PostgresRedisPVBRepository,
@@ -68,7 +68,7 @@ class PrivateDiceHandler(BaseTeleBotHandler):
         self.user: UserDTO = self.__user_service.get_or_create(
             CreateUserDTO(
                 tg_id=user_id,
-                tg_name=user_name,
+                tg_name=html.escape(user_name),
                 balance=config.start_balance,
                 beta_balance=config.start_beta_balance
             )
@@ -136,6 +136,7 @@ class PrivateDiceHandler(BaseTeleBotHandler):
                 self.user.tg_id,
                 str(exc)
             )
+            return
         else:
             self._bot.send_message(
                 self.user.tg_id,

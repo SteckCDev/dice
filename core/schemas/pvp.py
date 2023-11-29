@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from pydantic import BaseModel
 
-from core.states.pvp_status import PVPStatus
+from core.states import PVPStatus
 
 
 class PVP(BaseModel):

@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.states.pvp_status import PVPStatus
+from core.states import PVPStatus
 from infrastructure.database import Base
 
 

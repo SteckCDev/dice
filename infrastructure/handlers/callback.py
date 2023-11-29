@@ -1,3 +1,6 @@
+import html
+import math
+
 from core.schemas.config import (
     ConfigDTO,
 )
@@ -18,9 +21,11 @@ from core.services import (
     PVPService,
     UserService,
 )
-from core.states.pvp_status import PVPStatus
-from core.states.game_mode import GameMode
-from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
+from core.states import (
+    GameMode,
+    PVPStatus,
+)
+from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     MockConfigRepository,
     PostgresRedisPVBRepository,
@@ -76,7 +81,7 @@ class CallbackHandler(BaseTeleBotHandler):
         self.user: UserDTO = self.__user_service.get_or_create(
             CreateUserDTO(
                 tg_id=user_id,
-                tg_name=user_name,
+                tg_name=html.escape(user_name),
                 balance=self.config.start_balance,
                 beta_balance=self.config.start_beta_balance
             )
@@ -134,7 +139,7 @@ class CallbackHandler(BaseTeleBotHandler):
                 )
 
         elif self.path_args[0] == "pvb-history":
-            wins_percent = self.__pvb_service.get_wins_percent_for_tg_id(self.user.tg_id)
+            wins_percent: float = self.__pvb_service.get_wins_percent_for_tg_id(self.user.tg_id)
             games_pvb: list[PVBDTO] | None = self.__pvb_service.get_last_5_for_tg_id(self.user.tg_id)
 
             self.edit_message_in_context(
@@ -156,15 +161,19 @@ class CallbackHandler(BaseTeleBotHandler):
             page = int(self.path_args[1]) if len(self.path_args) > 1 else 0
 
             available_pvp_games = self.__pvp_service.get_all_for_status(PVPStatus.CREATED)
+            available_pvp_games_count = len(available_pvp_games) if available_pvp_games else 0
+            pages_total = math.ceil(available_pvp_games_count / 5)
 
             self.edit_message_in_context(
                 Messages.pvp(
-                    0 if available_pvp_games is None else len(available_pvp_games),
+                    available_pvp_games_count,
+                    pages_total,
                     page
                 ),
                 Markups.pvp(
                     self.user.tg_id,
                     available_pvp_games,
+                    pages_total,
                     page
                 )
             )

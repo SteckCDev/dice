@@ -16,3 +16,7 @@ class PVPNotFoundForUserError(ValueError):
 
 class PVPCreatorLate(ValueError):
     pass
+
+
+class PVPJoinRejectedError(ValueError):
+    pass

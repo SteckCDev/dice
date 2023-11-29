@@ -2,15 +2,16 @@ import math
 from datetime import datetime, timedelta
 from typing import Final
 
-from core.base_bot import BaseBotAPI
+from core.abstract_bot import AbstractBotAPI
 from core.exceptions import (
     BetOutOfLimitsError,
     BalanceIsNotEnoughError,
     PVPAlreadyStartedError,
     PVPNotFoundForUserError,
     PVPCreatorLate,
+    PVPJoinRejectedError,
 )
-from core.repositories.pvp import PVPRepository
+from core.repositories import PVPRepository
 from core.schemas.config import ConfigDTO
 from core.schemas.pvp import (
     PVPDTO,
@@ -25,7 +26,7 @@ from core.schemas.user import (
 )
 from core.services.config import ConfigService
 from core.services.user import UserService
-from core.states.pvp_status import PVPStatus
+from core.states import PVPStatus
 from templates.messages import Messages
 
 
@@ -38,12 +39,12 @@ class PVPService:
     def __init__(
             self,
             repository: PVPRepository,
-            bot: BaseBotAPI,
+            bot: AbstractBotAPI,
             config_service: ConfigService,
             user_service: UserService
     ) -> None:
         self.__repo: PVPRepository = repository
-        self.__bot: BaseBotAPI = bot
+        self.__bot: AbstractBotAPI = bot
         self.__config_service: ConfigService = config_service
         self.__user_service: UserService = user_service
 
@@ -56,7 +57,7 @@ class PVPService:
     def create(self, dto: CreatePVPDTO) -> None:
         self.__repo.create(dto)
 
-    def get_by_id(self, _id: int) -> PVPDTO:
+    def get_by_id(self, _id: int) -> PVPDTO | None:
         return self.__repo.get_by_id(_id)
 
     def update(self, dto: UpdatePVPDTO) -> None:
@@ -147,7 +148,12 @@ class PVPService:
     def join_game(self, user: UserDTO, user_cache: UserCacheDTO, user_dice: int) -> PVPDetailsDTO:
         pvp_details: PVPDetailsDTO = self.get_details_for_id(user_cache.pvp_game_id)
 
-        required_balance = user.beta_balance if pvp_details.beta_mode else user.balance
+        if pvp_details.creator_tg_id == user.tg_id:
+            raise PVPJoinRejectedError(
+                Messages.pvp_join_rejected(pvp_details.id, pvp_details.beta_mode)
+            )
+
+        required_balance: int = user.beta_balance if pvp_details.beta_mode else user.balance
 
         if required_balance < pvp_details.bet:
             raise BalanceIsNotEnoughError(

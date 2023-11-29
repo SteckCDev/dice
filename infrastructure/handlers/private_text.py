@@ -1,3 +1,5 @@
+import html
+
 from core.schemas.config import (
     ConfigDTO,
 )
@@ -8,11 +10,8 @@ from core.services import (
     ConfigService,
     UserService,
 )
-from core.states.game_mode import GameMode
-from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
-from infrastructure.handlers.lottery import LotteryHandler
-from infrastructure.handlers.profile import ProfileHandler
-from infrastructure.handlers.support import SupportHandler
+from core.states import GameMode
+from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     MockConfigRepository,
     PostgresRedisUserRepository,
@@ -22,6 +21,9 @@ from templates import (
     Menu,
     Messages,
 )
+from .lottery import LotteryHandler
+from .profile import ProfileHandler
+from .support import SupportHandler
 
 
 class PrivateTextHandler(BaseTeleBotHandler):
@@ -30,7 +32,7 @@ class PrivateTextHandler(BaseTeleBotHandler):
 
         self.text: str = text
         self.user_id: int = user_id
-        self.user_name: str = user_name
+        self.user_name: str = html.escape(user_name)
 
         config_service: ConfigService = ConfigService(
             repository=MockConfigRepository()

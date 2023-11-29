@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from core.states.game_mode import GameMode
+from core.states import GameMode
 
 
 class User(BaseModel):

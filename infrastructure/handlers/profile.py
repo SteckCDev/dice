@@ -1,3 +1,5 @@
+import html
+
 from core.schemas.config import (
     ConfigDTO,
 )
@@ -11,7 +13,7 @@ from core.services import (
     PVBService,
     UserService,
 )
-from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
+from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     MockConfigRepository,
     PostgresRedisPVBRepository,
@@ -46,7 +48,7 @@ class ProfileHandler(BaseTeleBotHandler):
         self.user: UserDTO = self.__user_service.get_or_create(
             CreateUserDTO(
                 tg_id=user_id,
-                tg_name=user_name,
+                tg_name=html.escape(user_name),
                 balance=config.start_balance,
                 beta_balance=config.start_beta_balance
             )

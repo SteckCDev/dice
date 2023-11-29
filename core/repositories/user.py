@@ -14,7 +14,7 @@ class UserRepository(ABC):
         ...
 
     @abstractmethod
-    def get_by_tg_id(self, tg_id: int) -> UserDTO:
+    def get_by_tg_id(self, tg_id: int) -> UserDTO | None:
         ...
 
     @abstractmethod

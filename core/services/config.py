@@ -1,4 +1,4 @@
-from core.repositories.config import ConfigRepository
+from core.repositories import ConfigRepository
 from core.schemas.config import ConfigDTO
 
 

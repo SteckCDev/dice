@@ -1,8 +1,20 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Callable
 
 
-class BaseBotAPI(ABC):
+class AbstractBotAPI(ABC):
+    @abstractmethod
+    def message_handler(self) -> Callable:
+        ...
+
+    @abstractmethod
+    def callback_handler(self) -> Callable:
+        ...
+
+    @abstractmethod
+    def infinity_polling(self) -> Callable:
+        ...
+
     @abstractmethod
     def send_message(self, chat_id: int, text: str, markup: Any = None) -> int | None:
         ...

@@ -6,7 +6,7 @@
 ```shell
 docker-compose -f docker-compose.yml --env-file .dev.env up -d
 ```
-### Run Celery instance
+### Run Celery and Celery Beat instances
 ```shell
 celery -A infrastructure.queues.celery.instance worker -P threads -l INFO
 celery -A infrastructure.queues.celery.instance beat -s ./.periodic/celerybeat-schedule

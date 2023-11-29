@@ -7,27 +7,27 @@ from core.services import (
 )
 from core.services.pvp import TTL_OF_CREATED
 from infrastructure.api_services.telebot import TeleBotAPI
-from infrastructure.queues.celery.instance import celery_instance
 from infrastructure.repositories import (
     PostgresRedisPVPRepository,
     PostgresRedisUserRepository,
     MockConfigRepository,
 )
 from settings import settings
+from .instance import celery_instance
 
 
+bot: TeleBotAPI = TeleBotAPI(
+    bot_token=settings.bot_token,
+    max_threads=settings.max_threads
+)
 config_service: ConfigService = ConfigService(
     repository=MockConfigRepository()
 )
-
-bot = TeleBotAPI(settings.bot_token)
-
 user_service: UserService = UserService(
     repository=PostgresRedisUserRepository(),
     bot=bot,
     config_service=config_service
 )
-
 pvp_service: PVPService = PVPService(
     repository=PostgresRedisPVPRepository(),
     bot=bot,

@@ -1,29 +1,31 @@
+from typing import Type
+
 from sqlalchemy.orm import Query
 
-from core.repositories.pvb import PVBRepository
+from core.repositories import PVBRepository
 from core.schemas.pvb import (
     PVBDTO,
     CreatePVBDTO,
 )
-from infrastructure.cache import RedisInterface, RedisKeys
+from infrastructure.cache.redis import RedisKey, redis_instance
 from infrastructure.database import Session
 from infrastructure.database.models import PVBModel
 
 
 class PostgresRedisPVBRepository(PVBRepository):
     def __init__(self) -> None:
-        self.__redis = RedisInterface()
+        self.__redis = redis_instance
 
     def toggle(self) -> bool:
-        cached_state: bool | None = self.__redis.get_bool(RedisKeys.PVB_ACTIVE)
+        cached_state: bool | None = self.__redis.get_bool(RedisKey.PVB_ACTIVE)
         state: bool = True if cached_state is None else not cached_state
 
-        self.__redis.set_bool(RedisKeys.PVB_ACTIVE, state)
+        self.__redis.set_bool(RedisKey.PVB_ACTIVE, state)
 
         return state
 
     def get_status(self) -> bool:
-        state: bool | None = self.__redis.get_bool(RedisKeys.PVB_ACTIVE)
+        state: bool | None = self.__redis.get_bool(RedisKey.PVB_ACTIVE)
 
         if state:
             return state
@@ -35,13 +37,13 @@ class PostgresRedisPVBRepository(PVBRepository):
             db.add(PVBModel(**dto.model_dump()))
             db.commit()
 
-            pvb: PVBModel = db.query(PVBModel).order_by(PVBModel.id.desc()).first()
+            pvb: Type[PVBModel] = db.query(PVBModel).order_by(PVBModel.id.desc()).first()
 
         return PVBDTO(**pvb.__dict__)
 
-    def get_by_id(self, _id: int) -> PVBDTO:
+    def get_by_id(self, _id: int) -> PVBDTO | None:
         with Session() as db:
-            pvb: PVBModel = db.get(PVBModel, _id)
+            pvb: Type[PVBModel] = db.get(PVBModel, _id)
 
         return PVBDTO(**pvb.__dict__)
 
@@ -58,7 +60,7 @@ class PostgresRedisPVBRepository(PVBRepository):
 
     def get_last_5_for_tg_id(self, tg_id: int) -> list[PVBDTO] | None:
         with Session() as db:
-            games: Query[PVBModel] = db.query(PVBModel).filter(
+            games: Query[Type[PVBModel]] = db.query(PVBModel).filter(
                 PVBModel.player_tg_id == tg_id
             ).order_by(PVBModel.id.desc()).limit(5)
 

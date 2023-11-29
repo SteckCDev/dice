@@ -1,15 +1,16 @@
 from os.path import isfile
+from typing import Final
 
 from pydantic_settings import BaseSettings
 
 
-ENV_DEVELOPMENT = ".dev.env"
-ENV_PRODUCTION = ".env"
+ENV_DEVELOPMENT: Final[str] = ".dev.env"
+ENV_PRODUCTION: Final[str] = ".env"
 
 
 class Settings(BaseSettings):
     class Config:
-        env_file = ENV_DEVELOPMENT if isfile(ENV_DEVELOPMENT) else ENV_PRODUCTION
+        env_file: str = ENV_DEVELOPMENT if isfile(ENV_DEVELOPMENT) else ENV_PRODUCTION
 
     postgres_host: str
     postgres_port: str
@@ -19,8 +20,11 @@ class Settings(BaseSettings):
 
     redis_host: str
     redis_port: str
+    redis_user: str | None = None
+    redis_password: str | None = None
 
     bot_token: str
+    max_threads: int
     admin_tg_id: int
 
     bot_url: str
@@ -35,7 +39,10 @@ class Settings(BaseSettings):
 
     @property
     def redis_dsn(self) -> str:
-        return f"redis://{self.redis_host}:{self.redis_port}"
+        if self.redis_user and self.redis_password:
+            return f"redis://{self.redis_user}:{self.redis_password}@{self.redis_host}:{self.redis_port}"
+        else:
+            return f"redis://{self.redis_host}:{self.redis_port}"
 
 
-settings = Settings()
+settings: Settings = Settings()

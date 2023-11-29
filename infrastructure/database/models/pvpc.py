@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.types import Integer
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.types import Integer
 
 from infrastructure.database import Base
 

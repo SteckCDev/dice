@@ -1,3 +1,5 @@
+import math
+
 from core.schemas.pvp import (
     PVPDTO,
 )
@@ -9,8 +11,8 @@ from core.services import (
     PVPService,
     UserService,
 )
-from core.states.pvp_status import PVPStatus
-from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
+from core.states import PVPStatus
+from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     MockConfigRepository,
     PostgresRedisPVPRepository,
@@ -69,11 +71,18 @@ class PVPHandler(BaseTeleBotHandler):
 
     def _process(self) -> None:
         available_pvp_games: list[PVPDTO] | None = self.__pvp_service.get_all_for_status(PVPStatus.CREATED)
+        available_pvp_games_count = len(available_pvp_games) if available_pvp_games else 0
+        pages_total = math.ceil(available_pvp_games_count / 5)
 
         self._bot.send_message(
             self.user_id,
             Messages.pvp(
-                0 if available_pvp_games is None else len(available_pvp_games)
+                available_pvp_games_count,
+                pages_total
             ),
-            Markups.pvp(self.user_id, available_pvp_games)
+            Markups.pvp(
+                self.user_id,
+                available_pvp_games,
+                pages_total
+            )
         )

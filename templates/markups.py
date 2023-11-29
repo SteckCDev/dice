@@ -1,5 +1,3 @@
-import math
-
 from telebot.types import (
     ReplyKeyboardMarkup,
     KeyboardButton,
@@ -7,12 +5,12 @@ from telebot.types import (
     InlineKeyboardButton
 )
 
-from common.formatting.emojis import get_status_emoji, get_balance_emoji
 from core.schemas.pvb import PVBDTO
 from core.schemas.pvp import PVPDTO, PVPDetailsDTO
 from core.schemas.user import UserDTO
 from settings import settings
-from templates.menu import Menu
+from .formatting.emojis import get_status_emoji, get_balance_emoji
+from .menu import Menu
 
 
 class Markups:
@@ -121,7 +119,7 @@ class Markups:
         return markup
 
     @staticmethod
-    def pvp(user_id: int, games_pvp: list[PVPDTO] | None, page: int = 0) -> InlineKeyboardMarkup:
+    def pvp(user_id: int, games_pvp: list[PVPDTO] | None, pages_total: int, page: int = 0) -> InlineKeyboardMarkup:
         if games_pvp is None:
             return InlineKeyboardMarkup(row_width=2).add(
                 InlineKeyboardButton("Создать", callback_data="pvp-create"),
@@ -131,10 +129,6 @@ class Markups:
                 InlineKeyboardButton("<< Игры", callback_data="games"),
                 InlineKeyboardButton("Обновить", callback_data=f"pvp:1")
             )
-
-        pages_total: int = math.ceil(
-            len(games_pvp) / 5
-        )
 
         if page > pages_total:
             page = 1

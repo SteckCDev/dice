@@ -1,4 +1,4 @@
-from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
+from infrastructure.api_services.telebot import BaseTeleBotHandler
 from templates import Markups, Messages
 
 

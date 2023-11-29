@@ -1,12 +1,5 @@
-import math
 from datetime import datetime, timedelta
 
-from common.formatting.emojis import get_balance_emoji
-from common.formatting.html import (
-    bold,
-    cursive,
-    link,
-)
 from core.schemas.pvp import (
     PVPDTO,
     PVPDetailsDTO,
@@ -14,6 +7,12 @@ from core.schemas.pvp import (
 from core.schemas.user import (
     UserDTO,
     UserCacheDTO,
+)
+from .formatting.emojis import get_balance_emoji
+from .formatting.html import (
+    bold,
+    cursive,
+    link,
 )
 
 
@@ -63,6 +62,11 @@ class Messages:
     @staticmethod
     def pvb_your_turn() -> str:
         return bold("🎲 Бросьте кубик!")
+
+    @staticmethod
+    def pvp_join_rejected(game_id: int, beta_mode: bool) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"❌ Вы не можете играть сами с собой в этом режиме"
 
     @staticmethod
     def pvp_already_started(game_id: int, beta_mode: bool) -> str:
@@ -145,17 +149,15 @@ class Messages:
                f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(selected_balance)}"
 
     @staticmethod
-    def pvb_history(wins_percent: int) -> str:
+    def pvb_history(wins_percent: float) -> str:
         return f"🎲 Ваш процент побед: {bold(f'{wins_percent:.1f}%')}"
 
     @staticmethod
-    def pvp(available_pvp_games: int, page: int = 1) -> str:
-        if available_pvp_games == 0:
+    def pvp(available_pvp_games_count: int, pages_total: int, page: int = 1) -> str:
+        if available_pvp_games_count == 0:
             return bold("🎲 На данный момент нет доступных игр")
 
-        pages_total = math.ceil(available_pvp_games / 5)
-
-        return f"{bold(f'🎲 Доступно {available_pvp_games} игр')}\n\n" \
+        return f"{bold(f'🎲 Доступно {available_pvp_games_count} игр')}\n\n" \
                f"📋 Страница: {bold(f'{page} / {pages_total}')}"
 
     @staticmethod

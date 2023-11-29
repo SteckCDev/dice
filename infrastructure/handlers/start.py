@@ -1,9 +1,11 @@
+import html
+
 from core.schemas.user import CreateUserDTO
 from core.services import (
     ConfigService,
     UserService,
 )
-from infrastructure.api_services.telebot_handler import BaseTeleBotHandler
+from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     MockConfigRepository,
     PostgresRedisUserRepository,
@@ -17,7 +19,7 @@ class StartHandler(BaseTeleBotHandler):
 
         self.chat_id: int = chat_id
         self.user_id: int = user_id
-        self.user_name: str = user_name
+        self.user_name: str = html.escape(user_name)
 
         self.__config_service: ConfigService = ConfigService(
             repository=MockConfigRepository()

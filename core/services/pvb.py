@@ -2,12 +2,12 @@ import math
 import time
 from typing import Final
 
-from core.base_bot import BaseBotAPI
+from core.abstract_bot import AbstractBotAPI
 from core.exceptions import (
     BetOutOfLimitsError,
     BalanceIsNotEnoughError,
 )
-from core.repositories.pvb import PVBRepository
+from core.repositories import PVBRepository
 from core.schemas.config import (
     ConfigDTO,
 )
@@ -20,9 +20,9 @@ from core.schemas.user import (
     UpdateUserDTO,
     UserCacheDTO,
 )
-from core.services.config import ConfigService
-from core.services.user import UserService
 from templates.messages import Messages
+from .config import ConfigService
+from .user import UserService
 
 
 DICE_SPIN_ANIMATION_DURATION: Final[int] = 3
@@ -32,12 +32,12 @@ class PVBService:
     def __init__(
             self,
             repository: PVBRepository,
-            bot: BaseBotAPI,
+            bot: AbstractBotAPI,
             config_service: ConfigService,
             user_service: UserService
     ) -> None:
         self.__repo: PVBRepository = repository
-        self.__bot: BaseBotAPI = bot
+        self.__bot: AbstractBotAPI = bot
         self.__config_service: ConfigService = config_service
         self.__user_service: UserService = user_service
 
@@ -50,7 +50,7 @@ class PVBService:
     def create(self, dto: CreatePVBDTO) -> None:
         self.__repo.create(dto)
 
-    def get_by_id(self, _id: int) -> PVBDTO:
+    def get_by_id(self, _id: int) -> PVBDTO | None:
         return self.__repo.get_by_id(_id)
 
     def get_count_for_tg_id(self, tg_id: int) -> int:
@@ -59,12 +59,12 @@ class PVBService:
     def get_last_5_for_tg_id(self, tg_id: int) -> list[PVBDTO] | None:
         return self.__repo.get_last_5_for_tg_id(tg_id)
 
-    def get_wins_percent_for_tg_id(self, tg_id: int) -> int | float:
+    def get_wins_percent_for_tg_id(self, tg_id: int) -> float:
         wins: int = self.__repo.get_count_for_tg_id_and_result(tg_id, True)
         defeats: int = self.__repo.get_count_for_tg_id_and_result(tg_id, False)
         total: int = wins + defeats
 
-        return 0 if total == 0 else 100 / total * wins
+        return .0 if total == 0 else 100 / total * wins
 
 
     def __validate_game_conditions(self, bet: int, selected_balance: int) -> None:

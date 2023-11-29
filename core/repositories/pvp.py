@@ -5,7 +5,7 @@ from core.schemas.pvp import (
     CreatePVPDTO,
     UpdatePVPDTO,
 )
-from core.states.pvp_status import PVPStatus
+from core.states import PVPStatus
 
 
 class PVPRepository(ABC):
@@ -22,7 +22,7 @@ class PVPRepository(ABC):
         ...
 
     @abstractmethod
-    def get_by_id(self, _id: int) -> PVPDTO:
+    def get_by_id(self, _id: int) -> PVPDTO | None:
         ...
 
     @abstractmethod

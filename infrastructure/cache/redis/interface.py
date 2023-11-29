@@ -1,20 +1,17 @@
-from typing import Any
 from json import JSONDecoder
+from typing import Any
 
 from redis import Redis
 from redis.commands.json.path import Path
 
-from infrastructure.cache.redis_databases import RedisDatabase
 from settings import settings
+from .database import RedisDatabase
 
 
 class RedisInterface:
-    def __init__(self):
-        self.__client: Redis = Redis(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            db=RedisDatabase.APP.value
-        )
+    def __init__(self, database: RedisDatabase = RedisDatabase.APP):
+        # wrong type hint in redis library: Redis.from_url() returns type Redis, not None
+        self.__client: Redis = Redis.from_url(settings.redis_dsn, db=database)
         self.__json_decoder = JSONDecoder()
 
     def set_bool(self, key: str, value: bool) -> None:
