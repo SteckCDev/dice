@@ -20,3 +20,23 @@ class PVPCreatorLate(ValueError):
 
 class PVPJoinRejectedError(ValueError):
     pass
+
+
+class PVPCNotFoundForUserError(ValueError):
+    pass
+
+
+class PVPCJoinRejectedError(ValueError):
+    pass
+
+
+class PVPCAlreadyInGameError(ValueError):
+    pass
+
+
+class PVPCAlreadyStartedError(ValueError):
+    pass
+
+
+class PVPCCancellationRejected(ValueError):
+    pass

@@ -54,8 +54,8 @@ class PVPService:
     def get_status(self) -> bool:
         return self.__repo.get_status()
 
-    def create(self, dto: CreatePVPDTO) -> None:
-        self.__repo.create(dto)
+    def create(self, dto: CreatePVPDTO) -> PVPDTO:
+        return self.__repo.create(dto)
 
     def get_by_id(self, _id: int) -> PVPDTO | None:
         return self.__repo.get_by_id(_id)

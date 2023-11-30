@@ -1,6 +1,16 @@
 import html
 import math
 
+from telebot.types import Message
+
+from core.exceptions import (
+    BalanceIsNotEnoughError,
+    PVPCCancellationRejected,
+    PVPCAlreadyStartedError,
+    PVPCJoinRejectedError,
+    PVPCAlreadyInGameError,
+    PVPCNotFoundForUserError,
+)
 from core.schemas.config import (
     ConfigDTO,
 )
@@ -9,6 +19,9 @@ from core.schemas.pvb import (
 )
 from core.schemas.pvp import (
     PVPDTO,
+)
+from core.schemas.pvpc import (
+    PVPCDetailsDTO
 )
 from core.schemas.user import (
     UserDTO,
@@ -19,6 +32,7 @@ from core.services import (
     ConfigService,
     PVBService,
     PVPService,
+    PVPCService,
     UserService,
 )
 from core.states import (
@@ -30,6 +44,7 @@ from infrastructure.repositories import (
     MockConfigRepository,
     PostgresRedisPVBRepository,
     PostgresRedisPVPRepository,
+    PostgresRedisPVPCRepository,
     PostgresRedisUserRepository,
 )
 from settings import settings
@@ -44,7 +59,8 @@ class CallbackHandler(BaseTeleBotHandler):
             chat_id: int,
             message_id: int,
             user_id: int,
-            user_name: str
+            user_name: str,
+            message: Message
     ) -> None:
         super().__init__()
 
@@ -53,6 +69,7 @@ class CallbackHandler(BaseTeleBotHandler):
         self.path_args = path.split(":")
         self.chat_id: int = chat_id
         self.message_id: int = message_id
+        self.message: Message = message
 
         self.edit_message_in_context = self._bot.get_edit_message_for_context(self.chat_id, self.message_id)
 
@@ -74,6 +91,11 @@ class CallbackHandler(BaseTeleBotHandler):
             repository=PostgresRedisPVPRepository(),
             bot=self._bot,
             config_service=config_service,
+            user_service=self.__user_service
+        )
+        self.__pvpc_service: PVPCService = PVPCService(
+            repository=PostgresRedisPVPCRepository(),
+            bot=self._bot,
             user_service=self.__user_service
         )
 
@@ -179,6 +201,9 @@ class CallbackHandler(BaseTeleBotHandler):
             )
 
         elif self.path_args[0] == "pvp-details":
+            if len(self.path_args) != 2 or not self.path_args[1].isdigit():
+                return
+
             _id = int(self.path_args[1])
 
             self.user_cache.pvp_game_id = _id
@@ -198,6 +223,9 @@ class CallbackHandler(BaseTeleBotHandler):
             )
 
         elif self.path_args[0] == "pvp-cancel":
+            if len(self.path_args) != 2 or not self.path_args[1].isdigit():
+                return
+
             _id = int(self.path_args[1])
 
             self.__pvp_service.cancel_by_creator(_id)
@@ -248,12 +276,80 @@ class CallbackHandler(BaseTeleBotHandler):
             )
 
     def __process_pvpc(self) -> None:
-        if self.path == "pvpc":
+        if self.path_args[0] == "pvpc":
             self._bot.send_message(
                 self.chat_id,
                 Messages.pvpc(),
                 Markups.pvpc()
             )
+
+        elif self.path_args[0] == "pvpc-join":
+            if len(self.path_args) != 2 or not self.path_args[1].isdigit():
+                return
+
+            _id: int = int(self.path_args[1])
+
+            try:
+                pvpc_details: PVPCDetailsDTO = self.__pvpc_service.join_game(_id, self.user)
+            except PVPCNotFoundForUserError:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.pvpc_not_found()
+                )
+            except PVPCJoinRejectedError:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.pvpc_join_rejected()
+                )
+            except PVPCAlreadyInGameError:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.pvpc_already_in_game()
+                )
+            except PVPCAlreadyStartedError:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.pvpc_join_rejected()
+                )
+            except BalanceIsNotEnoughError:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.balance_is_not_enough()
+                )
+            else:
+                self._bot.reply(
+                    self.message,
+                    Messages.pvpc_start(pvpc_details)
+                )
+
+        elif self.path_args[0] == "pvpc-cancel":
+            if len(self.path_args) != 2 or not self.path_args[1].isdigit():
+                return
+
+            _id: int = int(self.path_args[1])
+
+            try:
+                self.__pvpc_service.cancel_game(_id, self.user)
+            except PVPCNotFoundForUserError:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.pvpc_not_found()
+                )
+            except PVPCCancellationRejected:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.pvpc_cancellation_rejected()
+                )
+            except PVPCAlreadyStartedError:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.pvpc_already_started()
+                )
+            else:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.pvpc_canceled()
+                )
 
     def __process_admin_switches(self) -> None:
         if self.path == "admin-switch-pvb":
@@ -262,9 +358,9 @@ class CallbackHandler(BaseTeleBotHandler):
         elif self.path == "admin-switch-pvp":
             self.__pvp_service.toggle()
 
-        # elif self.path == "admin-switch-pvpc":
-        #     self.__pvpc_service.toggle()
-        #
+        elif self.path == "admin-switch-pvpc":
+            self.__pvpc_service.toggle()
+
         # elif self.path == "admin-switch-pvpf":
         #     self.__pvpf_service.toggle()
         #
@@ -278,7 +374,7 @@ class CallbackHandler(BaseTeleBotHandler):
             Markups.admin(
                 self.__pvb_service.get_status(),
                 self.__pvp_service.get_status(),
-                False,
+                self.__pvpc_service.get_status(),
                 False,
                 False
             )
@@ -334,15 +430,36 @@ class CallbackHandler(BaseTeleBotHandler):
     def _prepare(self) -> bool:
         if not self.__user_service.is_subscribed_to_chats(self.user.tg_id):
             self._bot.send_message(
-                self.chat_id,
+                self.user.tg_id,
                 Messages.force_to_subscribe()
             )
             return False
 
         if self.user_cache.pvb_in_process:
             self._bot.send_message(
-                self.chat_id,
+                self.user.tg_id,
                 Messages.pvb_in_process()
+            )
+            return False
+
+        if self.path.startswith("pvb") and not self.__pvb_service.get_status():
+            self._bot.answer_callback(
+                self.call_id,
+                Messages.game_mode_disabled()
+            )
+            return False
+
+        elif self.path.startswith("pvpc") and not self.__pvpc_service.get_status():
+            self._bot.answer_callback(
+                self.call_id,
+                Messages.game_mode_disabled()
+            )
+            return False
+
+        elif self.path.startswith("pvp") and not self.__pvp_service.get_status():
+            self._bot.answer_callback(
+                self.call_id,
+                Messages.game_mode_disabled()
             )
             return False
 
@@ -354,12 +471,16 @@ class CallbackHandler(BaseTeleBotHandler):
     def _process(self) -> None:
         if self.path.startswith("pvb"):
             self.__process_pvb()
+
         elif self.path.startswith("pvpc"):
             self.__process_pvpc()
+
         elif self.path.startswith("pvp"):
             self.__process_pvp()
+
         elif self.path.startswith("admin-switch"):
             self.__process_admin_switches()
+
         else:
             self.__process_misc()
 

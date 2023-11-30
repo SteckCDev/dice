@@ -8,8 +8,10 @@ from .database import RedisDatabase
 
 
 class RedisInterface:
+    # noinspection PyNoneFunctionAssignment
     def __init__(self, database: RedisDatabase = RedisDatabase.APP):
         # wrong type hint in redis library: Redis.from_url() returns type Redis, not None
+        # noinspection PyTypeChecker
         self.__client: Redis = Redis.from_url(settings.redis_dsn, db=database)
 
     def set_bool(self, key: str, value: bool) -> None:

@@ -4,6 +4,9 @@ from core.schemas.pvp import (
     PVPDTO,
     PVPDetailsDTO,
 )
+from core.schemas.pvpc import (
+    PVPCDetailsDTO
+)
 from core.schemas.user import (
     UserDTO,
     UserCacheDTO,
@@ -52,7 +55,7 @@ class Messages:
         return "🎲 Вы всё ещё в игре и трясёте кость в ладонях. Сначала закончите игру, бросив кубик"
 
     @staticmethod
-    def pvb_non_direct() -> str:
+    def dice_not_direct() -> str:
         return "🛑 Вход с намагниченными кубиками запрещён!"
 
     @staticmethod
@@ -177,7 +180,8 @@ class Messages:
                 cancel_caption = f"Игру можно будет отменить через " \
                                  f"{pvp_details.cancellation_unlocks_in.seconds // 60} минут"
 
-            return f"🎲 Игра #{pvp_details.id:03}{cursive(' - бета-режим') if pvp_details.beta_mode else ''} {bold('[Ваша]')}\n\n" \
+            return f"🎲 Игра #{pvp_details.id:03}{cursive(' - бета-режим') if pvp_details.beta_mode else ''} " \
+                   f"{bold('[Ваша]')}\n\n" \
                    f"{get_balance_emoji(pvp_details.beta_mode)} Ставка: {bold(pvp_details.bet)}\n\n" \
                    f"{cancel_caption}"
 
@@ -241,6 +245,73 @@ class Messages:
     @staticmethod
     def pvpc() -> str:
         return "⚔ Для игры с соперником в чате, вступите в наш чат"
+
+    @staticmethod
+    def pvpc_already_exists() -> str:
+        return "❌ Вы уже состоите в игре"
+
+    @staticmethod
+    def pvpc_create() -> str:
+        return f"{bold('🔔 Чтобы создать игру используйте шаблон')}\n\n" \
+               f"{cursive('дайс ставка количество_раундов')}"
+
+    @staticmethod
+    def pvpc_rounds_out_of_limits(max_rounds: int) -> str:
+        return f"🔔 Количество раундов должно быть от {bold('1')} до {bold(max_rounds)}"
+
+    @staticmethod
+    def pvpc_already_started() -> str:
+        return "❌ К игре уже присоединились"
+
+    @staticmethod
+    def pvpc_already_in_game() -> str:
+        return "❌ Сначала завершите предыдущую игру"
+
+    @staticmethod
+    def pvpc_join_rejected() -> str:
+        return "❌ Вы не можете вступить в свою же игру"
+
+    @staticmethod
+    def pvpc_cancellation_rejected() -> str:
+        return "❌ Вы не можете отменить чужую игру"
+
+    @staticmethod
+    def pvpc_not_found() -> str:
+        return "❌ Игра не найдена"
+
+    @staticmethod
+    def pvpc_canceled() -> str:
+        return "✅ Игра отменена"
+
+    @staticmethod
+    def pvpc_join(game_id: int, bet: int, rounds: int) -> str:
+        return f"{bold(f'🟡 Игра #{game_id:03}')}\n\n" \
+               f"💵 Ставка: {bold(bet)}\n" \
+               f"🎲 Количество кубиков: {bold(rounds)}"
+
+    @staticmethod
+    def pvpc_start(pvpc_details: PVPCDetailsDTO) -> str:
+        return f"{bold(f'🔥 Игра #{pvpc_details.id:03}')}\n\n" \
+               f"💵 Ставка: {bold(pvpc_details.bet)}\n" \
+               f"🎲 Раундов: {bold(pvpc_details.rounds)}\n\n" \
+               f"{link(pvpc_details.creator_tg_name, f'tg://user?id={pvpc_details.creator_tg_id}')}\n" \
+               f"----------\n" \
+               f"{link(pvpc_details.opponent_tg_name, f'tg://user?id={pvpc_details.opponent_tg_id}')}\n\n" \
+               f"🔥 Бросайте кости!"
+
+    @staticmethod
+    def pvpc_results(pvpc_details: PVPCDetailsDTO) -> str:
+        winner_or_draw = cursive("дружба") if pvpc_details.winner_tg_name is None else bold(pvpc_details.winner_tg_name)
+
+        return f"{bold(f'🔥 Игра #{pvpc_details.id:03}')}\n\n" \
+               f"💵 Ставка: {bold(pvpc_details.bet)}\n" \
+               f"🎲 Раундов: {bold(pvpc_details.rounds)}\n\n" \
+               f"🏆 Победитель: {winner_or_draw}\n\n" \
+               f"{link(pvpc_details.creator_tg_name, f'tg://user?id={pvpc_details.creator_tg_id}')} " \
+               f"выбросил на {bold(pvpc_details.creator_scored)}\n" \
+               f"----------\n" \
+               f"{link(pvpc_details.opponent_tg_name, f'tg://user?id={pvpc_details.opponent_tg_id}')} " \
+               f" выбросил на {bold(pvpc_details.opponent_scored)}"
 
     @staticmethod
     def terms_accepted() -> str:

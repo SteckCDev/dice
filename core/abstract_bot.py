@@ -28,6 +28,10 @@ class AbstractBotAPI(ABC):
         ...
 
     @abstractmethod
+    def reply(self, message: Any, text: str, markup: Any = None) -> int:
+        ...
+
+    @abstractmethod
     def send_message(self, chat_id: int, text: str, markup: Any = None) -> int | None:
         ...
 

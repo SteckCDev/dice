@@ -227,6 +227,13 @@ class Markups:
         )
 
     @staticmethod
+    def pvpc_join(game_id: int) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton("🎲 Присоединиться", callback_data=f"pvpc-join:{game_id}"),
+            InlineKeyboardButton("💀 Отменить", callback_data=f"pvpc-cancel:{game_id}")
+        )
+
+    @staticmethod
     def admin(
             pvb_active: bool, pvp_active: bool, pvpc_active: bool, pvpf_active: bool, transactions_active: bool
     ) -> InlineKeyboardMarkup:

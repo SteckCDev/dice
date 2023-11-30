@@ -160,7 +160,7 @@ class PrivateDiceHandler(BaseTeleBotHandler):
         if not self.is_direct:
             self._bot.send_message(
                 self.user.tg_id,
-                Messages.pvb_non_direct()
+                Messages.dice_not_direct()
             )
             return False
 

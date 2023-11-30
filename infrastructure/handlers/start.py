@@ -18,8 +18,6 @@ class StartHandler(BaseTeleBotHandler):
         super().__init__()
 
         self.chat_id: int = chat_id
-        self.user_id: int = user_id
-        self.user_name: str = html.escape(user_name)
 
         self.__config_service: ConfigService = ConfigService(
             repository=MockConfigRepository()
@@ -30,14 +28,12 @@ class StartHandler(BaseTeleBotHandler):
             config_service=self.__config_service
         )
 
-        # Because start command is the entry point for new users got to create user if it doesn't already exist
-
         config = self.__config_service.get()
 
         self.__user_service.get_or_create(
             CreateUserDTO(
-                tg_id=self.user_id,
-                tg_name=self.user_name,
+                tg_id=user_id,
+                tg_name=html.escape(user_name),
                 balance=config.start_balance,
                 beta_balance=config.start_beta_balance
             )
