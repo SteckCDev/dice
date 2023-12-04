@@ -42,9 +42,9 @@ class PostgresRedisUserRepository(UserRepository):
 
     def get_by_tg_id(self, tg_id: int) -> UserDTO | None:
         with Session() as db:
-            user: Type[UserModel] = db.get(UserModel, tg_id)
+            user: Type[UserModel] | None = db.get(UserModel, tg_id)
 
-        return UserDTO(**user.__dict__)
+        return UserDTO(**user.__dict__) if user else None
 
     def update(self, dto: UpdateUserDTO) -> None:
         with Session() as db:

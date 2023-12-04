@@ -48,6 +48,20 @@ class TeleBotAPI(AbstractBotAPI):
     def infinity_polling(self) -> Callable:
         return self.__bot.infinity_polling
 
+    def reply(
+            self,
+            message: Message,
+            text: str,
+            markup: InlineKeyboardMarkup | ReplyKeyboardMarkup | None = None
+    ) -> int:
+        sent_message: Message = self.__bot.reply_to(
+            message=message,
+            text=text,
+            reply_markup=markup
+        )
+
+        return sent_message.message_id
+
     def send_message(
             self,
             chat_id: int,

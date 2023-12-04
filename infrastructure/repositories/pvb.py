@@ -43,9 +43,9 @@ class PostgresRedisPVBRepository(PVBRepository):
 
     def get_by_id(self, _id: int) -> PVBDTO | None:
         with Session() as db:
-            pvb: Type[PVBModel] = db.get(PVBModel, _id)
+            pvb: Type[PVBModel] | None = db.get(PVBModel, _id)
 
-        return PVBDTO(**pvb.__dict__)
+        return PVBDTO(**pvb.__dict__) if pvb else None
 
     def get_count_for_tg_id(self, tg_id: int) -> int:
         with Session() as db:

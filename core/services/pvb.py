@@ -47,8 +47,8 @@ class PVBService:
     def get_status(self) -> bool:
         return self.__repo.get_status()
 
-    def create(self, dto: CreatePVBDTO) -> None:
-        self.__repo.create(dto)
+    def create(self, dto: CreatePVBDTO) -> PVBDTO:
+        return self.__repo.create(dto)
 
     def get_by_id(self, _id: int) -> PVBDTO | None:
         return self.__repo.get_by_id(_id)
@@ -65,7 +65,6 @@ class PVBService:
         total: int = wins + defeats
 
         return .0 if total == 0 else 100 / total * wins
-
 
     def __validate_game_conditions(self, bet: int, selected_balance: int) -> None:
         config: ConfigDTO = self.__config_service.get()

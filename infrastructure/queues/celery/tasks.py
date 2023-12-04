@@ -3,12 +3,14 @@ from celery import Celery
 from core.services import (
     ConfigService,
     PVPService,
+    PVPCService,
     UserService,
 )
 from core.services.pvp import TTL_OF_CREATED
 from infrastructure.api_services.telebot import TeleBotAPI
 from infrastructure.repositories import (
     PostgresRedisPVPRepository,
+    PostgresRedisPVPCRepository,
     PostgresRedisUserRepository,
     MockConfigRepository,
 )
@@ -18,7 +20,8 @@ from .instance import celery_instance
 
 bot: TeleBotAPI = TeleBotAPI(
     api_token=settings.api_token,
-    max_threads=settings.max_threads
+    max_threads=settings.max_threads,
+    threaded=settings.threaded
 )
 config_service: ConfigService = ConfigService(
     repository=MockConfigRepository()
@@ -30,6 +33,12 @@ user_service: UserService = UserService(
 )
 pvp_service: PVPService = PVPService(
     repository=PostgresRedisPVPRepository(),
+    bot=bot,
+    config_service=config_service,
+    user_service=user_service
+)
+pvpc_service: PVPCService = PVPCService(
+    repository=PostgresRedisPVPCRepository(),
     bot=bot,
     config_service=config_service,
     user_service=user_service
@@ -56,3 +65,13 @@ def pvp_finish_started() -> None:
 @celery_instance.task
 def pvp_close_expired() -> None:
     pvp_service.auto_close_expired_games()
+
+
+@celery_instance.task
+def pvpc_finish_started() -> None:
+    pvpc_service.auto_finish_started_games()
+
+
+@celery_instance.task
+def pvpc_close_expired() -> None:
+    pvpc_service.auto_close_expired_games()

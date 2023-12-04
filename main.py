@@ -12,6 +12,8 @@ from infrastructure.handlers import (
     AdminHandler,
     BalanceHandler,
     CallbackHandler,
+    GroupDiceHandler,
+    GroupTextHandler,
     LotteryHandler,
     PrivateDiceHandler,
     PrivateTextHandler,
@@ -64,99 +66,119 @@ def cmd_admin(_msg: Message) -> None:
 @bot.message_handler(commands=["start"], chat_types=["private"])
 def cmd_start(msg: Message) -> None:
     StartHandler(
-        msg.chat.id,
-        msg.from_user.id,
-        msg.from_user.username or msg.from_user.first_name
+        chat_id=msg.chat.id,
+        user_id=msg.from_user.id,
+        user_name=msg.from_user.username or msg.from_user.first_name
     ).handle()
 
 
 @bot.message_handler(commands=["balance"], chat_types=["private"])
 def cmd_balance(msg: Message) -> None:
     BalanceHandler(
-        msg.chat.id,
-        msg.from_user.id,
-        msg.from_user.username or msg.from_user.first_name
+        chat_id=msg.chat.id,
+        user_id=msg.from_user.id,
+        user_name=msg.from_user.username or msg.from_user.first_name
     ).handle()
 
 
 @bot.message_handler(commands=["profile"], chat_types=["private"])
 def cmd_profile(msg: Message) -> None:
     ProfileHandler(
-        msg.from_user.id,
-        msg.from_user.username or msg.from_user.first_name
+        user_id=msg.from_user.id,
+        user_name=msg.from_user.username or msg.from_user.first_name
     ).handle()
 
 
 @bot.message_handler(commands=["pvb"], chat_types=["private"])
 def cmd_pvb(msg: Message) -> None:
     PVBHandler(
-        msg.chat.id,
-        msg.message_id,
-        msg.from_user.id
+        chat_id=msg.chat.id,
+        message_id=msg.message_id,
+        user_id=msg.from_user.id
     ).handle()
 
 
 @bot.message_handler(commands=["pvp"], chat_types=["private"])
 def cmd_pvp(msg: Message) -> None:
     PVPHandler(
-        msg.from_user.id,
-        msg.message_id
+        user_id=msg.from_user.id,
+        message_id=msg.message_id
     ).handle()
 
 
 @bot.message_handler(commands=["pvpc"], chat_types=["private"])
 def cmd_pvpc(msg: Message) -> None:
-    PVPCHandler(msg.chat.id).handle()
+    PVPCHandler(
+        chat_id=msg.chat.id
+    ).handle()
 
 
 @bot.message_handler(commands=["lottery"], chat_types=["private"])
 def cmd_lottery(msg: Message) -> None:
-    LotteryHandler(msg.chat.id).handle()
+    LotteryHandler(
+        chat_id=msg.chat.id
+    ).handle()
 
 
 @bot.message_handler(commands=["support"], chat_types=["private"])
 def cmd_support(msg: Message) -> None:
-    SupportHandler(msg.chat.id).handle()
+    SupportHandler(
+        chat_id=msg.chat.id
+    ).handle()
 
 
 @bot.message_handler(chat_types=["private"])
 def private_text(msg: Message) -> None:
     PrivateTextHandler(
-        msg.text,
-        msg.from_user.id,
-        msg.from_user.username or msg.from_user.first_name
+        text=msg.text,
+        user_id=msg.from_user.id,
+        user_name=msg.from_user.username or msg.from_user.first_name
     ).handle()
 
 
 @bot.message_handler(content_types=["dice"], chat_types=["private"])
 def private_dice(msg: Message) -> None:
     PrivateDiceHandler(
-        msg.from_user.id,
-        msg.from_user.username or msg.from_user.first_name,
-        msg.forward_from,
-        msg.dice.value
+        user_id=msg.from_user.id,
+        user_name=msg.from_user.username or msg.from_user.first_name,
+        forwarded_from=msg.forward_from,
+        user_dice=msg.dice.value
     ).handle()
 
 
 @bot.message_handler(chat_types=["group", "supergroup"])
-def group_text(_msg: Message) -> None:
-    ...
+def group_text(msg: Message) -> None:
+    GroupTextHandler(
+        text=msg.text,
+        chat_id=msg.chat.id,
+        user_id=msg.from_user.id,
+        user_name=msg.from_user.username or msg.from_user.first_name,
+        message=msg
+    ).handle()
 
 
 @bot.message_handler(content_types=["dice"], chat_types=["group", "supergroup"])
-def group_dice(_msg: Message) -> None:
-    ...
+def group_dice(msg: Message) -> None:
+    GroupDiceHandler(
+        chat_id=msg.chat.id,
+        user_id=msg.from_user.id,
+        user_name=msg.from_user.username or msg.from_user.first_name,
+        forwarded_from=msg.forward_from,
+        user_dice=msg.dice.value,
+        message=msg
+    ).handle()
 
 
 @bot.callback_handler(func=lambda call: True)
 def callback(call: CallbackQuery) -> None:
     CallbackHandler(
-        call.id,
-        call.data,
-        call.message.chat.id,
-        call.message.message_id,
-        call.from_user.id,
-        call.from_user.username or call.from_user.first_name
+        call_id=call.id,
+        path=call.data,
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        user_id=call.from_user.id,
+        user_name=call.from_user.username or call.from_user.first_name,
+        message=call.message
     ).handle()
 
 

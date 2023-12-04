@@ -12,6 +12,8 @@ class Config(BaseModel):
     pvb_fee: int = 3
     pvp_fee: int = 3
     pvp_expires_in: timedelta = timedelta(minutes=1)
+    pvpc_fee: int = 3
+    pvpc_max_rounds: int = 3
 
 
 class ConfigDTO(BaseModel):
@@ -23,3 +25,5 @@ class ConfigDTO(BaseModel):
     pvb_fee: int
     pvp_fee: int
     pvp_expires_in: timedelta
+    pvpc_fee: int
+    pvpc_max_rounds: int
