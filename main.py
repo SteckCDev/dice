@@ -12,6 +12,7 @@ from infrastructure.handlers import (
     AdminHandler,
     BalanceHandler,
     CallbackHandler,
+    GroupDiceHandler,
     GroupTextHandler,
     LotteryHandler,
     PrivateDiceHandler,
@@ -157,8 +158,15 @@ def group_text(msg: Message) -> None:
 
 
 @bot.message_handler(content_types=["dice"], chat_types=["group", "supergroup"])
-def group_dice(_msg: Message) -> None:
-    ...
+def group_dice(msg: Message) -> None:
+    GroupDiceHandler(
+        chat_id=msg.chat.id,
+        user_id=msg.from_user.id,
+        user_name=msg.from_user.username or msg.from_user.first_name,
+        forwarded_from=msg.forward_from,
+        user_dice=msg.dice.value,
+        message=msg
+    ).handle()
 
 
 @bot.callback_handler(func=lambda call: True)

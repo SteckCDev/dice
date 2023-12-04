@@ -14,7 +14,7 @@ class PVPNotFoundForUserError(ValueError):
     pass
 
 
-class PVPCreatorLate(ValueError):
+class PVPCreatorLateError(ValueError):
     pass
 
 
@@ -38,5 +38,5 @@ class PVPCAlreadyStartedError(ValueError):
     pass
 
 
-class PVPCCancellationRejected(ValueError):
+class PVPCCancellationRejectedError(ValueError):
     pass

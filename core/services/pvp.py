@@ -8,7 +8,7 @@ from core.exceptions import (
     BalanceIsNotEnoughError,
     PVPAlreadyStartedError,
     PVPNotFoundForUserError,
-    PVPCreatorLate,
+    PVPCreatorLateError,
     PVPJoinRejectedError,
 )
 from core.repositories import PVPRepository
@@ -253,7 +253,7 @@ class PVPService:
             raise PVPNotFoundForUserError()
 
         if pvp.status != PVPStatus.STARTED:
-            raise PVPCreatorLate(
+            raise PVPCreatorLateError(
                 Messages.pvp_creator_late(pvp.id, pvp.beta_mode)
             )
 

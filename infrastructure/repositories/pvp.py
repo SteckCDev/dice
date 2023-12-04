@@ -45,9 +45,9 @@ class PostgresRedisPVPRepository(PVPRepository):
 
     def get_by_id(self, _id: int) -> PVPDTO | None:
         with Session() as db:
-            pvp: Type[PVPModel] = db.get(PVPModel, _id)
+            pvp: Type[PVPModel] | None = db.get(PVPModel, _id)
 
-        return PVPDTO(**pvp.__dict__)
+        return PVPDTO(**pvp.__dict__) if pvp else None
 
     def update(self, dto: UpdatePVPDTO) -> None:
         with Session() as db:

@@ -47,6 +47,7 @@ class GroupTextHandler(BaseTeleBotHandler):
         self.__pvpc_service: PVPCService = PVPCService(
             repository=PostgresRedisPVPCRepository(),
             bot=self._bot,
+            config_service=config_service,
             user_service=self.__user_service
         )
 
@@ -63,6 +64,9 @@ class GroupTextHandler(BaseTeleBotHandler):
 
     def _prepare(self) -> bool:
         if not self.text.lower().startswith(("dice", "дайс")):
+            return False
+
+        if not self.__pvpc_service.get_status():
             return False
 
         args: list[str] = self.text.split()
@@ -128,22 +132,7 @@ class GroupTextHandler(BaseTeleBotHandler):
     def _process(self) -> None:
         bet, rounds = [int(arg) for arg in self.text.split()[1:]]
 
-        pvpc: PVPCDTO = self.__pvpc_service.create(
-            CreatePVPCDTO(
-                chat_tg_id=self.chat_id,
-                creator_tg_id=self.user.tg_id,
-                bet=bet,
-                rounds=rounds
-            )
-        )
-
-        self.user.balance -= bet
-
-        self.__user_service.update(
-            UpdateUserDTO(
-                **self.user.model_dump()
-            )
-        )
+        pvpc: PVPCDTO = self.__pvpc_service.create_game(self.user, self.chat_id, bet, rounds)
 
         self._bot.reply(
             self.message,

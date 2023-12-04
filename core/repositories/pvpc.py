@@ -26,6 +26,10 @@ class PVPCRepository(ABC):
         ...
 
     @abstractmethod
+    def get_all_for_status(self, status: PVPCStatus) -> list[PVPCDTO] | None:
+        ...
+
+    @abstractmethod
     def update(self, dto: UpdatePVPCDTO) -> None:
         ...
 

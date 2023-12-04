@@ -261,7 +261,7 @@ class Messages:
 
     @staticmethod
     def pvpc_already_started() -> str:
-        return "❌ К игре уже присоединились"
+        return "❌ Игра более недоступна"
 
     @staticmethod
     def pvpc_already_in_game() -> str:
@@ -288,6 +288,11 @@ class Messages:
         return f"{bold(f'🟡 Игра #{game_id:03}')}\n\n" \
                f"💵 Ставка: {bold(bet)}\n" \
                f"🎲 Количество кубиков: {bold(rounds)}"
+
+    @staticmethod
+    def pvpc_throwing_for_user(game_id: int, user_tg_name: str) -> str:
+        return f"{bold(f'🔥 Игра #{game_id:03}')}\n\n" \
+               f"🎲 Бросаем кубики за {user_tg_name}"
 
     @staticmethod
     def pvpc_start(pvpc_details: PVPCDetailsDTO) -> str:

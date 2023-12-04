@@ -5,7 +5,7 @@ from telebot.types import Message
 
 from core.exceptions import (
     BalanceIsNotEnoughError,
-    PVPCCancellationRejected,
+    PVPCCancellationRejectedError,
     PVPCAlreadyStartedError,
     PVPCJoinRejectedError,
     PVPCAlreadyInGameError,
@@ -96,6 +96,7 @@ class CallbackHandler(BaseTeleBotHandler):
         self.__pvpc_service: PVPCService = PVPCService(
             repository=PostgresRedisPVPCRepository(),
             bot=self._bot,
+            config_service=config_service,
             user_service=self.__user_service
         )
 
@@ -335,7 +336,7 @@ class CallbackHandler(BaseTeleBotHandler):
                     self.call_id,
                     Messages.pvpc_not_found()
                 )
-            except PVPCCancellationRejected:
+            except PVPCCancellationRejectedError:
                 self._bot.answer_callback(
                     self.call_id,
                     Messages.pvpc_cancellation_rejected()

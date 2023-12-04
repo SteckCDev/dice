@@ -1,6 +1,7 @@
 from .admin import AdminHandler
 from .balance import BalanceHandler
 from .callback import CallbackHandler
+from .group_dice import GroupDiceHandler
 from .group_text import GroupTextHandler
 from .lottery import LotteryHandler
 from .private_dice import PrivateDiceHandler

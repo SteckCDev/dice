@@ -1,6 +1,7 @@
 from typing import Type
 
 from sqlalchemy import or_
+from sqlalchemy.orm import Query
 
 from core.repositories import PVPCRepository
 from core.schemas.pvpc import (
@@ -45,9 +46,22 @@ class PostgresRedisPVPCRepository(PVPCRepository):
 
     def get_by_id(self, _id: int) -> PVPCDTO | None:
         with Session() as db:
-            pvpc: Type[PVPCModel] = db.get(PVPCModel, _id)
+            pvpc: Type[PVPCModel] | None = db.get(PVPCModel, _id)
 
-        return PVPCDTO(**pvpc.__dict__)
+        return PVPCDTO(**pvpc.__dict__) if pvpc else None
+
+    def get_all_for_status(self, status: PVPCStatus) -> list[PVPCDTO] | None:
+        with Session() as db:
+            games: Query[Type[PVPCModel]] = db.query(PVPCModel).filter(
+                PVPCModel.status == status
+            ).order_by(PVPCModel.id.desc())
+
+            if games.count() == 0:
+                return
+
+            return [
+                PVPCDTO(**game.__dict__) for game in games
+            ]
 
     def update(self, dto: UpdatePVPCDTO) -> None:
         with Session() as db:
