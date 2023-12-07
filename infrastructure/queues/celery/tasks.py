@@ -12,7 +12,7 @@ from infrastructure.repositories import (
     PostgresRedisPVPRepository,
     PostgresRedisPVPCRepository,
     PostgresRedisUserRepository,
-    MockConfigRepository,
+    RedisConfigRepository,
 )
 from settings import settings
 from .instance import celery_instance
@@ -24,7 +24,7 @@ bot: TeleBotAPI = TeleBotAPI(
     threaded=settings.threaded
 )
 config_service: ConfigService = ConfigService(
-    repository=MockConfigRepository()
+    repository=RedisConfigRepository()
 )
 user_service: UserService = UserService(
     repository=PostgresRedisUserRepository(),

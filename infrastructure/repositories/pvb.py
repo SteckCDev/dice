@@ -7,14 +7,14 @@ from core.schemas.pvb import (
     PVBDTO,
     CreatePVBDTO,
 )
-from infrastructure.cache.redis import RedisKey, redis_instance
+from infrastructure.cache.redis import RedisKey, RedisInterface, redis_instance
 from infrastructure.database import Session
 from infrastructure.database.models import PVBModel
 
 
 class PostgresRedisPVBRepository(PVBRepository):
     def __init__(self) -> None:
-        self.__redis = redis_instance
+        self.__redis: RedisInterface = redis_instance
 
     def toggle(self) -> bool:
         cached_state: bool | None = self.__redis.get_bool(RedisKey.PVB_ACTIVE)
@@ -27,10 +27,11 @@ class PostgresRedisPVBRepository(PVBRepository):
     def get_status(self) -> bool:
         state: bool | None = self.__redis.get_bool(RedisKey.PVB_ACTIVE)
 
-        if state:
-            return state
+        if state is None:
+            self.__redis.set_bool(RedisKey.PVB_ACTIVE, True)
+            return True
 
-        return self.toggle()
+        return state
 
     def create(self, dto: CreatePVBDTO) -> PVBDTO:
         with Session() as db:

@@ -8,7 +8,7 @@ from core.services import (
 )
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    MockConfigRepository,
+    RedisConfigRepository,
     PostgresRedisPVBRepository,
     PostgresRedisUserRepository,
 )
@@ -24,7 +24,7 @@ class PVBHandler(BaseTeleBotHandler):
         self.user_id: int = user_id
 
         config_service: ConfigService = ConfigService(
-            repository=MockConfigRepository()
+            repository=RedisConfigRepository()
         )
         self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),

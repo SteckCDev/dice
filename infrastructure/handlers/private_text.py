@@ -7,13 +7,14 @@ from core.schemas.user import (
     UserCacheDTO,
 )
 from core.services import (
+    AdminService,
     ConfigService,
     UserService,
 )
 from core.states import GameMode
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    MockConfigRepository,
+    RedisConfigRepository,
     PostgresRedisUserRepository,
 )
 from templates import (
@@ -21,6 +22,7 @@ from templates import (
     Menu,
     Messages,
 )
+from settings import settings
 from .lottery import LotteryHandler
 from .profile import ProfileHandler
 from .support import SupportHandler
@@ -33,18 +35,42 @@ class PrivateTextHandler(BaseTeleBotHandler):
         self.text: str = text
         self.user_id: int = user_id
         self.user_name: str = html.escape(user_name)
+        self.is_admin = user_id == settings.admin_tg_id
 
         config_service: ConfigService = ConfigService(
-            repository=MockConfigRepository()
+            repository=RedisConfigRepository()
         )
         self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),
             bot=self._bot,
             config_service=config_service
         )
+        self.__admin_service: AdminService = AdminService(
+            config_service=config_service
+        )
 
         self.config: ConfigDTO = config_service.get()
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
+
+    def __process_admin(self) -> bool:
+        adjusted_or_error: bool | str = self.__admin_service.try_to_adjust_config_field(
+            self.text.split()
+        )
+
+        if isinstance(adjusted_or_error, str):
+            self._bot.send_message(
+                self.user_id,
+                adjusted_or_error
+            )
+            return True
+
+        if adjusted_or_error:
+            self._bot.send_message(
+                self.user_id,
+                Messages.admin_config_adjusted()
+            )
+
+        return adjusted_or_error
 
     def __set_bet(self) -> None:
         bet: int = int(self.text)
@@ -91,6 +117,9 @@ class PrivateTextHandler(BaseTeleBotHandler):
         return True
 
     def _process(self) -> None:
+        if self.is_admin and self.__process_admin():
+            return
+
         match self.text:
             case Menu.GAMES:
                 self._bot.send_message(

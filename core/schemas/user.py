@@ -61,7 +61,6 @@ class UserCache(BaseModel):
     deposit_amount: int = 0
     withdraw_amount: int = 0
     withdraw_bank: str | None = None
-    last_message_id: int | None = None
 
 
 class UserCacheDTO(BaseModel):
@@ -78,4 +77,3 @@ class UserCacheDTO(BaseModel):
     deposit_amount: int
     withdraw_amount: int
     withdraw_bank: str | None
-    last_message_id: int | None

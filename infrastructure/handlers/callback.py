@@ -41,7 +41,7 @@ from core.states import (
 )
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    MockConfigRepository,
+    RedisConfigRepository,
     PostgresRedisPVBRepository,
     PostgresRedisPVPRepository,
     PostgresRedisPVPCRepository,
@@ -74,7 +74,7 @@ class CallbackHandler(BaseTeleBotHandler):
         self.edit_message_in_context = self._bot.get_edit_message_for_context(self.chat_id, self.message_id)
 
         config_service: ConfigService = ConfigService(
-            repository=MockConfigRepository()
+            repository=RedisConfigRepository()
         )
         self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),
@@ -134,9 +134,6 @@ class CallbackHandler(BaseTeleBotHandler):
                 ),
                 Markups.pvb_create(self.user_cache.pvb_bots_turn_first)
             )
-
-            self.user_cache.last_message_id = self.message_id
-            self.__user_service.update_cache(self.user_cache)
 
         elif self.path_args[0] == "pvb-switch-turn":
             self.user_cache.pvb_bots_turn_first = not self.user_cache.pvb_bots_turn_first
@@ -429,6 +426,10 @@ class CallbackHandler(BaseTeleBotHandler):
             )
 
     def _prepare(self) -> bool:
+        # why not
+        if "admin" in self.path and self.user.tg_id != settings.admin_tg_id:
+            return False
+
         if not self.__user_service.is_subscribed_to_chats(self.user.tg_id):
             self._bot.send_message(
                 self.user.tg_id,
@@ -443,28 +444,15 @@ class CallbackHandler(BaseTeleBotHandler):
             )
             return False
 
-        if self.path.startswith("pvb") and not self.__pvb_service.get_status():
+        pvb_requested_and_disabled: bool = self.path.startswith("pvb") and not self.__pvb_service.get_status()
+        pvpc_requested_and_disabled: bool = self.path.startswith("pvpc") and not self.__pvpc_service.get_status()
+        pvp_requested_and_disabled: bool = self.path.startswith("pvp") and not self.__pvp_service.get_status()
+
+        if pvb_requested_and_disabled or pvpc_requested_and_disabled or pvp_requested_and_disabled:
             self._bot.answer_callback(
                 self.call_id,
                 Messages.game_mode_disabled()
             )
-            return False
-
-        elif self.path.startswith("pvpc") and not self.__pvpc_service.get_status():
-            self._bot.answer_callback(
-                self.call_id,
-                Messages.game_mode_disabled()
-            )
-            return False
-
-        elif self.path.startswith("pvp") and not self.__pvp_service.get_status():
-            self._bot.answer_callback(
-                self.call_id,
-                Messages.game_mode_disabled()
-            )
-            return False
-
-        if "admin" in self.path and self.user.tg_id != settings.admin_tg_id:
             return False
 
         return True

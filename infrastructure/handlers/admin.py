@@ -5,7 +5,7 @@ from core.services import (
 )
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    MockConfigRepository,
+    RedisConfigRepository,
     PostgresRedisPVBRepository,
     PostgresRedisUserRepository,
 )
@@ -18,7 +18,7 @@ class AdminHandler(BaseTeleBotHandler):
         super().__init__()
 
         config_service: ConfigService = ConfigService(
-            repository=MockConfigRepository()
+            repository=RedisConfigRepository()
         )
         self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),

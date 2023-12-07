@@ -16,7 +16,7 @@ from core.services import (
 )
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    MockConfigRepository,
+    RedisConfigRepository,
     PostgresRedisPVPCRepository,
     PostgresRedisUserRepository,
 )
@@ -41,7 +41,7 @@ class GroupDiceHandler(BaseTeleBotHandler):
         self.message: Message = message
 
         config_service: ConfigService = ConfigService(
-            repository=MockConfigRepository()
+            repository=RedisConfigRepository()
         )
         self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),

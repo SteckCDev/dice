@@ -13,7 +13,7 @@ from core.services import (
 )
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    MockConfigRepository,
+    RedisConfigRepository,
     PostgresRedisUserRepository,
 )
 from templates import Messages
@@ -26,7 +26,7 @@ class BalanceHandler(BaseTeleBotHandler):
         self.chat_id: int = chat_id
 
         config_service: ConfigService = ConfigService(
-            repository=MockConfigRepository()
+            repository=RedisConfigRepository()
         )
         self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),

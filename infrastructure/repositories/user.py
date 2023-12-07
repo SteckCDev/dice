@@ -8,14 +8,14 @@ from core.schemas.user import (
     UserCache,
     UserCacheDTO,
 )
-from infrastructure.cache.redis import RedisKey, redis_instance
+from infrastructure.cache.redis import RedisKey, RedisInterface, redis_instance
 from infrastructure.database import Session
 from infrastructure.database.models import UserModel
 
 
 class PostgresRedisUserRepository(UserRepository):
     def __init__(self) -> None:
-        self.__redis = redis_instance
+        self.__redis: RedisInterface = redis_instance
 
     def __init_cache(self, tg_id: int) -> None:
         initial_cache = UserCache(tg_id=tg_id)

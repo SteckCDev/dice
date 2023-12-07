@@ -38,63 +38,6 @@ class Messages:
                f"💴 Бета-баланс: {bold(beta_balance)} RUB"
 
     @staticmethod
-    def game_mode_disabled() -> str:
-        return f"🔧 На данный момент этот режим находится на {bold('плановых технических работах')}, " \
-               f"возвращайтесь позже"
-
-    @staticmethod
-    def balance_is_not_enough() -> str:
-        return "❌ Недостаточно баланса"
-
-    @staticmethod
-    def bet_out_of_limits(min_bet: int, max_bet: int) -> str:
-        return f"🔔 Сумма ставки должна быть в диапазоне между {min_bet} и {max_bet}"
-
-    @staticmethod
-    def pvb_in_process() -> str:
-        return "🎲 Вы всё ещё в игре и трясёте кость в ладонях. Сначала закончите игру, бросив кубик"
-
-    @staticmethod
-    def dice_not_direct() -> str:
-        return "🛑 Вход с намагниченными кубиками запрещён!"
-
-    @staticmethod
-    def pvb_bots_turn() -> str:
-        return bold("🤖 Бросает бот")
-
-    @staticmethod
-    def pvb_your_turn() -> str:
-        return bold("🎲 Бросьте кубик!")
-
-    @staticmethod
-    def pvp_join_rejected(game_id: int, beta_mode: bool) -> str:
-        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
-               f"❌ Вы не можете играть сами с собой в этом режиме"
-
-    @staticmethod
-    def pvp_already_started(game_id: int, beta_mode: bool) -> str:
-        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
-               f"❌ К игре уже присоединились, выберите другую"
-
-    @staticmethod
-    def pvp_creator_late(game_id: int, beta_mode: bool) -> str:
-        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
-               f"⌛ Время вышло, бот бросил кость за вас"
-
-    @staticmethod
-    def pvp_expired(game_id: int, beta_mode: bool, bet: int, ttl: timedelta) -> str:
-        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
-               f"⌛ Истекло время ожидания - {ttl.seconds // 3600} часов, " \
-               f"ставка закрыта, баланс восстановлен\n" \
-               f"{get_balance_emoji(beta_mode)} Ставка: {bold(bet)}"
-
-    @staticmethod
-    def force_to_subscribe() -> str:
-        return f"🔔 Для взаимодействия с ботом необходимо состоять в следующих чатах:\n" \
-               f" 1. {link('первый чат', 'https://google.com')}\n" \
-               f" 2. {link('второй чат', 'https://google.com')}"
-
-    @staticmethod
     def games(selected_balance: int, beta_mode: bool) -> str:
         return f"{bold('🎲 Выберите режим игры')}\n\n" \
                f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(selected_balance)} RUB"
@@ -116,9 +59,52 @@ class Messages:
         return "🤖 Если у вас возникли вопросы, обратитесь в нашу поддержку"
 
     @staticmethod
+    def game_mode_disabled() -> str:
+        return f"🔧 На данный момент этот режим находится на {bold('плановых технических работах')}, " \
+               f"возвращайтесь позже"
+
+    @staticmethod
+    def balance_is_not_enough() -> str:
+        return "❌ Недостаточно баланса"
+
+    @staticmethod
+    def bet_out_of_limits(min_bet: int, max_bet: int) -> str:
+        return f"🔔 Сумма ставки должна быть в диапазоне между {min_bet} и {max_bet}"
+
+    @staticmethod
+    def dice_not_direct() -> str:
+        return "🛑 Вход с намагниченными кубиками запрещён!"
+
+    @staticmethod
+    def force_to_subscribe() -> str:
+        return f"🔔 Для взаимодействия с ботом необходимо состоять в следующих чатах:\n" \
+               f" 1. {link('первый чат', 'https://google.com')}\n" \
+               f" 2. {link('второй чат', 'https://google.com')}"
+
+    @staticmethod
     def terms_and_conditions() -> str:
         return f"{bold('📋 Внимательно прочитайте правила игры')}\n\n" \
                f"1. Первое правило бойцовского клуба"
+
+    @staticmethod
+    def terms_accepted() -> str:
+        return f"🎲 Хорошей игры!"
+
+    @staticmethod
+    def terms_rejected() -> str:
+        return f"❌ Игра с ботом возможна {bold('только после принятия правил игры')}"
+
+    @staticmethod
+    def pvb_in_process() -> str:
+        return "🎲 Вы всё ещё в игре и трясёте кость в ладонях. Сначала закончите игру, бросив кубик"
+
+    @staticmethod
+    def pvb_bots_turn() -> str:
+        return bold("🤖 Бросает бот")
+
+    @staticmethod
+    def pvb_your_turn() -> str:
+        return bold("🎲 Бросьте кубик!")
 
     @staticmethod
     def pvb(balance: int, beta_mode: bool) -> str:
@@ -154,6 +140,28 @@ class Messages:
     @staticmethod
     def pvb_history(wins_percent: float) -> str:
         return f"🎲 Ваш процент побед: {bold(f'{wins_percent:.1f}%')}"
+
+    @staticmethod
+    def pvp_join_rejected(game_id: int, beta_mode: bool) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"❌ Вы не можете играть сами с собой в этом режиме"
+
+    @staticmethod
+    def pvp_already_started(game_id: int, beta_mode: bool) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"❌ К игре уже присоединились, выберите другую"
+
+    @staticmethod
+    def pvp_creator_late(game_id: int, beta_mode: bool) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"⌛ Время вышло, бот бросил кость за вас"
+
+    @staticmethod
+    def pvp_expired(game_id: int, beta_mode: bool, bet: int, ttl: timedelta) -> str:
+        return f"{bold(f'🎲 Игра #{game_id:03}')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+               f"⌛ Истекло время ожидания - {ttl.seconds // 3600} часов, " \
+               f"ставка закрыта, баланс восстановлен\n" \
+               f"{get_balance_emoji(beta_mode)} Ставка: {bold(bet)}"
 
     @staticmethod
     def pvp(available_pvp_games_count: int, pages_total: int, page: int = 1) -> str:
@@ -319,19 +327,16 @@ class Messages:
                f" выбросил на {bold(pvpc_details.opponent_scored)}"
 
     @staticmethod
-    def terms_accepted() -> str:
-        return f"🎲 Хорошей игры!"
-
-    @staticmethod
-    def terms_rejected() -> str:
-        return f"❌ Игра с ботом возможна {bold('только после принятия правил игры')}"
-
-    @staticmethod
     def admin(users_since_launch: int) -> str:
         return f"{bold('🎲 Дайс / Админ-панель')}\n\n" \
                f"🙋 Пользователей с момента запуска: {bold(users_since_launch)}\n\n" \
                f"{bold('Доступные команды:')} " \
-               f"реквизиты, баланс, чат, комиссия (бот, p2p, чат, банк, биткоин), ставка (минимум, максимум), " \
-               f"транзакция (минимум, биткоин), оповещение (сумма, период), сумма, период\n\n" \
-               f"Чтобы увидеть синтаксис команды необходимо написать только её имя без параметров, " \
-               f"например, - \"комиссия\""
+               f"баланс (обычный, бета), комиссия (pvb, pvp, pvpc, card, wallet), " \
+               f"ставка (минимальная, максимальная), чат (раунды)\n\n" \
+               f"Чтобы увидеть синтаксис команды и текущие значения изменяемых ею параметров, " \
+               f"необходимо написать только её имя без параметров, " \
+               f"например, - {cursive('комиссия')}"
+
+    @staticmethod
+    def admin_config_adjusted() -> str:
+        return "✅ Параметр изменён"

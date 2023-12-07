@@ -11,13 +11,13 @@ from core.schemas.pvpc import (
 )
 from infrastructure.database import Session
 from infrastructure.database.models import PVPCModel
-from infrastructure.cache.redis import RedisKey, redis_instance
+from infrastructure.cache.redis import RedisKey, RedisInterface, redis_instance
 from states import PVPCStatus
 
 
 class PostgresRedisPVPCRepository(PVPCRepository):
     def __init__(self) -> None:
-        self.__redis = redis_instance
+        self.__redis: RedisInterface = redis_instance
 
     def toggle(self) -> bool:
         cached_state: bool | None = self.__redis.get_bool(RedisKey.PVPC_ACTIVE)
@@ -30,10 +30,11 @@ class PostgresRedisPVPCRepository(PVPCRepository):
     def get_status(self) -> bool:
         state: bool | None = self.__redis.get_bool(RedisKey.PVPC_ACTIVE)
 
-        if state:
-            return state
+        if state is None:
+            self.__redis.set_bool(RedisKey.PVPC_ACTIVE, True)
+            return True
 
-        return self.toggle()
+        return state
 
     def create(self, dto: CreatePVPCDTO) -> PVPCDTO:
         with Session() as db:

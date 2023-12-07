@@ -8,3 +8,6 @@ class ConfigService:
 
     def get(self) -> ConfigDTO:
         return self.__repo.get()
+
+    def update(self, dto: ConfigDTO) -> None:
+        self.__repo.update(dto)

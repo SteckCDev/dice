@@ -27,7 +27,7 @@ from core.services import (
 from core.states import GameMode
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    MockConfigRepository,
+    RedisConfigRepository,
     PostgresRedisPVBRepository,
     PostgresRedisPVPRepository,
     PostgresRedisUserRepository,
@@ -43,7 +43,7 @@ class PrivateDiceHandler(BaseTeleBotHandler):
         self.user_dice: int = user_dice
 
         config_service: ConfigService = ConfigService(
-            repository=MockConfigRepository()
+            repository=RedisConfigRepository()
         )
         self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),

@@ -5,12 +5,10 @@ from telebot.types import Message
 from core.schemas.config import ConfigDTO
 from core.schemas.pvpc import (
     PVPCDTO,
-    CreatePVPCDTO,
 )
 from core.schemas.user import (
     UserDTO,
     CreateUserDTO,
-    UpdateUserDTO,
     UserCacheDTO,
 )
 from core.services import (
@@ -21,7 +19,7 @@ from core.services import (
 from core.states import PVPCStatus
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    MockConfigRepository,
+    RedisConfigRepository,
     PostgresRedisPVPCRepository,
     PostgresRedisUserRepository,
 )
@@ -37,7 +35,7 @@ class GroupTextHandler(BaseTeleBotHandler):
         self.message: Message = message
 
         config_service: ConfigService = ConfigService(
-            repository=MockConfigRepository()
+            repository=RedisConfigRepository()
         )
         self.__user_service: UserService = UserService(
             repository=PostgresRedisUserRepository(),
