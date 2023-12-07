@@ -39,12 +39,12 @@ class Markups:
 
     @staticmethod
     def profile(beta_mode: bool) -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("💵 Капуста", callback_data="transactions"),
-            InlineKeyboardButton("💳 Транзакции", callback_data="transactions-mine"),
+        beta_caption = "Выключить бета-режим" if beta_mode else "Включить бета-режим"
+
+        return InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton("💳 Транзакции", callback_data="transactions"),
             InlineKeyboardButton("📋 Топ-5 лучших", callback_data="top5"),
-            InlineKeyboardButton(f"{get_balance_emoji(beta_mode)} Бета-режим", callback_data=f"switch-beta"),
-            # InlineKeyboardButton("🛑 Закрыть", callback_data="hide")
+            InlineKeyboardButton(f"{get_balance_emoji(beta_mode)} {beta_caption}", callback_data=f"switch-beta")
         )
 
     @staticmethod
@@ -69,18 +69,18 @@ class Markups:
     @staticmethod
     def pvb() -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("🎲 Создать", callback_data="pvb-create"),
+            InlineKeyboardButton("Инструкция", callback_data="pvb-instruction"),
             InlineKeyboardButton("📋 Мои игры", callback_data="pvb-history"),
             InlineKeyboardButton("<< Назад", callback_data="games"),
-            InlineKeyboardButton("Инструкция", callback_data="pvb-instruction")
+            InlineKeyboardButton("🎲 Создать", callback_data="pvb-create")
         )
 
     @staticmethod
     def pvb_create(bots_turn_first: bool) -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("🛑 Отменить", callback_data="pvb"),
-            InlineKeyboardButton("🔄️ Обновить", callback_data="pvb-create"),
+            InlineKeyboardButton("Обновить", callback_data="pvb-create"),
             InlineKeyboardButton(f"🔁 Первый {'бот' if bots_turn_first else 'я'}", callback_data="pvb-switch-turn"),
+            InlineKeyboardButton("<< Назад", callback_data="pvb"),
             InlineKeyboardButton("🎲 Начать", callback_data=f"pvb-start")
         )
 
@@ -122,12 +122,12 @@ class Markups:
     def pvp(user_id: int, games_pvp: list[PVPDTO] | None, pages_total: int, page: int = 0) -> InlineKeyboardMarkup:
         if games_pvp is None:
             return InlineKeyboardMarkup(row_width=2).add(
-                InlineKeyboardButton("Создать", callback_data="pvp-create"),
-                InlineKeyboardButton("Мои игры", callback_data="pvp-history"),
                 InlineKeyboardButton("Рейтинг", callback_data="pvp-rating"),
+                InlineKeyboardButton("Мои игры", callback_data="pvp-history"),
                 InlineKeyboardButton("Инструкция", callback_data="pvp-instruction"),
-                InlineKeyboardButton("<< Игры", callback_data="games"),
-                InlineKeyboardButton("Обновить", callback_data=f"pvp:1")
+                InlineKeyboardButton("Обновить", callback_data=f"pvp:1"),
+                InlineKeyboardButton("<< Назад", callback_data="games"),
+                InlineKeyboardButton("🎲 Создать", callback_data="pvp-create"),
             )
 
         if page > pages_total:
@@ -158,7 +158,7 @@ class Markups:
         markup: InlineKeyboardMarkup = InlineKeyboardMarkup(row_width=2)
 
         markup.add(
-            InlineKeyboardButton("Создать", callback_data="pvp-create"),
+            InlineKeyboardButton("Рейтинг", callback_data=f"pvp-rating"),
             InlineKeyboardButton("Мои игры", callback_data=f"pvp-history")
         )
 
@@ -188,17 +188,17 @@ class Markups:
 
         markup.add(
             InlineKeyboardButton("Инструкция", callback_data=f"pvp-instruction"),
-            InlineKeyboardButton("Рейтинг", callback_data=f"pvp-rating")
+            InlineKeyboardButton("Обновить", callback_data=f"pvp:1")
         )
         markup.add(
-            InlineKeyboardButton("<< Игры", callback_data="games"),
-            InlineKeyboardButton("Обновить", callback_data=f"pvp:1")
+            InlineKeyboardButton("<< Назад", callback_data="games"),
+            InlineKeyboardButton("🎲 Создать", callback_data="pvp-create")
         )
 
         return markup
 
     @staticmethod
-    def pvp_details(user: UserDTO, pvp_details: PVPDetailsDTO) -> InlineKeyboardMarkup:
+    def pvp_details(user: UserDTO, pvp_details: PVPDetailsDTO, page: int) -> InlineKeyboardMarkup:
         markup = InlineKeyboardMarkup(row_width=1)
 
         if user.tg_id == pvp_details.creator_tg_id and pvp_details.cancellation_unlocks_in is None:
@@ -207,7 +207,7 @@ class Markups:
             )
 
         markup.add(
-            InlineKeyboardButton("<< Назад", callback_data="pvp")
+            InlineKeyboardButton("<< Назад", callback_data=f"pvp:{page}")
         )
 
         return markup
@@ -215,9 +215,9 @@ class Markups:
     @staticmethod
     def pvp_create() -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("🛑 Отменить", callback_data="pvp"),
-            InlineKeyboardButton("🔄️ Обновить", callback_data="pvp-create"),
-            InlineKeyboardButton("✅ Создать игру", callback_data="pvp-confirm")
+            InlineKeyboardButton("<< Назад", callback_data="pvp"),
+            InlineKeyboardButton("Обновить", callback_data="pvp-create"),
+            InlineKeyboardButton("🎲 Создать игру", callback_data="pvp-confirm")
         )
 
     @staticmethod

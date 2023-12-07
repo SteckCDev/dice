@@ -139,7 +139,9 @@ class CallbackHandler(BaseTeleBotHandler):
                     self.user_cache.pvb_bots_turn_first,
                     self.user_cache.beta_mode,
                     self.user.beta_balance if self.user_cache.beta_mode else self.user.balance,
-                    self.user_cache.pvb_bet
+                    self.user_cache.pvb_bet,
+                    self.config.min_bet,
+                    self.config.max_bet
                 ),
                 Markups.pvb_create(self.user_cache.pvb_bots_turn_first)
             )
@@ -153,7 +155,9 @@ class CallbackHandler(BaseTeleBotHandler):
                     self.user_cache.pvb_bots_turn_first,
                     self.user_cache.beta_mode,
                     self.user.beta_balance if self.user_cache.beta_mode else self.user.balance,
-                    self.user_cache.pvb_bet
+                    self.user_cache.pvb_bet,
+                    self.config.min_bet,
+                    self.config.max_bet
                 ),
                 Markups.pvb_create(self.user_cache.pvb_bots_turn_first)
             )
@@ -187,7 +191,7 @@ class CallbackHandler(BaseTeleBotHandler):
         self.__user_service.update_cache(self.user_cache)
 
         if self.path_args[0] == "pvp":
-            page = int(self.path_args[1]) if len(self.path_args) > 1 else 0
+            page = int(self.path_args[1]) if len(self.path_args) > 1 else 1
 
             available_pvp_games = self.__pvp_service.get_all_for_status(PVPStatus.CREATED)
             available_pvp_games_count = len(available_pvp_games) if available_pvp_games else 0
@@ -208,10 +212,11 @@ class CallbackHandler(BaseTeleBotHandler):
             )
 
         elif self.path_args[0] == "pvp-details":
-            if len(self.path_args) != 2 or not self.path_args[1].isdigit():
+            if len(self.path_args) not in (2, 3) or not self.path_args[1].isdigit():
                 return
 
             _id = int(self.path_args[1])
+            _page = int(self.path_args[2])
 
             self.user_cache.pvp_game_id = _id
             self.__user_service.update_cache(self.user_cache)
@@ -225,7 +230,8 @@ class CallbackHandler(BaseTeleBotHandler):
                 ),
                 Markups.pvp_details(
                     self.user,
-                    pvp_details
+                    pvp_details,
+                    _page
                 )
             )
 
@@ -246,6 +252,7 @@ class CallbackHandler(BaseTeleBotHandler):
             self.edit_message_in_context(
                 Messages.pvp_create(
                     self.user_cache,
+                    self.__user_service.get_user_selected_balance(self.user.tg_id),
                     self.config.min_bet,
                     self.config.max_bet
                 ),

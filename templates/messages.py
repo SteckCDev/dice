@@ -34,20 +34,21 @@ class Messages:
 
     @staticmethod
     def balance(balance: int, beta_balance: int) -> str:
-        return f"💵 Ваш баланс: {bold(balance)} RUB\n" \
-               f"💴 Бета-баланс: {bold(beta_balance)} RUB"
+        return f"💵 Ваш баланс: {bold(balance)}\n" \
+               f"💴 Бета-баланс: {bold(beta_balance)}"
 
     @staticmethod
     def games(selected_balance: int, beta_mode: bool) -> str:
-        return f"{bold('🎲 Выберите режим игры')}\n\n" \
-               f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(selected_balance)} RUB"
+        return f"{bold('🎲 Дайс / Режимы игр')}\n\n" \
+               f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(selected_balance)}"
 
     @staticmethod
     def profile(name: str, balance: int, beta_balance: int, joined_at: datetime, games_count: int) -> str:
-        return f"Имя: {bold(name)}\n" \
+        return f"{bold('🎲 Дайс / Профиль')}\n\n" \
+               f"Имя: {bold(name)}\n" \
                f"Баланс: {bold(balance)}\n" \
                f"Бета-баланс: {bold(beta_balance)}\n" \
-               f"Дата регистрации: {bold(joined_at)} (UTC)\n" \
+               f"Дата регистрации: {bold(joined_at.strftime('%y.%m.%d %H:%M'))} (UTC)\n" \
                f"Всего игр: {bold(games_count)}"
 
     @staticmethod
@@ -108,21 +109,35 @@ class Messages:
 
     @staticmethod
     def pvb(balance: int, beta_mode: bool) -> str:
-        return f"{bold('🤖 Игра с ботом')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+        return f"{bold('🤖 Дайс / Игра с ботом')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
                f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(balance)}"
 
     @staticmethod
-    def pvb_instruction() -> str:
-        return f"{bold('🤖 Игра с ботом - инструкция')}"
+    def pvb_history(wins_percent: float) -> str:
+        return f"{bold('🤖 Дайс / Игра с ботом - история (5)')}\n\n" \
+               f"🎲 Ваш процент побед: {bold(f'{wins_percent:.1f}%')}"
 
     @staticmethod
-    def pvb_create(bots_turn_first: bool, beta_mode: bool, selected_balance: int, bet: int) -> str:
-        balance_emoji = get_balance_emoji(beta_mode)
+    def pvb_instruction() -> str:
+        return f"{bold('🤖 Дайс / Игра с ботом - инструкция')}"
 
-        return f"{bold('🤖 Игра с ботом')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
+    @staticmethod
+    def pvb_create(
+            bots_turn_first: bool,
+            beta_mode: bool,
+            selected_balance: int,
+            bet: int,
+            min_bet: int,
+            max_bet: int
+    ) -> str:
+        upper_limit = selected_balance if min_bet < selected_balance < max_bet else max_bet
+        balance_emoji: str = get_balance_emoji(beta_mode)
+
+        return f"{bold('🤖 Дайс / Игра с ботом')}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
                f"{balance_emoji} Ваш баланс: {bold(selected_balance)}\n" \
                f"{balance_emoji} Ставка: {bold(bet)}\n" \
-               f"🔁 Первым {bold('бросает бот' if bots_turn_first else 'бросаете вы')}"
+               f"🔁 Первым {bold('бросает бот' if bots_turn_first else 'бросаете вы')}\n\n" \
+               f"{cursive(f'Введите сумму ставки от {min_bet} до {upper_limit}')}"
 
     @staticmethod
     def pvb_result(beta_mode: bool, selected_balance: int, player_won: bool | None, game_id: int) -> str:
@@ -136,10 +151,6 @@ class Messages:
         return f"🎲 Игра #{game_id:03}{cursive(' - бета-режим') if beta_mode else ''}\n\n" \
                f"{result}\n" \
                f"{get_balance_emoji(beta_mode)} Ваш баланс: {bold(selected_balance)}"
-
-    @staticmethod
-    def pvb_history(wins_percent: float) -> str:
-        return f"🎲 Ваш процент побед: {bold(f'{wins_percent:.1f}%')}"
 
     @staticmethod
     def pvp_join_rejected(game_id: int, beta_mode: bool) -> str:
@@ -166,14 +177,17 @@ class Messages:
     @staticmethod
     def pvp(available_pvp_games_count: int, pages_total: int, page: int = 1) -> str:
         if available_pvp_games_count == 0:
-            return bold("🎲 На данный момент нет доступных игр")
+            return f"{bold('👥 Дайс / Игра с соперником')}\n\n" \
+                   f"{cursive('На данный момент нет доступных игр')}"
 
-        return f"{bold(f'🎲 Доступно {available_pvp_games_count} игр')}\n\n" \
-               f"📋 Страница: {bold(f'{page} / {pages_total}')}"
+        return f"{bold('👥 Дайс / Игра с соперником')}\n\n" \
+               f"Доступно игр: {bold(available_pvp_games_count)}\n" \
+               f"Страница: {bold(f'{page} / {pages_total}')}"
 
     @staticmethod
     def pvp_instruction() -> str:
-        return "🎲 Вы можете, либо присоединиться к существующей игре, либо создать свою\n" \
+        return f"{bold('👥 Дайс / Игра с соперником - инструкция')}\n\n" \
+               "Вы можете, либо присоединиться к существующей игре, либо создать свою\n" \
                "- Если в существующую игру вступает игрок и бросает кубик, " \
                "у создателя игры есть минута чтобы бросить кубик в ответ, иначе это сделает бот\n" \
                "- Если игру не приняли в течение 72 часов, она автоматически закрывается " \
@@ -212,10 +226,14 @@ class Messages:
         return bold(f'✅ Игра #{game_id:03} успешно отменена, баланс восстановлен')
 
     @staticmethod
-    def pvp_create(user_cache: UserCacheDTO, min_bet: int, max_bet: int) -> str:
-        return f"{bold('👥 Игра с соперником')} {cursive(' - бета-режим') if user_cache.beta_mode else ''}\n\n" \
-               f"{get_balance_emoji(user_cache.beta_mode)} Ставка: {bold(user_cache.pvp_bet)}\n\n" \
-               f"{cursive(f'Введите сумму ставки от {min_bet} RUB до {max_bet} RUB')}"
+    def pvp_create(user_cache: UserCacheDTO, selected_balance: int, min_bet: int, max_bet: int) -> str:
+        upper_limit = selected_balance if min_bet < selected_balance < max_bet else max_bet
+        balance_emoji = get_balance_emoji(user_cache.beta_mode)
+
+        return f"{bold('👥 Дайс / Игра с соперником')} {cursive(' - бета-режим') if user_cache.beta_mode else ''}\n\n" \
+               f"{balance_emoji} Ваш баланс: {bold(selected_balance)}\n" \
+               f"{balance_emoji} Ставка: {bold(user_cache.pvp_bet)}\n\n" \
+               f"{cursive(f'Введите сумму ставки от {min_bet} до {upper_limit}')}"
 
     @staticmethod
     def pvp_confirm(game_id: int, user_cache: UserCacheDTO) -> str:

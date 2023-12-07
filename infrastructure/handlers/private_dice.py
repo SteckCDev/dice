@@ -63,14 +63,14 @@ class PrivateDiceHandler(BaseTeleBotHandler):
             user_service=self.__user_service
         )
 
-        config: ConfigDTO = config_service.get()
+        self.config: ConfigDTO = config_service.get()
 
         self.user: UserDTO = self.__user_service.get_or_create(
             CreateUserDTO(
                 tg_id=user_id,
                 tg_name=html.escape(user_name),
-                balance=config.start_balance,
-                beta_balance=config.start_beta_balance
+                balance=self.config.start_balance,
+                beta_balance=self.config.start_beta_balance
             )
         )
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
@@ -106,7 +106,9 @@ class PrivateDiceHandler(BaseTeleBotHandler):
                 self.user_cache.pvb_bots_turn_first,
                 self.user_cache.beta_mode,
                 selected_balance,
-                self.user_cache.pvb_bet
+                self.user_cache.pvb_bet,
+                self.config.min_bet,
+                self.config.max_bet
             ),
             Markups.pvb_create(self.user_cache.pvb_bots_turn_first)
         )
