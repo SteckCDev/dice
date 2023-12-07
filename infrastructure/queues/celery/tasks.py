@@ -12,11 +12,11 @@ from core.services.pvp import TTL_OF_CREATED
 from core.services.pvpc import TTL_AFTER_CREATION
 from infrastructure.api_services.telebot import TeleBotAPI
 from infrastructure.repositories import (
-    RedisAdminRepository,
-    PostgresRedisPVPRepository,
-    PostgresRedisPVPCRepository,
-    PostgresRedisUserRepository,
-    RedisConfigRepository,
+    ImplementedAdminRepository,
+    ImplementedPVPRepository,
+    ImplementedPVPCRepository,
+    ImplementedUserRepository,
+    ImplementedConfigRepository,
 )
 from settings import settings
 from .instance import celery_instance
@@ -28,27 +28,27 @@ bot: TeleBotAPI = TeleBotAPI(
     threaded=settings.threaded
 )
 config_service: ConfigService = ConfigService(
-    repository=RedisConfigRepository()
+    repository=ImplementedConfigRepository()
 )
 user_service: UserService = UserService(
-    repository=PostgresRedisUserRepository(),
+    repository=ImplementedUserRepository(),
     bot=bot,
     config_service=config_service
 )
 pvp_service: PVPService = PVPService(
-    repository=PostgresRedisPVPRepository(),
+    repository=ImplementedPVPRepository(),
     bot=bot,
     config_service=config_service,
     user_service=user_service
 )
 pvpc_service: PVPCService = PVPCService(
-    repository=PostgresRedisPVPCRepository(),
+    repository=ImplementedPVPCRepository(),
     bot=bot,
     config_service=config_service,
     user_service=user_service
 )
 admin_service: AdminService = AdminService(
-    repository=RedisAdminRepository(),
+    repository=ImplementedAdminRepository(),
     bot=bot,
     user_service=user_service,
     config_service=config_service

@@ -7,8 +7,8 @@ from core.services import (
 )
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    RedisConfigRepository,
-    PostgresRedisUserRepository,
+    ImplementedConfigRepository,
+    ImplementedUserRepository,
 )
 from templates import Markups, Messages
 
@@ -20,10 +20,10 @@ class StartHandler(BaseTeleBotHandler):
         self.chat_id: int = chat_id
 
         self.__config_service: ConfigService = ConfigService(
-            repository=RedisConfigRepository()
+            repository=ImplementedConfigRepository()
         )
         self.__user_service: UserService = UserService(
-            repository=PostgresRedisUserRepository(),
+            repository=ImplementedUserRepository(),
             bot=self._bot,
             config_service=self.__config_service
         )

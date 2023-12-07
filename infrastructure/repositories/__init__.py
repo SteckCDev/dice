@@ -1,6 +1,15 @@
-from .admin import RedisAdminRepository
-from .config import RedisConfigRepository, RedisConfigRepository
-from .pvb import PostgresRedisPVBRepository
-from .pvp import PostgresRedisPVPRepository
-from .pvpc import PostgresRedisPVPCRepository
-from .user import PostgresRedisUserRepository
+from .admin import RedisAdminRepository as __RedisAdminRepository
+from .config import RedisConfigRepository as __RedisConfigRepository
+from .config import MockConfigRepository as __MockConfigRepository
+from .pvb import PostgresRedisPVBRepository as __PostgresRedisPVBRepository
+from .pvp import PostgresRedisPVPRepository as __PostgresRedisPVPRepository
+from .pvpc import PostgresRedisPVPCRepository as __PostgresRedisPVPCRepository
+from .user import PostgresRedisUserRepository as __PostgresRedisUserRepository
+
+
+ImplementedAdminRepository = __RedisAdminRepository
+ImplementedConfigRepository = __RedisConfigRepository
+ImplementedPVBRepository = __PostgresRedisPVBRepository
+ImplementedPVPRepository = __PostgresRedisPVPRepository
+ImplementedPVPCRepository = __PostgresRedisPVPCRepository
+ImplementedUserRepository = __PostgresRedisUserRepository

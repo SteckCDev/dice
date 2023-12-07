@@ -8,9 +8,9 @@ from core.services import (
 )
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    RedisConfigRepository,
-    PostgresRedisPVBRepository,
-    PostgresRedisUserRepository,
+    ImplementedConfigRepository,
+    ImplementedPVBRepository,
+    ImplementedUserRepository,
 )
 from templates import Markups, Messages
 
@@ -24,15 +24,15 @@ class PVBHandler(BaseTeleBotHandler):
         self.user_id: int = user_id
 
         config_service: ConfigService = ConfigService(
-            repository=RedisConfigRepository()
+            repository=ImplementedConfigRepository()
         )
         self.__user_service: UserService = UserService(
-            repository=PostgresRedisUserRepository(),
+            repository=ImplementedUserRepository(),
             bot=self._bot,
             config_service=config_service
         )
         self.__pvb_service: PVBService = PVBService(
-            repository=PostgresRedisPVBRepository(),
+            repository=ImplementedPVBRepository(),
             bot=self._bot,
             config_service=config_service,
             user_service=self.__user_service

@@ -14,9 +14,9 @@ from core.services import (
 from core.states import GameMode
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    RedisAdminRepository,
-    RedisConfigRepository,
-    PostgresRedisUserRepository,
+    ImplementedAdminRepository,
+    ImplementedConfigRepository,
+    ImplementedUserRepository,
 )
 from templates import (
     Markups,
@@ -39,15 +39,15 @@ class PrivateTextHandler(BaseTeleBotHandler):
         self.is_admin = user_id == settings.admin_tg_id
 
         config_service: ConfigService = ConfigService(
-            repository=RedisConfigRepository()
+            repository=ImplementedConfigRepository()
         )
         self.__user_service: UserService = UserService(
-            repository=PostgresRedisUserRepository(),
+            repository=ImplementedUserRepository(),
             bot=self._bot,
             config_service=config_service
         )
         self.__admin_service: AdminService = AdminService(
-            repository=RedisAdminRepository(),
+            repository=ImplementedAdminRepository(),
             bot=self._bot,
             user_service=self.__user_service,
             config_service=config_service

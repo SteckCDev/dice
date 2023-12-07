@@ -19,9 +19,9 @@ from core.services import (
 from core.states import PVPCStatus
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    RedisConfigRepository,
-    PostgresRedisPVPCRepository,
-    PostgresRedisUserRepository,
+    ImplementedConfigRepository,
+    ImplementedPVPCRepository,
+    ImplementedUserRepository,
 )
 from templates import Markups, Messages
 
@@ -35,15 +35,15 @@ class GroupTextHandler(BaseTeleBotHandler):
         self.message: Message = message
 
         config_service: ConfigService = ConfigService(
-            repository=RedisConfigRepository()
+            repository=ImplementedConfigRepository()
         )
         self.__user_service: UserService = UserService(
-            repository=PostgresRedisUserRepository(),
+            repository=ImplementedUserRepository(),
             bot=self._bot,
             config_service=config_service
         )
         self.__pvpc_service: PVPCService = PVPCService(
-            repository=PostgresRedisPVPCRepository(),
+            repository=ImplementedPVPCRepository(),
             bot=self._bot,
             config_service=config_service,
             user_service=self.__user_service

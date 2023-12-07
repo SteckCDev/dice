@@ -42,12 +42,12 @@ from core.states import (
 )
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
-    RedisAdminRepository,
-    RedisConfigRepository,
-    PostgresRedisPVBRepository,
-    PostgresRedisPVPRepository,
-    PostgresRedisPVPCRepository,
-    PostgresRedisUserRepository,
+    ImplementedAdminRepository,
+    ImplementedConfigRepository,
+    ImplementedPVBRepository,
+    ImplementedPVPRepository,
+    ImplementedPVPCRepository,
+    ImplementedUserRepository,
 )
 from infrastructure.queues.celery.tasks import mailing
 from settings import settings
@@ -77,33 +77,33 @@ class CallbackHandler(BaseTeleBotHandler):
         self.edit_message_in_context = self._bot.get_edit_message_for_context(self.chat_id, self.message_id)
 
         config_service: ConfigService = ConfigService(
-            repository=RedisConfigRepository()
+            repository=ImplementedConfigRepository()
         )
         self.__user_service: UserService = UserService(
-            repository=PostgresRedisUserRepository(),
+            repository=ImplementedUserRepository(),
             bot=self._bot,
             config_service=config_service
         )
         self.__pvb_service: PVBService = PVBService(
-            repository=PostgresRedisPVBRepository(),
+            repository=ImplementedPVBRepository(),
             bot=self._bot,
             config_service=config_service,
             user_service=self.__user_service
         )
         self.__pvp_service: PVPService = PVPService(
-            repository=PostgresRedisPVPRepository(),
+            repository=ImplementedPVPRepository(),
             bot=self._bot,
             config_service=config_service,
             user_service=self.__user_service
         )
         self.__pvpc_service: PVPCService = PVPCService(
-            repository=PostgresRedisPVPCRepository(),
+            repository=ImplementedPVPCRepository(),
             bot=self._bot,
             config_service=config_service,
             user_service=self.__user_service
         )
         self.__admin_service: AdminService = AdminService(
-            repository=RedisAdminRepository(),
+            repository=ImplementedAdminRepository(),
             bot=self._bot,
             user_service=self.__user_service,
             config_service=config_service
