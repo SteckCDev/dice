@@ -1,9 +1,13 @@
-from typing import Final
+from typing import Any, Final
 
 from pydantic import ValidationError
 
+from core.abstract_bot import AbstractBotAPI
 from core.services.config import ConfigService
+from core.services.user import UserService
 from core.schemas.config import UpdateConfig, ConfigDTO
+from core.schemas.user import UserDTO
+from core.repositories import AdminRepository
 
 
 ADJUST_COMMANDS: Final[dict[str, tuple[str, ...]]] = {
@@ -29,7 +33,16 @@ ADJUST_COMMANDS: Final[dict[str, tuple[str, ...]]] = {
 
 
 class AdminService:
-    def __init__(self, config_service: ConfigService) -> None:
+    def __init__(
+            self,
+            repository: AdminRepository,
+            bot: AbstractBotAPI,
+            user_service: UserService,
+            config_service: ConfigService
+    ) -> None:
+        self.__repo: AdminRepository = repository
+        self.__bot: AbstractBotAPI = bot
+        self.__user_service: UserService = user_service
         self.__config_service: ConfigService = config_service
 
         self.__config: UpdateConfig = UpdateConfig(
@@ -159,3 +172,29 @@ class AdminService:
             return UpdateConfig.get_first_error_msg(err)
         except ValueError as err:
             return str(err)
+
+    def set_mailing_text(self, text: str) -> None:
+        self.__repo.set_mailing_text(text)
+
+    def get_mailing_text(self) -> str | None:
+        return self.__repo.get_mailing_text()
+
+    def mailing(self, admin_tg_id: int, to_except: tuple[Exception | Any]) -> None:
+        users: list[UserDTO] = self.__user_service.get_all()
+        mail: str | None = self.__repo.get_mailing_text()
+
+        if mail is None:
+            self.__bot.send_message(admin_tg_id, "Не задан текст рассылки")
+            return
+
+        succeed: int = 0
+        failed: int = 0
+
+        for user in users:
+            try:
+                self.__bot.send_message(user.tg_id, mail)
+                succeed += 1
+            except to_except:
+                failed += 1
+
+        self.__bot.send_message(admin_tg_id, f"Успешно отправлено: {succeed}\nНе удалось: {failed}")

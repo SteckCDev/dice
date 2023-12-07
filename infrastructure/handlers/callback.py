@@ -29,6 +29,7 @@ from core.schemas.user import (
     UserCacheDTO,
 )
 from core.services import (
+    AdminService,
     ConfigService,
     PVBService,
     PVPService,
@@ -41,12 +42,14 @@ from core.states import (
 )
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
+    RedisAdminRepository,
     RedisConfigRepository,
     PostgresRedisPVBRepository,
     PostgresRedisPVPRepository,
     PostgresRedisPVPCRepository,
     PostgresRedisUserRepository,
 )
+from infrastructure.queues.celery.tasks import mailing
 from settings import settings
 from templates import Markups, Messages
 
@@ -98,6 +101,12 @@ class CallbackHandler(BaseTeleBotHandler):
             bot=self._bot,
             config_service=config_service,
             user_service=self.__user_service
+        )
+        self.__admin_service: AdminService = AdminService(
+            repository=RedisAdminRepository(),
+            bot=self._bot,
+            user_service=self.__user_service,
+            config_service=config_service
         )
 
         self.config: ConfigDTO = config_service.get()
@@ -378,6 +387,44 @@ class CallbackHandler(BaseTeleBotHandler):
             )
         )
 
+    def __process_admin_mailing(self) -> None:
+        if self.path_args[0] == "admin-mailing":
+            self.edit_message_in_context(
+                Messages.admin_mailing(),
+                Markups.admin_mailing()
+            )
+
+        elif self.path_args[0] == "admin-mailing-preview":
+            mail: str | None = self.__admin_service.get_mailing_text()
+
+            if mail is None:
+                mail = "Не задан текст рассылки"
+
+            self._bot.send_message(self.user.tg_id, mail)
+
+        elif self.path_args[0] == "admin-mailing-start":
+            mailing.delay()
+
+            self.edit_message_in_context(
+                Messages.admin_mailing_started(),
+                Markups.back_to("admin")
+            )
+
+    def __process_admin_misc(self) -> None:
+        if self.path_args[0] == "admin":
+            self.edit_message_in_context(
+                Messages.admin(
+                    self.__user_service.get_cached_users_count()
+                ),
+                Markups.admin(
+                    self.__pvb_service.get_status(),
+                    self.__pvp_service.get_status(),
+                    self.__pvpc_service.get_status(),
+                    False,
+                    False
+                )
+            )
+
     def __process_misc(self) -> None:
         if self.path == "terms-accept":
             self.__user_service.agree_with_terms_and_conditions(self.user.tg_id)
@@ -469,6 +516,12 @@ class CallbackHandler(BaseTeleBotHandler):
 
         elif self.path.startswith("admin-switch"):
             self.__process_admin_switches()
+
+        elif self.path.startswith("admin-mailing"):
+            self.__process_admin_mailing()
+
+        elif self.path.startswith("admin"):
+            self.__process_admin_misc()
 
         else:
             self.__process_misc()

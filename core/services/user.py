@@ -24,6 +24,9 @@ class UserService:
     def get_or_create(self, dto: CreateUserDTO) -> UserDTO:
         return self.__repo.get_or_create(dto)
 
+    def get_all(self) -> list[UserDTO] | None:
+        return self.__repo.get_all()
+
     def get_by_tg_id(self, tg_id: int) -> UserDTO | None:
         return self.__repo.get_by_tg_id(tg_id)
 

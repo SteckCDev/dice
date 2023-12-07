@@ -12,7 +12,7 @@ from core.schemas.pvpc import (
 from infrastructure.database import Session
 from infrastructure.database.models import PVPCModel
 from infrastructure.cache.redis import RedisKey, RedisInterface, redis_instance
-from states import PVPCStatus
+from core.states import PVPCStatus
 
 
 class PostgresRedisPVPCRepository(PVPCRepository):

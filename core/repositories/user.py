@@ -18,6 +18,10 @@ class UserRepository(ABC):
         ...
 
     @abstractmethod
+    def get_all(self) -> list[UserDTO] | None:
+        ...
+
+    @abstractmethod
     def update(self, dto: UpdateUserDTO) -> None:
         ...
 

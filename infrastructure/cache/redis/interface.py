@@ -13,6 +13,12 @@ class RedisInterface:
         # noinspection PyTypeChecker
         self.__client: Redis = Redis.from_url(settings.redis_dsn, db=database)
 
+    def set(self, key: str, value: str) -> None:
+        self.__client.set(key, value)
+
+    def get(self, key: str) -> str | None:
+        return self.__client.get(key)
+
     def set_bool(self, key: str, value: bool) -> None:
         self.__client.set(key, int(value))
 

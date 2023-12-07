@@ -1,14 +1,18 @@
 from celery import Celery
+from telebot.apihelper import ApiTelegramException
 
 from core.services import (
+    AdminService,
     ConfigService,
     PVPService,
     PVPCService,
     UserService,
 )
 from core.services.pvp import TTL_OF_CREATED
+from core.services.pvpc import TTL_AFTER_CREATION
 from infrastructure.api_services.telebot import TeleBotAPI
 from infrastructure.repositories import (
+    RedisAdminRepository,
     PostgresRedisPVPRepository,
     PostgresRedisPVPCRepository,
     PostgresRedisUserRepository,
@@ -43,6 +47,12 @@ pvpc_service: PVPCService = PVPCService(
     config_service=config_service,
     user_service=user_service
 )
+admin_service: AdminService = AdminService(
+    repository=RedisAdminRepository(),
+    bot=bot,
+    user_service=user_service,
+    config_service=config_service
+)
 
 
 @celery_instance.on_after_finalize.connect
@@ -54,6 +64,14 @@ def setup_beat(sender: Celery, **_kwargs) -> None:
     sender.add_periodic_task(
         schedule=TTL_OF_CREATED.seconds,
         sig=pvp_close_expired.s()
+    )
+    sender.add_periodic_task(
+        schedule=5,
+        sig=pvpc_finish_started.s()
+    )
+    sender.add_periodic_task(
+        schedule=TTL_AFTER_CREATION.seconds,
+        sig=pvpc_close_expired.s()
     )
 
 
@@ -75,3 +93,11 @@ def pvpc_finish_started() -> None:
 @celery_instance.task
 def pvpc_close_expired() -> None:
     pvpc_service.auto_close_expired_games()
+
+
+@celery_instance.task
+def mailing() -> None:
+    admin_service.mailing(
+        settings.admin_tg_id,
+        (ApiTelegramException,)
+    )

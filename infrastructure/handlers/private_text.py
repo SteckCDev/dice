@@ -14,6 +14,7 @@ from core.services import (
 from core.states import GameMode
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
+    RedisAdminRepository,
     RedisConfigRepository,
     PostgresRedisUserRepository,
 )
@@ -46,6 +47,9 @@ class PrivateTextHandler(BaseTeleBotHandler):
             config_service=config_service
         )
         self.__admin_service: AdminService = AdminService(
+            repository=RedisAdminRepository(),
+            bot=self._bot,
+            user_service=self.__user_service,
             config_service=config_service
         )
 
@@ -53,24 +57,22 @@ class PrivateTextHandler(BaseTeleBotHandler):
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
     def __process_admin(self) -> bool:
+        if self.text[0] == ">" and len(self.text) > 1:
+            self.__admin_service.set_mailing_text(self.text[1:])
+            return True
+
         adjusted_or_error: bool | str = self.__admin_service.try_to_adjust_config_field(
             self.text.split()
         )
 
-        if isinstance(adjusted_or_error, str):
-            self._bot.send_message(
-                self.user_id,
-                adjusted_or_error
-            )
-            return True
-
         if adjusted_or_error:
             self._bot.send_message(
                 self.user_id,
-                Messages.admin_config_adjusted()
+                Messages.admin_config_adjusted() if isinstance(adjusted_or_error, bool) else adjusted_or_error
             )
+            return True
 
-        return adjusted_or_error
+        return False
 
     def __set_bet(self) -> None:
         bet: int = int(self.text)

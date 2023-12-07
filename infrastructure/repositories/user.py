@@ -40,6 +40,15 @@ class PostgresRedisUserRepository(UserRepository):
                 **db.get(UserModel, dto.tg_id).__dict__
             )
 
+    def get_all(self) -> list[UserDTO] | None:
+        with Session() as db:
+            users: list[Type[UserModel]] = db.query(UserModel).all()
+
+        if len(users) == 0:
+            return
+
+        return [UserDTO(**user.__dict__) for user in users]
+
     def get_by_tg_id(self, tg_id: int) -> UserDTO | None:
         with Session() as db:
             user: Type[UserModel] | None = db.get(UserModel, tg_id)

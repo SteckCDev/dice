@@ -241,7 +241,7 @@ class Markups:
             InlineKeyboardButton("📋 Общая статистика", callback_data="admin-total"),
             InlineKeyboardButton("⏳ Транзакции", callback_data="admin-transactions"),
             InlineKeyboardButton("🎲 Созданные игры", callback_data="admin-log-filtered"),
-            InlineKeyboardButton("📢 Рассылка", callback_data="admin-call"),
+            InlineKeyboardButton("📢 Рассылка", callback_data="admin-mailing"),
             InlineKeyboardButton(
                 f"{get_status_emoji(pvb_active)} PVB",
                 callback_data=f"admin-switch-pvb"
@@ -262,4 +262,12 @@ class Markups:
                 f"{get_status_emoji(transactions_active)} Транзакции",
                 callback_data=f"admin-switch-transactions"
             ),
+        )
+
+    @staticmethod
+    def admin_mailing() -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton("📢 Начать рассылку", callback_data="admin-mailing-start"),
+            InlineKeyboardButton("📋 Предпросмотр", callback_data="admin-mailing-preview"),
+            InlineKeyboardButton("<< Назад", callback_data="admin")
         )

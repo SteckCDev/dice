@@ -338,5 +338,15 @@ class Messages:
                f"например, - {cursive('комиссия')}"
 
     @staticmethod
+    def admin_mailing() -> str:
+        return f"{bold('🎲 Дайс / Рассылка')}\n\n" \
+               f"{cursive('>[текст рассылки]')}"
+
+    @staticmethod
+    def admin_mailing_started() -> str:
+        return f"{bold('🎲 Дайс / Рассылка')}\n\n" \
+               f"Рассылка запущена"
+
+    @staticmethod
     def admin_config_adjusted() -> str:
         return "✅ Параметр изменён"
