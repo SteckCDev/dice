@@ -1,9 +1,10 @@
 import re
 from typing import Any, Final
 
+from templates.regexes import RegEx
 
-ANY_TAG_REGEX: Final[str] = "<.*?>"
-CLEAN_PATTERN: re.Pattern = re.compile(ANY_TAG_REGEX)
+
+CLEAN_PATTERN: Final[re.Pattern] = re.compile(RegEx.HTML_TAG)
 
 
 def remove_tags(marked_up: str) -> str:

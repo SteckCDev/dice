@@ -1,5 +1,6 @@
 from typing import Type
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
 from core.repositories import PVPRepository
@@ -50,11 +51,6 @@ class PostgresRedisPVPRepository(PVPRepository):
 
         return PVPDTO(**pvp.__dict__) if pvp else None
 
-    def update(self, dto: UpdatePVPDTO) -> None:
-        with Session() as db:
-            db.query(PVPModel).filter(PVPModel.id == dto.id).update(dto.model_dump())
-            db.commit()
-
     def get_all_for_status(self, status: PVPStatus) -> list[PVPDTO] | None:
         with Session() as db:
             games: Query[Type[PVPModel]] = db.query(PVPModel).filter(
@@ -68,6 +64,15 @@ class PostgresRedisPVPRepository(PVPRepository):
                 PVPDTO(**game.__dict__) for game in games
             ]
 
+    def get_last_for_tg_id_and_status(self, tg_id: int, status: int) -> PVPDTO | None:
+        with Session() as db:
+            pvp: Type[PVPModel] = db.query(PVPModel).filter(
+                or_(PVPModel.creator_tg_id == tg_id, PVPModel.opponent_tg_id == tg_id),
+                PVPModel.status == status
+            ).order_by(PVPModel.id.desc()).first()
+
+            return None if pvp is None else PVPDTO(**pvp.__dict__)
+
     def get_last_for_creator_and_status(self, tg_id: int, status: PVPStatus) -> PVPDTO | None:
         with Session() as db:
             pvp: Type[PVPModel] = db.query(PVPModel).filter(
@@ -76,3 +81,8 @@ class PostgresRedisPVPRepository(PVPRepository):
             ).order_by(PVPModel.id.desc()).first()
 
             return None if pvp is None else PVPDTO(**pvp.__dict__)
+
+    def update(self, dto: UpdatePVPDTO) -> None:
+        with Session() as db:
+            db.query(PVPModel).filter(PVPModel.id == dto.id).update(dto.model_dump())
+            db.commit()

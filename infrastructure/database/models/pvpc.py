@@ -14,9 +14,9 @@ class PVPCModel(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_tg_id: Mapped[int] = mapped_column(BIGINT)
-    creator_tg_id: Mapped[int] = mapped_column(ForeignKey("users.tg_id"))
-    opponent_tg_id: Mapped[int] = mapped_column(ForeignKey("users.tg_id"), nullable=True)
-    winner_tg_id: Mapped[int] = mapped_column(nullable=True)
+    creator_tg_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("users.tg_id"))
+    opponent_tg_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("users.tg_id"), nullable=True)
+    winner_tg_id: Mapped[int] = mapped_column(BIGINT, nullable=True)
     creator_dices: Mapped[list[int]] = mapped_column(ARRAY(Integer), nullable=True)
     opponent_dices: Mapped[list[int]] = mapped_column(ARRAY(Integer), nullable=True)
     bet: Mapped[int]

@@ -28,6 +28,10 @@ ADJUST_COMMANDS: Final[dict[str, tuple[str, ...]]] = {
     ),
     "чат": (
         "раунды",
+    ),
+    "транзакция": (
+        "пополнение",
+        "вывод"
     )
 }
 
@@ -145,6 +149,28 @@ class AdminService:
             
             if request_params[1] == "раунды":
                 self.__config.pvpc_max_rounds = request_params[2]
+            else:
+                raise ValueError(tip)
+
+        elif request_params[0] == "транзакция":
+            syntax: str = "Синтаксис команды: [транзакция] [пополнение / вывод] [число]\n"
+            current: str = "Текущие значения: пополнение({min_deposit}), максимальная({min_withdraw})"
+            tip: str = syntax + current
+
+            tip = tip.format(
+                min_deposit=self.__config.min_deposit,
+                min_withdraw=self.__config.min_withdraw
+            )
+
+            if not len(request_params) == 3:
+                raise ValueError(tip)
+
+            if request_params[1] == "пополнение":
+                self.__config.min_bet = request_params[2]
+
+            elif request_params[1] == "вывод":
+                self.__config.max_bet = request_params[2]
+
             else:
                 raise ValueError(tip)
             

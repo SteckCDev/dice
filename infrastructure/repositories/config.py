@@ -30,16 +30,3 @@ class RedisConfigRepository(ConfigRepository):
             RedisKey.CONFIG,
             dto.model_dump_json()
         )
-
-
-class MockConfigRepository(ConfigRepository):
-    def __init__(self) -> None:
-        pass
-
-    def get(self) -> ConfigDTO:
-        return ConfigDTO(
-            **Config().model_dump()
-        )
-
-    def update(self, dto: ConfigDTO) -> ConfigDTO:
-        ...

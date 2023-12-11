@@ -42,7 +42,7 @@ class Markups:
         beta_caption = "Выключить бета-режим" if beta_mode else "Включить бета-режим"
 
         return InlineKeyboardMarkup(row_width=1).add(
-            InlineKeyboardButton("💳 Транзакции", callback_data="transactions"),
+            InlineKeyboardButton("💳 Транзакции", callback_data="transaction"),
             InlineKeyboardButton("📋 Топ-5 лучших", callback_data="top5"),
             InlineKeyboardButton(f"{get_balance_emoji(beta_mode)} {beta_caption}", callback_data=f"switch-beta")
         )
@@ -234,6 +234,54 @@ class Markups:
         )
 
     @staticmethod
+    def transaction() -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(row_width=2).add(
+            InlineKeyboardButton("⬅ Вывести", callback_data="transaction-withdraw"),
+            InlineKeyboardButton("➡ Пополнить", callback_data="transaction-deposit"),
+            InlineKeyboardButton("<< Назад", callback_data="profile")
+        )
+
+    @staticmethod
+    def transaction_deposit() -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(row_width=2).add(
+            InlineKeyboardButton("🪙 Bitcoin", callback_data="transaction-deposit-amount:btc"),
+            InlineKeyboardButton("💳 Card", callback_data="transaction-deposit-amount:card"),
+            InlineKeyboardButton("<< Назад", callback_data="transaction")
+        )
+
+    @staticmethod
+    def transaction_deposit_amount(method: str, min_deposit: int, amount: int) -> InlineKeyboardMarkup:
+        if amount < min_deposit:
+            return InlineKeyboardMarkup(row_width=2).add(
+                InlineKeyboardButton("<< Назад", callback_data="transaction-deposit"),
+                InlineKeyboardButton("Обновить", callback_data=f"transaction-deposit-amount:{method}")
+            )
+
+        markup = InlineKeyboardMarkup(row_width=2).add(
+            InlineKeyboardButton("Обновить", callback_data=f"transaction-deposit-amount:{method}")
+        )
+        markup.add(
+            InlineKeyboardButton("<< Назад", callback_data="transaction-deposit"),
+            InlineKeyboardButton("Далее >>", callback_data=f"transaction-deposit-amount-confirm:{method}")
+        )
+
+        return markup
+
+    @staticmethod
+    def transaction_deposit_confirm_amount(method: str) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(row_width=2).add(
+            InlineKeyboardButton("<< Назад", callback_data=f"transaction-deposit-amount:{method}"),
+            InlineKeyboardButton("✅ Подтвердить", callback_data=f"transaction-deposit-confirm:{method}")
+        )
+
+    @staticmethod
+    def transaction_deposit_confirm(method: str) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(row_width=2).add(
+            InlineKeyboardButton("<< Назад", callback_data=f"transaction-deposit-amount:{method}"),
+            InlineKeyboardButton("✅ Подтвердить перевод", callback_data=f"transaction-deposit-create:{method}")
+        )
+
+    @staticmethod
     def admin(
             pvb_active: bool, pvp_active: bool, pvpc_active: bool, pvpf_active: bool, transactions_active: bool
     ) -> InlineKeyboardMarkup:
@@ -270,4 +318,18 @@ class Markups:
             InlineKeyboardButton("📢 Начать рассылку", callback_data="admin-mailing-start"),
             InlineKeyboardButton("📋 Предпросмотр", callback_data="admin-mailing-preview"),
             InlineKeyboardButton("<< Назад", callback_data="admin")
+        )
+
+    @staticmethod
+    def admin_deposit_confirm(transaction_id: int, done: bool = False) -> InlineKeyboardMarkup:
+        if done:
+            return InlineKeyboardMarkup().add(
+                InlineKeyboardButton(f"✅ Обработана", callback_data=f"None")
+            )
+
+        return InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton(
+                f"✅ Подтвердить и зачислить", callback_data=f"admin-transaction-approve:{transaction_id}"
+            ),
+            InlineKeyboardButton(f"🛑 Отклонить", callback_data=f"admin-transaction-reject:{transaction_id}")
         )

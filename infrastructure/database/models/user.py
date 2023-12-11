@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import BIGINT
 
 from infrastructure.database import Base
 
@@ -8,7 +9,7 @@ from infrastructure.database import Base
 class UserModel(Base):
     __tablename__ = "users"
 
-    tg_id: Mapped[int] = mapped_column(primary_key=True, unique=True)
+    tg_id: Mapped[int] = mapped_column(BIGINT, primary_key=True, unique=True)
     tg_name: Mapped[str]
     balance: Mapped[int]
     beta_balance: Mapped[int]

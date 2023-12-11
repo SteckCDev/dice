@@ -60,11 +60,14 @@ class PVPService:
     def get_by_id(self, _id: int) -> PVPDTO | None:
         return self.__repo.get_by_id(_id)
 
-    def update(self, dto: UpdatePVPDTO) -> None:
-        self.__repo.update(dto)
-
     def get_all_for_status(self, status: int) -> list[PVPDTO] | None:
         return self.__repo.get_all_for_status(status)
+
+    def get_last_for_tg_id_and_status(self, tg_id: int, status: int) -> PVPDTO | None:
+        return self.__repo.get_last_for_tg_id_and_status(tg_id, status)
+
+    def update(self, dto: UpdatePVPDTO) -> None:
+        self.__repo.update(dto)
 
     def get_details_for_id(self, _id: int) -> PVPDetailsDTO:
         game: PVPDTO = self.__repo.get_by_id(_id)

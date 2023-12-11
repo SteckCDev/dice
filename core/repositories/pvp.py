@@ -26,13 +26,17 @@ class PVPRepository(ABC):
         ...
 
     @abstractmethod
-    def update(self, dto: UpdatePVPDTO) -> None:
-        ...
-
-    @abstractmethod
     def get_all_for_status(self, status: int) -> list[PVPDTO] | None:
         ...
 
     @abstractmethod
+    def get_last_for_tg_id_and_status(self, tg_id: int, status: int) -> PVPDTO | None:
+        ...
+
+    @abstractmethod
     def get_last_for_creator_and_status(self, tg_id: int, status: PVPStatus) -> PVPDTO:
+        ...
+
+    @abstractmethod
+    def update(self, dto: UpdatePVPDTO) -> None:
         ...

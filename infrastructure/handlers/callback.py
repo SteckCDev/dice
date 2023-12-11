@@ -1,5 +1,7 @@
 import html
 import math
+from datetime import datetime
+from decimal import Decimal
 
 from telebot.types import Message
 
@@ -23,33 +25,44 @@ from core.schemas.pvp import (
 from core.schemas.pvpc import (
     PVPCDetailsDTO
 )
+from core.schemas.transaction import (
+    TransactionDTO,
+    CreateTransactionDTO,
+    UpdateTransactionDTO,
+)
 from core.schemas.user import (
     UserDTO,
     CreateUserDTO,
+    UpdateUserDTO,
     UserCacheDTO,
 )
 from core.services import (
     AdminService,
     ConfigService,
+    CurrencyService,
     PVBService,
     PVPService,
     PVPCService,
+    TransactionService,
     UserService,
 )
 from core.states import (
-    GameMode,
+    NumbersRelation,
     PVPStatus,
+    TransactionStatus,
 )
 from infrastructure.api_services.telebot import BaseTeleBotHandler
+from infrastructure.queues.celery.tasks import mailing
 from infrastructure.repositories import (
     ImplementedAdminRepository,
     ImplementedConfigRepository,
+    ImplementedCurrencyRepository,
     ImplementedPVBRepository,
     ImplementedPVPRepository,
     ImplementedPVPCRepository,
+    ImplementedTransactionRepository,
     ImplementedUserRepository,
 )
-from infrastructure.queues.celery.tasks import mailing
 from settings import settings
 from templates import Markups, Messages
 
@@ -69,7 +82,7 @@ class CallbackHandler(BaseTeleBotHandler):
 
         self.call_id: int = call_id
         self.path: str = path
-        self.path_args = path.split(":")
+        self.path_args: list[str] = path.split(":")
         self.chat_id: int = chat_id
         self.message_id: int = message_id
         self.message: Message = message
@@ -108,6 +121,12 @@ class CallbackHandler(BaseTeleBotHandler):
             user_service=self.__user_service,
             config_service=config_service
         )
+        self.__currency_service: CurrencyService = CurrencyService(
+            repository=ImplementedCurrencyRepository()
+        )
+        self.__transaction_service: TransactionService = TransactionService(
+            repository=ImplementedTransactionRepository()
+        )
 
         self.config: ConfigDTO = config_service.get()
         self.user: UserDTO = self.__user_service.get_or_create(
@@ -121,7 +140,7 @@ class CallbackHandler(BaseTeleBotHandler):
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
     def __process_pvb(self) -> None:
-        self.user_cache.game_mode = GameMode.PVB
+        self.user_cache.numbers_relation = NumbersRelation.PVB_BET
         self.__user_service.update_cache(self.user_cache)
 
         if self.path_args[0] == "pvb":
@@ -187,7 +206,7 @@ class CallbackHandler(BaseTeleBotHandler):
             )
 
     def __process_pvp(self) -> None:
-        self.user_cache.game_mode = GameMode.PVP
+        self.user_cache.numbers_relation = NumbersRelation.PVP_BET
         self.__user_service.update_cache(self.user_cache)
 
         if self.path_args[0] == "pvp":
@@ -365,72 +384,115 @@ class CallbackHandler(BaseTeleBotHandler):
                     Messages.pvpc_canceled()
                 )
 
-    def __process_admin_switches(self) -> None:
-        if self.path == "admin-switch-pvb":
-            self.__pvb_service.toggle()
-
-        elif self.path == "admin-switch-pvp":
-            self.__pvp_service.toggle()
-
-        elif self.path == "admin-switch-pvpc":
-            self.__pvpc_service.toggle()
-
-        # elif self.path == "admin-switch-pvpf":
-        #     self.__pvpf_service.toggle()
-        #
-        # elif self.path == "admin-switch-transactions":
-        #     self.__transactions_service.toggle()
-
-        self.edit_message_in_context(
-            Messages.admin(
-                self.__user_service.get_cached_users_count()
-            ),
-            Markups.admin(
-                self.__pvb_service.get_status(),
-                self.__pvp_service.get_status(),
-                self.__pvpc_service.get_status(),
-                False,
-                False
+    def __process_transaction(self) -> None:
+        if self.path_args[0] == "transaction":
+            self.edit_message_in_context(
+                Messages.transaction(self.user.balance, self.config.min_deposit, self.config.min_withdraw),
+                Markups.transaction()
             )
+
+    def __process_deposit(self) -> None:
+        self.user_cache.numbers_relation = NumbersRelation.DEPOSIT_AMOUNT
+        self.__user_service.update_cache(self.user_cache)
+
+        if self.path_args[0] == "transaction-deposit":
+            self.edit_message_in_context(
+                Messages.transaction_deposit(),
+                Markups.transaction_deposit()
+            )
+            return
+
+        # "transaction-deposit-amount:{method}",
+        # "transaction-deposit-amount-confirm:{method}",
+        # "transaction-deposit-confirm:{method}",
+        # "transaction-deposit-create:{method}"
+
+        method: str = self.path_args[1]
+
+        btc_equivalent: Decimal | None = None if method == "card" else self.__currency_service.rub_to_btc(
+            self.user_cache.deposit_amount
         )
 
-    def __process_admin_mailing(self) -> None:
-        if self.path_args[0] == "admin-mailing":
+        if method == "btc" and btc_equivalent is None:
             self.edit_message_in_context(
-                Messages.admin_mailing(),
-                Markups.admin_mailing()
+                Messages.on_issue(),
+                Markups.support()
             )
+            return
 
-        elif self.path_args[0] == "admin-mailing-preview":
-            mail: str | None = self.__admin_service.get_mailing_text()
-
-            if mail is None:
-                mail = "Не задан текст рассылки"
-
-            self._bot.send_message(self.user.tg_id, mail)
-
-        elif self.path_args[0] == "admin-mailing-start":
-            mailing.delay()
-
+        if self.path_args[0] == "transaction-deposit-amount":
             self.edit_message_in_context(
-                Messages.admin_mailing_started(),
-                Markups.back_to("admin")
-            )
-
-    def __process_admin_misc(self) -> None:
-        if self.path_args[0] == "admin":
-            self.edit_message_in_context(
-                Messages.admin(
-                    self.__user_service.get_cached_users_count()
+                Messages.transaction_deposit_amount(
+                    self.config.min_deposit,
+                    self.user_cache.deposit_amount,
+                    btc_equivalent
                 ),
-                Markups.admin(
-                    self.__pvb_service.get_status(),
-                    self.__pvp_service.get_status(),
-                    self.__pvpc_service.get_status(),
-                    False,
-                    False
+                Markups.transaction_deposit_amount(
+                    method,
+                    self.config.min_deposit,
+                    self.user_cache.deposit_amount
                 )
             )
+
+        elif self.path_args[0] == "transaction-deposit-amount-confirm":
+            self.edit_message_in_context(
+                Messages.transaction_deposit_confirm_amount(
+                    self.user_cache.deposit_amount,
+                    btc_equivalent
+                ),
+                Markups.transaction_deposit_confirm_amount(method)
+            )
+
+        elif self.path_args[0] == "transaction-deposit-confirm":
+            self.edit_message_in_context(
+                Messages.transaction_deposit_confirm(
+                    method,
+                    self.user_cache.deposit_amount if method == "card" else btc_equivalent,
+                    self.config.card_details if method == "card" else self.config.btc_details
+                ),
+                Markups.transaction_deposit_confirm(method)
+            )
+
+        elif self.path_args[0] == "transaction-deposit-create":
+            method: str = self.path_args[1]
+
+            transaction: TransactionDTO = self.__transaction_service.create(
+                CreateTransactionDTO(
+                    user_tg_id=self.user.tg_id,
+                    type="deposit",
+                    method=method,
+                    rub=self.user_cache.deposit_amount,
+                    btc=btc_equivalent,
+                    fee=0,
+                    recipient_details=self.config.card_details if method == "card" else self.config.btc_details,
+                    recipient_bank=None
+                )
+            )
+
+            self.edit_message_in_context(
+                Messages.transaction_deposit_create(transaction.id)
+            )
+
+            self._bot.send_message(
+                settings.admin_tg_id,
+                Messages.admin_deposit_confirm(
+                    transaction.id,
+                    self.user.tg_id,
+                    self.user.tg_name,
+                    transaction.created_at,
+                    transaction.method,
+                    transaction.rub,
+                    transaction.btc
+                ),
+                Markups.admin_deposit_confirm(transaction.id)
+            )
+
+    def __process_withdraw(self) -> None:
+        self.user_cache.numbers_relation = NumbersRelation.WITHDRAW_AMOUNT
+        self.__user_service.update_cache(self.user_cache)
+
+        if self.path_args[0] == "transaction-withdraw":
+            pass
 
     def __process_misc(self) -> None:
         if self.path == "terms-accept":
@@ -479,6 +541,141 @@ class CallbackHandler(BaseTeleBotHandler):
                 Markups.games()
             )
 
+        elif self.path == "profile":
+            self.edit_message_in_context(
+                Messages.profile(
+                    self.user.tg_name,
+                    self.user.balance,
+                    self.user.beta_balance,
+                    self.user.joined_at,
+                    self.__pvb_service.get_count_for_tg_id(self.user.tg_id)
+                ),
+                Markups.profile(self.user_cache.beta_mode)
+            )
+
+    def __process_admin_switch(self) -> None:
+        if self.path == "admin-switch-pvb":
+            self.__pvb_service.toggle()
+
+        elif self.path == "admin-switch-pvp":
+            self.__pvp_service.toggle()
+
+        elif self.path == "admin-switch-pvpc":
+            self.__pvpc_service.toggle()
+
+        # elif self.path == "admin-switch-pvpf":
+        #     self.__pvpf_service.toggle()
+
+        elif self.path == "admin-switch-transactions":
+            self.__transaction_service.toggle()
+
+        self.edit_message_in_context(
+            Messages.admin(
+                self.__user_service.get_cached_users_count()
+            ),
+            Markups.admin(
+                self.__pvb_service.get_status(),
+                self.__pvp_service.get_status(),
+                self.__pvpc_service.get_status(),
+                False,
+                self.__transaction_service.get_status()
+            )
+        )
+
+    def __process_admin_mailing(self) -> None:
+        if self.path_args[0] == "admin-mailing":
+            self.edit_message_in_context(
+                Messages.admin_mailing(),
+                Markups.admin_mailing()
+            )
+
+        elif self.path_args[0] == "admin-mailing-preview":
+            mail: str | None = self.__admin_service.get_mailing_text()
+
+            if mail is None:
+                mail = "Не задан текст рассылки"
+
+            self._bot.send_message(self.user.tg_id, mail)
+
+        elif self.path_args[0] == "admin-mailing-start":
+            mailing.delay()
+
+            self.edit_message_in_context(
+                Messages.admin_mailing_started(),
+                Markups.back_to("admin")
+            )
+
+    def __process_admin_misc(self) -> None:
+        if self.path_args[0] == "admin":
+            self.edit_message_in_context(
+                Messages.admin(
+                    self.__user_service.get_cached_users_count()
+                ),
+                Markups.admin(
+                    self.__pvb_service.get_status(),
+                    self.__pvp_service.get_status(),
+                    self.__pvpc_service.get_status(),
+                    False,
+                    self.__transaction_service.get_status()
+                )
+            )
+
+        elif self.path_args[0] in (
+                "admin-transaction-approve",
+                "admin-transaction-reject"
+        ):
+            transaction_id: int = int(self.path_args[1])
+
+            transaction: TransactionDTO = self.__transaction_service.get_by_id(transaction_id)
+
+            if transaction is None or transaction.status != TransactionStatus.CREATED:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.admin_transaction_not_found()
+                )
+                return
+
+            user: UserDTO = self.__user_service.get_by_tg_id(transaction.user_tg_id)
+            approved: bool = self.path_args[0] == "admin-transaction-approve"
+
+            if approved:
+                transaction.status = TransactionStatus.SUCCEED
+                user.balance += transaction.rub
+            else:
+                transaction.status = TransactionStatus.CANCELED_BY_ADMIN
+
+            transaction.processed_at = datetime.now()
+
+            self.__transaction_service.update(
+                UpdateTransactionDTO(
+                    **transaction.model_dump()
+                )
+            )
+            self.__user_service.update(
+                UpdateUserDTO(
+                    **user.model_dump()
+                )
+            )
+
+            self._bot.send_message(
+                user.tg_id,
+                Messages.transaction_processed(transaction.id, approved)
+            )
+
+            self.edit_message_in_context(
+                Messages.admin_deposit_confirm(
+                    transaction.id,
+                    user.tg_id,
+                    user.tg_name,
+                    transaction.created_at,
+                    transaction.method,
+                    transaction.rub,
+                    transaction.btc,
+                    done=True
+                ),
+                Markups.admin_deposit_confirm(transaction.id, done=True)
+            )
+
     def _prepare(self) -> bool:
         # why not
         if "admin" in self.path and self.user.tg_id != settings.admin_tg_id:
@@ -521,8 +718,17 @@ class CallbackHandler(BaseTeleBotHandler):
         elif self.path.startswith("pvp"):
             self.__process_pvp()
 
+        elif self.path.startswith("transaction-deposit"):
+            self.__process_deposit()
+
+        elif self.path.startswith("transaction-withdraw"):
+            self.__process_withdraw()
+
+        elif self.path.startswith("transaction"):
+            self.__process_transaction()
+
         elif self.path.startswith("admin-switch"):
-            self.__process_admin_switches()
+            self.__process_admin_switch()
 
         elif self.path.startswith("admin-mailing"):
             self.__process_admin_mailing()

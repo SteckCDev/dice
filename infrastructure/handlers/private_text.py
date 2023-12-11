@@ -4,6 +4,7 @@ from core.schemas.config import (
     ConfigDTO,
 )
 from core.schemas.user import (
+    UserDTO,
     UserCacheDTO,
 )
 from core.services import (
@@ -11,7 +12,7 @@ from core.services import (
     ConfigService,
     UserService,
 )
-from core.states import GameMode
+from core.states import NumbersRelation
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     ImplementedAdminRepository,
@@ -54,6 +55,7 @@ class PrivateTextHandler(BaseTeleBotHandler):
         )
 
         self.config: ConfigDTO = config_service.get()
+        self.user: UserDTO = self.__user_service.get_by_tg_id(user_id)
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
     def __process_admin(self) -> bool:
@@ -74,30 +76,58 @@ class PrivateTextHandler(BaseTeleBotHandler):
 
         return False
 
-    def __set_bet(self) -> None:
-        bet: int = int(self.text)
+    def __set_amount(self) -> None:
+        amount: int = int(self.text)
 
-        if bet < self.config.min_bet or bet > self.config.max_bet:
-            self._bot.send_message(
-                self.user_id,
-                Messages.bet_out_of_limits(
-                    self.config.min_bet,
-                    self.config.max_bet
+        if self.user_cache.numbers_relation == NumbersRelation.DEPOSIT_AMOUNT:
+            if amount < self.config.min_deposit:
+                self._bot.send_message(
+                    self.user_id,
+                    Messages.transaction_deposit_min_limit(self.config.min_deposit)
                 )
-            )
-            return
+                return
 
-        if bet > self.__user_service.get_user_selected_balance(self.user_id):
-            self._bot.send_message(
-                self.user_id,
-                Messages.balance_is_not_enough()
-            )
-            return
+            self.user_cache.deposit_amount = amount
 
-        if self.user_cache.game_mode == GameMode.PVB:
-            self.user_cache.pvb_bet = bet
+        elif self.user_cache.numbers_relation == NumbersRelation.WITHDRAW_AMOUNT:
+            if amount < self.config.min_withdraw:
+                self._bot.send_message(
+                    self.user_id,
+                    Messages.transaction_withdraw_min_limit(self.config.min_withdraw)
+                )
+                return
+
+            if amount > self.user.balance:
+                self._bot.send_message(
+                    self.user_id,
+                    Messages.balance_is_not_enough()
+                )
+                return
+
+            self.user_cache.withdraw_amount = amount
+
         else:
-            self.user_cache.pvp_bet = bet
+            if amount < self.config.min_bet or amount > self.config.max_bet:
+                self._bot.send_message(
+                    self.user_id,
+                    Messages.bet_out_of_limits(
+                        self.config.min_bet,
+                        self.config.max_bet
+                    )
+                )
+                return
+
+            if amount > self.__user_service.get_user_selected_balance(self.user_id):
+                self._bot.send_message(
+                    self.user_id,
+                    Messages.balance_is_not_enough()
+                )
+                return
+
+            if self.user_cache.numbers_relation == NumbersRelation.PVB:
+                self.user_cache.pvb_bet = amount
+            else:
+                self.user_cache.pvp_bet = amount
 
         self.__user_service.update_cache(self.user_cache)
 
@@ -140,4 +170,4 @@ class PrivateTextHandler(BaseTeleBotHandler):
                 SupportHandler(self.user_id).handle()
 
         if self.text.isdigit():
-            self.__set_bet()
+            self.__set_amount()

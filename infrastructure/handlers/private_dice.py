@@ -24,7 +24,6 @@ from core.services import (
     PVPService,
     UserService,
 )
-from core.states import GameMode
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     ImplementedConfigRepository,
@@ -32,6 +31,7 @@ from infrastructure.repositories import (
     ImplementedPVPRepository,
     ImplementedUserRepository,
 )
+from states import PVPStatus
 from templates import Markups, Messages
 
 
@@ -74,6 +74,10 @@ class PrivateDiceHandler(BaseTeleBotHandler):
             )
         )
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
+
+        self.__pvp_in_process: bool = self.__pvp_service.get_last_for_tg_id_and_status(
+            self.user.tg_id, PVPStatus.STARTED
+        ) is not None
 
     def __send_games_menu(self) -> None:
         self._bot.send_message(
@@ -166,8 +170,8 @@ class PrivateDiceHandler(BaseTeleBotHandler):
             )
             return False
 
-        # check below is for PVB mode, so skip now if it's PVP
-        if self.user_cache.game_mode == GameMode.PVP:
+        # check below is for PVB mode, so skip if there is active PVP game
+        if self.__pvp_in_process:
             return True
 
         if not self.user_cache.pvb_in_process:
@@ -177,15 +181,7 @@ class PrivateDiceHandler(BaseTeleBotHandler):
         return True
 
     def _process(self) -> None:
-        if self.user_cache.game_mode == GameMode.PVB:
-            self.__pvb()
-        else:
+        if self.__pvp_in_process:
             self.__pvp()
-
-        # match self.user_cache.game_mode:
-        #     case GameMode.PVB:
-        #         self.__pvb()
-        #     case GameMode.PVP:  # because of this condition creator will not be able to finish game
-        #         self.__pvp()
-        #     case _:
-        #         self.__send_games_menu()
+        else:
+            self.__pvb()

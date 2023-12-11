@@ -23,7 +23,7 @@ class RedisInterface:
         self.__client.set(key, int(value))
 
     def get_bool(self, key: str) -> bool | None:
-        value = self.__client.get(key)
+        value: str | None = self.__client.get(key)
 
         if value is None:
             return

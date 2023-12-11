@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 
+from decimal import Decimal
+
 from core.schemas.pvp import (
     PVPDTO,
     PVPDetailsDTO,
@@ -16,6 +18,7 @@ from .formatting.html import (
     bold,
     cursive,
     link,
+    code,
 )
 
 
@@ -58,6 +61,10 @@ class Messages:
     @staticmethod
     def support() -> str:
         return "🤖 Если у вас возникли вопросы, обратитесь в нашу поддержку"
+
+    @staticmethod
+    def on_issue() -> str:
+        return "🔧 У нас возникли технические проблемы, пожалуйста, обратитесь в поддержку"
 
     @staticmethod
     def game_mode_disabled() -> str:
@@ -345,6 +352,76 @@ class Messages:
                f" выбросил на {bold(pvpc_details.opponent_scored)}"
 
     @staticmethod
+    def transaction(balance: int, min_deposit: int, min_withdraw: int) -> str:
+        return f"{bold('💰 Дайс / Транзакции')}\n\n" \
+               f"💵 Баланс: {bold(balance)}\n\n" \
+               f"{cursive(f'Минимальная сумма пополнения: {min_deposit}')}\n" \
+               f"{cursive(f'Минимальная сумма вывода: {min_withdraw}')}"
+
+    @staticmethod
+    def transaction_processed(transaction_id: int, succeed: bool) -> str:
+        if succeed:
+            return f"✅ Транзакция #{transaction_id:03} успешно обработана"
+        else:
+            return f"❌ Транзакция #{transaction_id:03} отклонена"
+
+    @staticmethod
+    def transaction_deposit_min_limit(min_deposit: int) -> str:
+        return f"🔔 Минимальная сумма пополнения {min_deposit} RUB"
+
+    @staticmethod
+    def transaction_withdraw_min_limit(min_withdraw: int) -> str:
+        return f"🔔 Минимальная сумма вывода {min_withdraw} RUB"
+
+    @staticmethod
+    def __transaction_deposit_header() -> str:
+        return bold("➡ Дайс / Пополнение баланса")
+
+    @staticmethod
+    def transaction_deposit() -> str:
+        return f"{Messages.__transaction_deposit_header()}\n\n" \
+               f"{cursive('Выберите удобный способ пополнения баланса')}"
+
+    @staticmethod
+    def transaction_deposit_amount(min_deposit: int, amount: int, btc_equivalent: Decimal | None = None) -> str:
+        btc_caption = f"🪙 Эквивалент в BTC: {btc_equivalent}\n\n" if btc_equivalent else ""
+        enter_amount_tip = cursive(f"Введите сумму от {min_deposit} RUB") if amount < min_deposit else ""
+
+        return f"{Messages.__transaction_deposit_header()}\n\n" \
+               f"💵 Сумма пополнения: {amount} RUB\n" \
+               f"{btc_caption}" \
+               f"{enter_amount_tip}"
+
+    @staticmethod
+    def transaction_deposit_confirm_amount(amount: int, btc_equivalent: Decimal | None = None) -> str:
+        amount_caption = f"{amount} RUB"
+
+        if btc_equivalent is not None:
+            amount_caption += f" ({btc_equivalent} BTC)"
+
+        return f"{Messages.__transaction_deposit_header()}\n\n" \
+               f"Вы подтверждаете, что хотите пополнить баланс на сумму {bold(amount_caption)}?"
+
+    @staticmethod
+    def transaction_deposit_confirm(
+            method: str,
+            amount_relative_to_method: int,
+            details_relative_to_method: str
+    ) -> str:
+        currency_tip = "RUB" if method == "card" else "BTC"
+
+        return f"{Messages.__transaction_deposit_header()}\n\n" \
+               f"Переведите {amount_relative_to_method} {currency_tip} на следующие реквизиты:\n" \
+               f"{code(details_relative_to_method)}"
+
+    @staticmethod
+    def transaction_deposit_create(transaction_id: int) -> str:
+        return f"⏳ Транзакция #{transaction_id:03} принята и будет обработана в ближайшее время.\n\n" \
+               f"Статус можно проверить на вкладке {cursive('«Транзакции»')} в профиле. " \
+               f"Если пополнения не произошло - обратитесь в поддержку.\n\n" \
+               f"Благодарим, что выбрали нас 🤝"
+
+    @staticmethod
     def admin(users_since_launch: int) -> str:
         return f"{bold('🎲 Дайс / Админ-панель')}\n\n" \
                f"🙋 Пользователей с момента запуска: {bold(users_since_launch)}\n\n" \
@@ -368,3 +445,32 @@ class Messages:
     @staticmethod
     def admin_config_adjusted() -> str:
         return "✅ Параметр изменён"
+
+    @staticmethod
+    def admin_deposit_confirm(
+            transaction_id: int,
+            user_tg_id: int,
+            user_tg_name: str,
+            created_at: datetime,
+            method: str,
+            amount: int,
+            btc_equivalent: float | None = None,
+            done: bool = False
+    ) -> str:
+        method_caption = "карта" if method == "card" else "биткоин"
+        amount_caption = f"{amount} RUB "
+
+        if btc_equivalent is not None:
+            amount_caption += f"({btc_equivalent} BTC)"
+
+        status_emoji = "💵" if done else "⏳"
+
+        return f"{bold(f'{status_emoji} Транзакция #{transaction_id:03} - пополнение')}\n\n" \
+               f"🙋‍ Пользователь: {link(user_tg_name, f'tg://user?id={user_tg_id}')} | {user_tg_id}\n" \
+               f"📅 Создана: {bold(created_at.strftime('%y.%m.%d %H:%M'))} (UTC)\n" \
+               f"💰 Способ оплаты: {bold(method_caption)}\n" \
+               f"💰 Сумма: {bold(amount_caption)}"
+
+    @staticmethod
+    def admin_transaction_not_found() -> str:
+        return "❌ Транзакция не найдена, либо уже обработана"

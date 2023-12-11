@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from core.states import GameMode
+from core.states import NumbersRelation
 
 
 class User(BaseModel):
@@ -49,7 +49,7 @@ class UpdateUserDTO(BaseModel):
 
 class UserCache(BaseModel):
     tg_id: int
-    game_mode: GameMode = GameMode.PVB
+    numbers_relation: NumbersRelation = NumbersRelation.PVB_BET
     beta_mode: bool = False
     pvb_bet: int = 0
     pvb_bot_dice: int | None = None
@@ -65,7 +65,7 @@ class UserCache(BaseModel):
 
 class UserCacheDTO(BaseModel):
     tg_id: int
-    game_mode: GameMode
+    numbers_relation: NumbersRelation
     beta_mode: bool
     pvb_bet: int
     pvb_bot_dice: int | None
