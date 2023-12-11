@@ -297,10 +297,63 @@ class CallbackHandler(BaseTeleBotHandler):
             )
 
         elif self.path_args[0] == "pvp-rating":
-            pass
+            limit: int = 5
+
+            finished: list[PVPDTO] | None = self.__pvp_service.get_all_for_status(PVPStatus.FINISHED)
+            finished_by_bot: list[PVPDTO] | None = self.__pvp_service.get_all_for_status(PVPStatus.FINISHED_BY_BOT)
+
+            if finished:
+                if finished_by_bot:
+                    finished.extend(finished_by_bot)
+
+                all_finished: list[PVPDTO] | None = finished
+            else:
+                if finished_by_bot:
+                    all_finished: list[PVPDTO] | None = finished_by_bot
+                else:
+                    all_finished: list[PVPDTO] | None = None
+
+            if all_finished is None:
+                self.edit_message_in_context(
+                    Messages.pvp_rating(True),
+                    Markups.pvp_rating(None)
+                )
+                return
+
+            all_winners: dict[int, int] = dict()
+            leaders: list[tuple[int, str]] = list()
+
+            for pvp in all_finished:
+                if pvp.winner_tg_id is None:
+                    continue
+
+                all_winners[pvp.winner_tg_id] = all_winners.get(pvp.winner_tg_id, 0) + pvp.bet
+
+            leaders_raw: list[tuple[int, int]] = sorted(
+                all_winners.items(), key=lambda user: user[1], reverse=True
+            )[:limit]
+
+            for leader_id, leader_winnings in leaders_raw:
+                leaders.append(
+                    (
+                        leader_winnings,
+                        self.__user_service.get_by_tg_id(leader_id).tg_name
+                    )
+                )
+
+            self.edit_message_in_context(
+                Messages.pvp_rating(leaders is None),
+                Markups.pvp_rating(leaders)
+            )
 
         elif self.path_args[0] == "pvp-history":
-            pass
+            wins_percent: float = self.__pvp_service.get_wins_percent_for_tg_id(self.user.tg_id)
+            games_pvp: list[PVBDTO] | None = self.__pvp_service.get_last_5_for_tg_id(self.user.tg_id)
+
+            self.edit_message_in_context(
+                Messages.pvp_history(wins_percent),
+                Markups.pvp_history(games_pvp, self.user.tg_id)
+            )
 
         elif self.path_args[0] == "pvp-instruction":
             self.edit_message_in_context(
@@ -697,7 +750,8 @@ class CallbackHandler(BaseTeleBotHandler):
 
         pvb_requested_and_disabled: bool = self.path.startswith("pvb") and not self.__pvb_service.get_status()
         pvpc_requested_and_disabled: bool = self.path.startswith("pvpc") and not self.__pvpc_service.get_status()
-        pvp_requested_and_disabled: bool = self.path.startswith("pvp") and not self.__pvp_service.get_status()
+        pvp_requested_and_disabled: bool = self.path.startswith("pvp") and \
+            not self.path.startswith("pvpc") and not self.__pvp_service.get_status()
 
         if pvb_requested_and_disabled or pvpc_requested_and_disabled or pvp_requested_and_disabled:
             self._bot.answer_callback(

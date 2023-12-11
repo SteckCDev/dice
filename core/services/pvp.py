@@ -66,8 +66,22 @@ class PVPService:
     def get_last_for_tg_id_and_status(self, tg_id: int, status: int) -> PVPDTO | None:
         return self.__repo.get_last_for_tg_id_and_status(tg_id, status)
 
+    def get_last_5_for_tg_id(self, tg_id: int) -> list[PVPDTO] | None:
+        return self.__repo.get_last_5_for_tg_id(tg_id)
+
     def update(self, dto: UpdatePVPDTO) -> None:
         self.__repo.update(dto)
+
+    def get_wins_percent_for_tg_id(self, tg_id: int) -> float:
+        wins: int = self.__repo.get_count_for_tg_id_and_result(tg_id, True)
+        defeats: int = self.__repo.get_count_for_tg_id_and_result(tg_id, False)
+        draws: int = self.__repo.get_count_for_tg_id_and_result(tg_id, None)
+
+        total: int = wins + defeats + draws
+
+        print(f"{wins=}\n{defeats=}\n{draws=}")
+
+        return .0 if total == 0 else 100 / total * wins
 
     def get_details_for_id(self, _id: int) -> PVPDetailsDTO:
         game: PVPDTO = self.__repo.get_by_id(_id)

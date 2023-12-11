@@ -38,5 +38,13 @@ class PVPRepository(ABC):
         ...
 
     @abstractmethod
+    def get_last_5_for_tg_id(self, tg_id: int) -> list[PVPDTO] | None:
+        ...
+
+    @abstractmethod
+    def get_count_for_tg_id_and_result(self, tg_id: int, user_won: bool | None) -> int:
+        ...
+
+    @abstractmethod
     def update(self, dto: UpdatePVPDTO) -> None:
         ...

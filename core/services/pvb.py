@@ -62,7 +62,9 @@ class PVBService:
     def get_wins_percent_for_tg_id(self, tg_id: int) -> float:
         wins: int = self.__repo.get_count_for_tg_id_and_result(tg_id, True)
         defeats: int = self.__repo.get_count_for_tg_id_and_result(tg_id, False)
-        total: int = wins + defeats
+        draws: int = self.__repo.get_count_for_tg_id_and_result(tg_id, None)
+
+        total: int = wins + defeats + draws
 
         return .0 if total == 0 else 100 / total * wins
 

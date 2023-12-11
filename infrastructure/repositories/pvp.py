@@ -82,6 +82,35 @@ class PostgresRedisPVPRepository(PVPRepository):
 
             return None if pvp is None else PVPDTO(**pvp.__dict__)
 
+    def get_last_5_for_tg_id(self, tg_id: int) -> list[PVPDTO] | None:
+        with Session() as db:
+            games: Query[Type[PVPModel]] = db.query(PVPModel).filter(
+                or_(PVPModel.creator_tg_id == tg_id, PVPModel.opponent_tg_id == tg_id)
+            ).order_by(PVPModel.id.desc()).limit(5)
+
+            if games.count() == 0:
+                return
+
+            return [
+                PVPDTO(**game.__dict__) for game in games
+            ]
+
+    def get_count_for_tg_id_and_result(self, tg_id: int, user_won: bool | None) -> int:
+        if user_won is None:
+            # user_won equals None here. Stand in condition, instead of None itself, only to escape inspection
+            # 'is' operator doesn't work here
+            condition = or_(PVPModel.winner_tg_id == user_won)
+        elif user_won:
+            condition = or_(PVPModel.winner_tg_id == tg_id)
+        else:
+            condition = or_(PVPModel.winner_tg_id != tg_id)
+
+        with Session() as db:
+            return db.query(PVPModel).filter(
+                or_(PVPModel.creator_tg_id == tg_id, PVPModel.opponent_tg_id == tg_id),
+                condition
+            ).count()
+
     def update(self, dto: UpdatePVPDTO) -> None:
         with Session() as db:
             db.query(PVPModel).filter(PVPModel.id == dto.id).update(dto.model_dump())

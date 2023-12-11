@@ -213,6 +213,56 @@ class Markups:
         return markup
 
     @staticmethod
+    def pvp_rating(users: list[tuple[int, str]] | None) -> InlineKeyboardMarkup:
+        markup = InlineKeyboardMarkup(row_width=1)
+
+        if users:
+            for i, (winnings, tg_name) in enumerate(users, 1):
+                markup.add(
+                    InlineKeyboardButton(f"🥇 #{i:02} | {winnings} RUB | {tg_name}", callback_data="None")
+                )
+
+        markup.add(
+            InlineKeyboardButton("<< Назад", callback_data="pvp")
+        )
+
+        return markup
+
+    @staticmethod
+    def pvp_history(games_pvp: list[PVPDTO] | None, user_id: int) -> InlineKeyboardMarkup:
+        markup = InlineKeyboardMarkup(row_width=1)
+
+        if games_pvp is None:
+            markup.add(
+                InlineKeyboardButton(
+                    "🔔 Вы ещё ни разу не сыграли", callback_data="None"
+                ),
+                InlineKeyboardButton("<< Назад", callback_data="pvb")
+            )
+            return markup
+
+        for pvp in games_pvp:
+            if pvp.winner_tg_id is None:
+                sign = "🤝"
+            elif pvp.winner_tg_id == user_id:
+                sign = "💰"
+            else:
+                sign = "💀"
+
+            markup.add(
+                InlineKeyboardButton(
+                    f"{sign} Игра #{pvp.id:03} | {get_balance_emoji(pvp.beta_mode)} {pvp.bet}",
+                    callback_data="None"
+                )
+            )
+
+        markup.add(
+            InlineKeyboardButton("<< Назад", callback_data="pvp")
+        )
+
+        return markup
+
+    @staticmethod
     def pvp_create() -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup(row_width=2).add(
             InlineKeyboardButton("<< Назад", callback_data="pvp"),

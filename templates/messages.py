@@ -201,6 +201,19 @@ class Messages:
                "и ставка зачисляется обратно на баланс создателя"
 
     @staticmethod
+    def pvp_rating(is_empty: bool) -> str:
+        empty_caption = "🥇 Здесь пусто, вы можете стать первым топ-1 игроком" if is_empty else ""
+
+        return f"{bold('👥 Дайс / Игра с соперником - рейтинг')}\n\n" \
+               f"🏆 Критерий: сумма чистого выигрыша\n\n" \
+               f"{empty_caption}"
+
+    @staticmethod
+    def pvp_history(wins_percent: float) -> str:
+        return f"{bold('👥 Дайс / Игра с соперником - история (5)')}\n\n" \
+               f"🎲 Ваш процент побед: {bold(f'{wins_percent:.1f}%')}"
+
+    @staticmethod
     def pvp_details(user: UserDTO, pvp_details: PVPDetailsDTO) -> str:
         if user.tg_id == pvp_details.creator_tg_id:
             cancel_caption = ""
