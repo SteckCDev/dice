@@ -253,6 +253,36 @@ class PVPCService:
 
         self.__finish_game(pvpc, creator, opponent, PVPCStatus.FINISHED)
 
+    def __try_throw_for_user(self, user: UserDTO, pvpc: PVPCDTO) -> None:
+        is_creator: bool = pvpc.creator_tg_id == user.tg_id
+        user_dices: list[int] | None = pvpc.creator_dices if is_creator else pvpc.opponent_dices
+
+        user_throws_left: int = pvpc.rounds - (
+            len(user_dices) if user_dices else 0
+        )
+
+        if not user_throws_left:
+            return
+
+        self.__bot.send_message(
+            pvpc.chat_tg_id,
+            Messages.pvpc_throwing_for_user(pvpc.id, user.tg_name)
+        )
+
+        for _ in range(user_throws_left):
+            dice: int = self.__bot.send_dice(pvpc.chat_tg_id)
+
+            if is_creator:
+                if pvpc.creator_dices is None:
+                    pvpc.creator_dices = [dice]
+                else:
+                    pvpc.creator_dices.append(dice)
+            else:
+                if pvpc.opponent_dices is None:
+                    pvpc.opponent_dices = [dice]
+                else:
+                    pvpc.opponent_dices.append(dice)
+
     def auto_finish_started_games(self) -> None:
         pvpc_games: list[PVPCDTO] | None = self.__repo.get_all_for_status(PVPCStatus.STARTED)
 
@@ -266,40 +296,8 @@ class PVPCService:
             creator: UserDTO = self.__user_service.get_by_tg_id(pvpc.creator_tg_id)
             opponent: UserDTO = self.__user_service.get_by_tg_id(pvpc.opponent_tg_id)
 
-            creator_throws_left: int = pvpc.rounds - (
-                len(pvpc.creator_dices) if pvpc.creator_dices else 0
-            )
-            opponent_throws_left: int = pvpc.rounds - (
-                len(pvpc.opponent_dices) if pvpc.opponent_dices else 0
-            )
-
-            if creator_throws_left:
-                self.__bot.send_message(
-                    pvpc.chat_tg_id,
-                    Messages.pvpc_throwing_for_user(pvpc.id, creator.tg_name)
-                )
-
-                for _ in range(creator_throws_left):
-                    dice: int = self.__bot.send_dice(pvpc.chat_tg_id)
-
-                    if pvpc.creator_dices is None:
-                        pvpc.creator_dices = [dice]
-                    else:
-                        pvpc.creator_dices.append(dice)
-
-            if opponent_throws_left:
-                self.__bot.send_message(
-                    pvpc.chat_tg_id,
-                    Messages.pvpc_throwing_for_user(pvpc.id, opponent.tg_name)
-                )
-
-                for _ in range(opponent_throws_left):
-                    dice: int = self.__bot.send_dice(pvpc.chat_tg_id)
-
-                    if pvpc.opponent_dices is None:
-                        pvpc.opponent_dices = [dice]
-                    else:
-                        pvpc.opponent_dices.append(dice)
+            self.__try_throw_for_user(creator, pvpc)
+            self.__try_throw_for_user(opponent, pvpc)
 
             self.__finish_game(pvpc, creator, opponent, PVPCStatus.FINISHED_BY_BOT)
 
