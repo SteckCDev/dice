@@ -1,5 +1,5 @@
-from decimal import Decimal
 from contextlib import suppress
+from decimal import Decimal
 from typing import Final
 
 import requests

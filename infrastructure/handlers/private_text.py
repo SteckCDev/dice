@@ -19,12 +19,12 @@ from infrastructure.repositories import (
     ImplementedConfigRepository,
     ImplementedUserRepository,
 )
+from settings import settings
 from templates import (
     Markups,
     Menu,
     Messages,
 )
-from settings import settings
 from .lottery import LotteryHandler
 from .profile import ProfileHandler
 from .support import SupportHandler

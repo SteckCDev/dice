@@ -3,11 +3,11 @@ from typing import Any, Final
 from pydantic import ValidationError
 
 from core.abstract_bot import AbstractBotAPI
-from core.services.config import ConfigService
-from core.services.user import UserService
+from core.repositories import AdminRepository
 from core.schemas.config import UpdateConfig, ConfigDTO
 from core.schemas.user import UserDTO
-from core.repositories import AdminRepository
+from core.services.config import ConfigService
+from core.services.user import UserService
 
 
 ADJUST_COMMANDS: Final[dict[str, tuple[str, ...]]] = {

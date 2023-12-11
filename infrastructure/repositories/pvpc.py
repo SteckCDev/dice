@@ -9,10 +9,10 @@ from core.schemas.pvpc import (
     CreatePVPCDTO,
     UpdatePVPCDTO,
 )
+from core.states import PVPCStatus
+from infrastructure.cache.redis import RedisKey, RedisInterface, redis_instance
 from infrastructure.database import Session
 from infrastructure.database.models import PVPCModel
-from infrastructure.cache.redis import RedisKey, RedisInterface, redis_instance
-from core.states import PVPCStatus
 
 
 class PostgresRedisPVPCRepository(PVPCRepository):

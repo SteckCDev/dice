@@ -1,6 +1,6 @@
 import math
-from typing import Final
 from datetime import datetime, timedelta
+from typing import Final
 
 from core.abstract_bot import AbstractBotAPI
 from core.exceptions import (

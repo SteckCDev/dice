@@ -2,8 +2,8 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import BIGINT
+from sqlalchemy.orm import Mapped, mapped_column
 
 from core.states import TransactionStatus
 from infrastructure.database import Base

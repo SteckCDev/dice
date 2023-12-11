@@ -1,8 +1,8 @@
 from datetime import datetime
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import BIGINT
+from sqlalchemy.orm import Mapped, mapped_column
 
 from core.states import PVPStatus
 from infrastructure.database import Base
