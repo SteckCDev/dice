@@ -1,3 +1,4 @@
+import re
 import html
 
 from core.schemas.config import (
@@ -25,6 +26,7 @@ from templates import (
     Menu,
     Messages,
 )
+from templates import RegEx
 from .lottery import LotteryHandler
 from .profile import ProfileHandler
 from .support import SupportHandler
@@ -37,7 +39,11 @@ class PrivateTextHandler(BaseTeleBotHandler):
         self.text: str = text
         self.user_id: int = user_id
         self.user_name: str = html.escape(user_name)
+
         self.is_admin = user_id == settings.admin_tg_id
+        self.is_text_card = re.fullmatch(RegEx.CARD, self.text)
+        self.is_text_phone = re.fullmatch(RegEx.PHONE, self.text)
+        self.is_text_btc_wallet = re.fullmatch(RegEx.BTC_WALLET, self.text)
 
         config_service: ConfigService = ConfigService(
             repository=ImplementedConfigRepository()
@@ -75,6 +81,17 @@ class PrivateTextHandler(BaseTeleBotHandler):
             return True
 
         return False
+
+    def __set_withdraw_details(self) -> None:
+        self.user_cache.withdraw_details = self.text
+        self.__user_service.update_cache(self.user_cache)
+
+    def __set_withdraw_bank(self) -> None:
+        if len(self.text) > 32 or len(self.text) < 2:
+            return
+
+        self.user_cache.withdraw_bank = self.text
+        self.__user_service.update_cache(self.user_cache)
 
     def __set_amount(self) -> None:
         amount: int = int(self.text)
@@ -124,7 +141,7 @@ class PrivateTextHandler(BaseTeleBotHandler):
                 )
                 return
 
-            if self.user_cache.numbers_relation == NumbersRelation.PVB:
+            if self.user_cache.numbers_relation == NumbersRelation.PVB_BET:
                 self.user_cache.pvb_bet = amount
             else:
                 self.user_cache.pvp_bet = amount
@@ -149,25 +166,33 @@ class PrivateTextHandler(BaseTeleBotHandler):
         return True
 
     def _process(self) -> None:
-        if self.is_admin and self.__process_admin():
-            return
+        if self.text == Menu.GAMES:
+            self._bot.send_message(
+                self.user_id,
+                Messages.games(
+                    self.__user_service.get_user_selected_balance(self.user_id),
+                    self.user_cache.beta_mode
+                ),
+                Markups.games()
+            )
 
-        match self.text:
-            case Menu.GAMES:
-                self._bot.send_message(
-                    self.user_id,
-                    Messages.games(
-                        self.__user_service.get_user_selected_balance(self.user_id),
-                        self.user_cache.beta_mode
-                    ),
-                    Markups.games()
-                )
-            case Menu.PROFILE:
-                ProfileHandler(self.user_id, self.user_name).handle()
-            case Menu.LOTTERY:
-                LotteryHandler(self.user_id).handle()
-            case Menu.SUPPORT:
-                SupportHandler(self.user_id).handle()
+        elif self.text == Menu.PROFILE:
+            ProfileHandler(self.user_id, self.user_name).handle()
 
-        if self.text.isdigit():
+        elif self.text == Menu.LOTTERY:
+            LotteryHandler(self.user_id).handle()
+
+        elif self.text == Menu.SUPPORT:
+            SupportHandler(self.user_id).handle()
+
+        elif self.is_admin and self.__process_admin():
+            pass
+
+        elif self.is_text_card or self.is_text_phone or self.is_text_btc_wallet:
+            self.__set_withdraw_details()
+
+        elif self.text.isdigit():
             self.__set_amount()
+
+        else:
+            self.__set_withdraw_bank()

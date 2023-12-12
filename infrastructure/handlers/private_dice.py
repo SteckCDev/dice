@@ -24,6 +24,7 @@ from core.services import (
     PVPService,
     UserService,
 )
+from core.states import PVPStatus
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     ImplementedConfigRepository,
@@ -31,7 +32,6 @@ from infrastructure.repositories import (
     ImplementedPVPRepository,
     ImplementedUserRepository,
 )
-from states import PVPStatus
 from templates import Markups, Messages
 
 
@@ -170,18 +170,12 @@ class PrivateDiceHandler(BaseTeleBotHandler):
             )
             return False
 
-        # check below is for PVB mode, so skip if there is active PVP game
-        if self.__pvp_in_process:
-            return True
-
-        if not self.user_cache.pvb_in_process:
-            self.__send_games_menu()
-            return False
-
         return True
 
     def _process(self) -> None:
-        if self.__pvp_in_process:
+        if self.user_cache.pvb_in_process:
+            self.__pvb()
+        elif self.__pvp_in_process or self.user_cache.pvp_game_id:
             self.__pvp()
         else:
-            self.__pvb()
+            self.__send_games_menu()

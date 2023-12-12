@@ -507,8 +507,6 @@ class CallbackHandler(BaseTeleBotHandler):
             )
 
         elif self.path_args[0] == "transaction-deposit-create":
-            method: str = self.path_args[1]
-
             transaction: TransactionDTO = self.__transaction_service.create(
                 CreateTransactionDTO(
                     user_tg_id=self.user.tg_id,
@@ -523,12 +521,12 @@ class CallbackHandler(BaseTeleBotHandler):
             )
 
             self.edit_message_in_context(
-                Messages.transaction_deposit_create(transaction.id)
+                Messages.transaction_create(transaction.id)
             )
 
             self._bot.send_message(
                 settings.admin_tg_id,
-                Messages.admin_deposit_confirm(
+                Messages.admin_transaction_deposit_confirm(
                     transaction.id,
                     self.user.tg_id,
                     self.user.tg_name,
@@ -537,7 +535,7 @@ class CallbackHandler(BaseTeleBotHandler):
                     transaction.rub,
                     transaction.btc
                 ),
-                Markups.admin_deposit_confirm(transaction.id)
+                Markups.admin_transaction_confirm(transaction.id)
             )
 
     def __process_withdraw(self) -> None:
@@ -545,7 +543,126 @@ class CallbackHandler(BaseTeleBotHandler):
         self.__user_service.update_cache(self.user_cache)
 
         if self.path_args[0] == "transaction-withdraw":
-            pass
+            self.edit_message_in_context(
+                Messages.transaction_withdraw(self.user.balance),
+                Markups.transaction_withdraw(self.config.card_withdrawal_fee, self.config.btc_withdrawal_fee)
+            )
+            return
+
+        # transaction-withdraw-amount
+        # transaction-withdraw-details
+        # transaction-withdraw-confirm
+
+        method: str = self.path_args[1]
+
+        btc_equivalent: Decimal | None = None if method == "card" else self.__currency_service.rub_to_btc(
+            self.user_cache.deposit_amount
+        )
+
+        if method == "btc" and btc_equivalent is None:
+            self.edit_message_in_context(
+                Messages.on_issue(),
+                Markups.support()
+            )
+            return
+
+        if self.path_args[0] == "transaction-withdraw-amount":
+            self.edit_message_in_context(
+                Messages.transaction_withdraw_amount(
+                    self.config.min_withdraw,
+                    self.config.card_withdrawal_fee if method == "card" else self.config.btc_withdrawal_fee,
+                    self.user.balance,
+                    self.user_cache.withdraw_amount,
+                    btc_equivalent
+                ),
+                Markups.transaction_withdraw_amount(
+                    method,
+                    self.user_cache.withdraw_amount,
+                    self.user.balance,
+                    self.config.min_withdraw
+                )
+            )
+
+        elif self.path_args[0] == "transaction-withdraw-details":
+            self.edit_message_in_context(
+                Messages.transaction_withdraw_details(
+                    method,
+                    self.user_cache.withdraw_details,
+                    self.user_cache.withdraw_bank
+                ),
+                Markups.transaction_withdraw_details(
+                    method,
+                    self.user_cache.withdraw_details,
+                    self.user_cache.withdraw_bank
+                )
+            )
+
+        elif self.path_args[0] == "transaction-withdraw-confirm":
+            fee: int = self.config.card_withdrawal_fee if method == "card" else self.config.btc_withdrawal_fee
+            amount_with_fee: int = int((self.user_cache.withdraw_amount / 100) * (100 - fee))
+
+            self.edit_message_in_context(
+                Messages.transaction_withdraw_confirm(
+                    method,
+                    self.user.balance,
+                    self.user_cache.withdraw_amount,
+                    fee,
+                    amount_with_fee,
+                    self.user_cache.withdraw_details,
+                    self.user_cache.withdraw_bank,
+                    btc_equivalent
+                ),
+                Markups.transaction_withdraw_confirm(method)
+            )
+
+        elif self.path_args[0] == "transaction-withdraw-create":
+            fee: int = self.config.card_withdrawal_fee if method == "card" else self.config.btc_withdrawal_fee
+            amount_with_fee: int = int((self.user_cache.withdraw_amount / 100) * (100 - fee))
+            btc_equivalent_with_fee: Decimal | None = (btc_equivalent / 100) * (100 - fee) if btc_equivalent else None
+
+            transaction: TransactionDTO = self.__transaction_service.create(
+                CreateTransactionDTO(
+                    user_tg_id=self.user.tg_id,
+                    type="withdraw",
+                    method=method,
+                    rub=self.user_cache.withdraw_amount,
+                    btc=btc_equivalent,
+                    fee=fee,
+                    recipient_details=self.user_cache.withdraw_details,
+                    recipient_bank=self.user_cache.withdraw_bank
+                )
+            )
+
+            self.user.balance -= transaction.rub
+
+            self.__user_service.update(
+                UpdateUserDTO(
+                    **self.user.model_dump()
+                )
+            )
+
+            self.edit_message_in_context(
+                Messages.transaction_create(transaction.id)
+            )
+
+            self._bot.send_message(
+                settings.admin_tg_id,
+                Messages.admin_transaction_withdraw_confirm(
+                    transaction.id,
+                    self.user.tg_id,
+                    self.user.tg_name,
+                    transaction.created_at,
+                    transaction.method,
+                    transaction.rub,
+                    transaction.fee,
+                    amount_with_fee,
+                    transaction.recipient_details,
+                    transaction.recipient_bank,
+                    transaction.btc,
+                    btc_equivalent_with_fee
+                ),
+                Markups.admin_transaction_confirm(transaction.id)
+            )
 
     def __process_misc(self) -> None:
         if self.path == "terms-accept":
@@ -693,9 +810,14 @@ class CallbackHandler(BaseTeleBotHandler):
 
             if approved:
                 transaction.status = TransactionStatus.SUCCEED
-                user.balance += transaction.rub
+
+                if transaction.type == "deposit":
+                    user.balance += transaction.rub
             else:
                 transaction.status = TransactionStatus.CANCELED_BY_ADMIN
+
+                if transaction.type == "withdraw":
+                    user.balance += transaction.rub
 
             transaction.processed_at = datetime.now()
 
@@ -715,19 +837,44 @@ class CallbackHandler(BaseTeleBotHandler):
                 Messages.transaction_processed(transaction.id, approved)
             )
 
-            self.edit_message_in_context(
-                Messages.admin_deposit_confirm(
-                    transaction.id,
-                    user.tg_id,
-                    user.tg_name,
-                    transaction.created_at,
-                    transaction.method,
-                    transaction.rub,
-                    transaction.btc,
-                    done=True
-                ),
-                Markups.admin_deposit_confirm(transaction.id, done=True)
-            )
+            if transaction.type == "deposit":
+                self.edit_message_in_context(
+                    Messages.admin_transaction_deposit_confirm(
+                        transaction.id,
+                        user.tg_id,
+                        user.tg_name,
+                        transaction.created_at,
+                        transaction.method,
+                        transaction.rub,
+                        transaction.btc,
+                        done=True
+                    ),
+                    Markups.admin_transaction_confirm(transaction.id, done=True)
+                )
+            else:
+                amount_with_fee: int = int((self.user_cache.withdraw_amount / 100) * (100 - transaction.fee))
+                btc_equivalent_with_fee: Decimal | None = None
+
+                if transaction.btc:
+                    btc_equivalent_with_fee: Decimal | None = (transaction.btc / 100) * (100 - transaction.fee)
+
+                self.edit_message_in_context(
+                    Messages.admin_transaction_withdraw_confirm(
+                        transaction.id,
+                        self.user.tg_id,
+                        self.user.tg_name,
+                        transaction.created_at,
+                        transaction.method,
+                        transaction.rub,
+                        transaction.fee,
+                        amount_with_fee,
+                        transaction.recipient_details,
+                        transaction.recipient_bank,
+                        transaction.btc,
+                        btc_equivalent_with_fee
+                    ),
+                    Markups.admin_transaction_confirm(transaction.id, done=True)
+                )
 
     def _prepare(self) -> bool:
         # why not
@@ -757,6 +904,13 @@ class CallbackHandler(BaseTeleBotHandler):
             self._bot.answer_callback(
                 self.call_id,
                 Messages.game_mode_disabled()
+            )
+            return False
+
+        if self.path.startswith("transaction") and not self.__transaction_service.get_status():
+            self._bot.answer_callback(
+                self.call_id,
+                Messages.transactions_disabled()
             )
             return False
 

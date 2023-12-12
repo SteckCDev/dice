@@ -33,7 +33,7 @@ from core.states import PVPCStatus
 from templates import Messages
 
 
-TTL_AFTER_CREATION: Final[timedelta] = timedelta(hours=2)
+TTL_AFTER_CREATION: Final[timedelta] = timedelta(minutes=2)
 TTL_AFTER_START: Final[timedelta] = timedelta(minutes=1)
 
 

@@ -79,8 +79,6 @@ class PVPService:
 
         total: int = wins + defeats + draws
 
-        print(f"{wins=}\n{defeats=}\n{draws=}")
-
         return .0 if total == 0 else 100 / total * wins
 
     def get_details_for_id(self, _id: int) -> PVPDetailsDTO:

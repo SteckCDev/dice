@@ -1,3 +1,4 @@
-from templates.markups import Markups
-from templates.menu import Menu
-from templates.messages import Messages
+from .markups import Markups
+from .menu import Menu
+from .messages import Messages
+from .regexes import RegEx

@@ -71,6 +71,11 @@ class Messages:
                f"возвращайтесь позже"
 
     @staticmethod
+    def transactions_disabled() -> str:
+        return f"🔧 На данный момент сервис транзакций находится на {bold('плановых технических работах')}, " \
+               f"возвращайтесь позже"
+
+    @staticmethod
     def balance_is_not_enough() -> str:
         return "❌ Недостаточно баланса"
 
@@ -234,9 +239,9 @@ class Messages:
             join_caption = bold("У вас недостаточно баланса чтобы присоединиться к игре")
 
         return f"🎲 Игра #{pvp_details.id:03}" \
-               f"{cursive(' - бета-режим') if pvp_details.beta_mode else ''} {bold(' [Ваша]')}\n\n" \
+               f"{cursive(' - бета-режим') if pvp_details.beta_mode else ''}\n\n" \
                f"🤙 Соперник: {bold(pvp_details.creator_name)}\n\n" \
-               f"{get_balance_emoji(pvp_details.beta_mode)}: {bold(balance_for_mode)}\n" \
+               f"{get_balance_emoji(pvp_details.beta_mode)} Баланс: {bold(balance_for_mode)}\n" \
                f"{get_balance_emoji(pvp_details.beta_mode)} Сумма ставки: {bold(pvp_details.bet)}\n\n" \
                f"{join_caption}"
 
@@ -400,7 +405,7 @@ class Messages:
         enter_amount_tip = cursive(f"Введите сумму от {min_deposit} RUB") if amount < min_deposit else ""
 
         return f"{Messages.__transaction_deposit_header()}\n\n" \
-               f"💵 Сумма пополнения: {amount} RUB\n" \
+               f"💵 Сумма пополнения: {bold(amount)} RUB\n" \
                f"{btc_caption}" \
                f"{enter_amount_tip}"
 
@@ -427,11 +432,98 @@ class Messages:
                f"{code(details_relative_to_method)}"
 
     @staticmethod
-    def transaction_deposit_create(transaction_id: int) -> str:
+    def transaction_create(transaction_id: int) -> str:
         return f"⏳ Транзакция #{transaction_id:03} принята и будет обработана в ближайшее время.\n\n" \
-               f"Статус можно проверить на вкладке {cursive('«Транзакции»')} в профиле. " \
-               f"Если пополнения не произошло - обратитесь в поддержку.\n\n" \
+               f"{cursive('Статус можно проверить на вкладке «Транзакции» в профиле.')} " \
+               f"{cursive('Если у вас есть вопрос - обратитесь в поддержку.')}\n\n" \
                f"Благодарим, что выбрали нас 🤝"
+
+    @staticmethod
+    def __transaction_withdraw_header() -> str:
+        return bold("➡ Дайс / Вывод средств")
+
+    @staticmethod
+    def transaction_withdraw(balance: int) -> str:
+        return f"{Messages.__transaction_withdraw_header()}\n\n" \
+               f"💵 Баланс: {bold(balance)}\n\n" \
+               f"{cursive('Выберите удобный способ вывода средств.')}\n" \
+               f"{cursive('Обратите внимание - каждому способу соответствует взимаемая комиссия')}"
+
+    @staticmethod
+    def transaction_withdraw_amount(
+            min_withdraw: int,
+            fee: int,
+            balance: int,
+            amount: int,
+            btc_equivalent: Decimal | None = None
+    ) -> str:
+        btc_caption = f"🪙 Эквивалент в BTC: {btc_equivalent}\n" if btc_equivalent else ""
+
+        if balance < min_withdraw:
+            enter_amount_tip = cursive(f"\nМинимальная сумма вывода {min_withdraw} RUB")
+        elif balance < amount or amount < min_withdraw:
+            enter_amount_tip = cursive(f"\nВведите сумму от {min_withdraw} RUB до {balance} RUB")
+        else:
+            enter_amount_tip = ""
+
+        return f"{Messages.__transaction_withdraw_header()}\n\n" \
+               f"💵 Баланс: {bold(balance)}\n" \
+               f"💵 Сумма вывода: {bold(amount)} RUB\n" \
+               f"💲 Комиссия: {bold(fee)}%\n" \
+               f"{btc_caption}\n" \
+               f"{enter_amount_tip}"
+
+    @staticmethod
+    def transaction_withdraw_details(method: str, withdraw_details: str | None, withdraw_bank: str | None) -> str:
+        if method == "card":
+            if withdraw_details is None and withdraw_bank is None:
+                fill_tip = "Пожалуйста, пишите данные по очереди."
+                details_caption = f"Укажите название банка и реквизиты (номер телефона, либо номер карты).\n{fill_tip}"
+            elif withdraw_details is None:
+                details_caption = "Укажите реквизиты (номер телефона, либо номер карты)."
+            elif withdraw_bank is None:
+                details_caption = "Укажите название банка."
+            else:
+                details_caption = ""
+
+            return f"{Messages.__transaction_withdraw_header()}\n\n" \
+                   f"🏦 Банк: {bold(withdraw_bank if withdraw_bank else 'не указан')}\n" \
+                   f"💳 Реквизиты: {bold(withdraw_details if withdraw_details else 'не указаны')}\n\n" \
+                   f"{cursive(details_caption)}"
+        else:
+            if withdraw_details is None:
+                details_caption = "Укажите адрес биткоин-кошелька."
+            else:
+                details_caption = ""
+
+            return f"{Messages.__transaction_withdraw_header()}\n\n" \
+                   f"🪙 Адрес кошелька: {bold(withdraw_details)}\n\n" \
+                   f"{cursive(details_caption)}"
+
+    @staticmethod
+    def transaction_withdraw_confirm(
+            method: str,
+            balance: int,
+            amount: int,
+            fee: int,
+            amount_with_fee: int,
+            details: str,
+            bank: str | None = None,
+            btc_equivalent: Decimal | None = None
+    ) -> str:
+        amount_with_fee_caption = bold(amount_with_fee)
+        details_caption = f"💳 Реквизиты: {bold(details)}\n🏦 Банк: {bold(bank)}"
+
+        if method == "btc":
+            amount_with_fee_caption += f" ({btc_equivalent} BTC)"
+            details_caption = f"🪙 Адрес биткоин-кошелька: {bold(details)}"
+
+        return f"{Messages.__transaction_withdraw_header()}\n\n" \
+               f"💵 Баланс: {bold(balance)}\n" \
+               f"💵 К выводу: {bold(amount)}\n" \
+               f"💲 Комиссия: {bold(fee)}%\n" \
+               f"💵 К получению: {amount_with_fee_caption}\n" \
+               f"{details_caption}"
 
     @staticmethod
     def admin(users_since_launch: int) -> str:
@@ -459,7 +551,7 @@ class Messages:
         return "✅ Параметр изменён"
 
     @staticmethod
-    def admin_deposit_confirm(
+    def admin_transaction_deposit_confirm(
             transaction_id: int,
             user_tg_id: int,
             user_tg_name: str,
@@ -470,9 +562,9 @@ class Messages:
             done: bool = False
     ) -> str:
         method_caption = "карта" if method == "card" else "биткоин"
-        amount_caption = f"{amount} RUB "
+        amount_caption = bold(f"{amount} RUB ")
 
-        if btc_equivalent is not None:
+        if method == "btc":
             amount_caption += f"({btc_equivalent} BTC)"
 
         status_emoji = "💵" if done else "⏳"
@@ -482,6 +574,43 @@ class Messages:
                f"📅 Создана: {bold(created_at.strftime('%y.%m.%d %H:%M'))} (UTC)\n" \
                f"💰 Способ оплаты: {bold(method_caption)}\n" \
                f"💰 Сумма: {bold(amount_caption)}"
+
+    @staticmethod
+    def admin_transaction_withdraw_confirm(
+            transaction_id: int,
+            user_tg_id: int,
+            user_tg_name: str,
+            created_at: datetime,
+            method: str,
+            amount: int,
+            fee: int,
+            amount_with_fee: int,
+            details: str,
+            bank: str,
+            btc_equivalent: Decimal | None = None,
+            btc_equivalent_with_fee: Decimal | None = None,
+            done: bool = False
+    ) -> str:
+        method_caption = "на карту" if method == "card" else "биткоином"
+        status_emoji = "💵" if done else "⏳"
+
+        amount_caption = bold(f"{amount} RUB ")
+        amount_with_fee_caption = bold(amount_with_fee)
+        details_caption = f"💳 Реквизиты: {bold(details)}\n🏦 Банк: {bold(bank)}"
+
+        if method == "btc":
+            amount_caption += f"({btc_equivalent} BTC)"
+            amount_with_fee_caption += f" ({btc_equivalent_with_fee} BTC)"
+            details_caption = f"🪙 Адрес биткоин-кошелька: {bold(details)}"
+
+        return f"{bold(f'{status_emoji} Транзакция #{transaction_id:03} - вывод')}\n\n" \
+               f"🙋‍ Пользователь: {link(user_tg_name, f'tg://user?id={user_tg_id}')} | {user_tg_id}\n" \
+               f"📅 Создана: {bold(created_at.strftime('%y.%m.%d %H:%M'))} (UTC)\n" \
+               f"💰 Способ получения: {bold(method_caption)}\n" \
+               f"💰 Сумма: {bold(amount_caption)}\n" \
+               f"💲 Комиссия: {bold(fee)}\n" \
+               f"💰 Сумма к переводу: {bold(amount_with_fee_caption)}\n" \
+               f"{details_caption}"
 
     @staticmethod
     def admin_transaction_not_found() -> str:

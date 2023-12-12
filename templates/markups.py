@@ -332,6 +332,66 @@ class Markups:
         )
 
     @staticmethod
+    def transaction_withdraw(card_fee: int, btc_fee: int) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(row_width=2).add(
+            InlineKeyboardButton(f"🪙 Bitcoin {btc_fee}%", callback_data="transaction-withdraw-amount:btc"),
+            InlineKeyboardButton(f"💳 Card {card_fee}%", callback_data="transaction-withdraw-amount:card"),
+            InlineKeyboardButton("<< Назад", callback_data="transaction")
+        )
+
+    @staticmethod
+    def transaction_withdraw_amount(method: str, amount: int, balance: int, min_withdraw: int) -> InlineKeyboardMarkup:
+        if amount > balance or amount < min_withdraw:
+            return InlineKeyboardMarkup(row_width=2).add(
+                InlineKeyboardButton("<< Назад", callback_data="transaction-withdraw"),
+                InlineKeyboardButton("Обновить", callback_data=f"transaction-withdraw-amount:{method}")
+            )
+
+        markup = InlineKeyboardMarkup(row_width=2).add(
+            InlineKeyboardButton("Обновить", callback_data=f"transaction-withdraw-amount:{method}")
+        )
+        markup.add(
+            InlineKeyboardButton("<< Назад", callback_data="transaction-withdraw"),
+            InlineKeyboardButton("Далее >>", callback_data=f"transaction-withdraw-details:{method}")
+        )
+
+        return markup
+
+    @staticmethod
+    def transaction_withdraw_details(
+            method: str,
+            withdraw_details: str | None,
+            withdraw_bank: str | None
+    ) -> InlineKeyboardMarkup:
+        card_condition = method == "card" and withdraw_details and withdraw_bank
+        btc_condition = method == "btc" and withdraw_details
+
+        if card_condition or btc_condition:
+            markup = InlineKeyboardMarkup(row_width=2)
+
+            markup.add(
+                InlineKeyboardButton("Обновить", callback_data=f"transaction-withdraw-details:{method}"),
+            )
+            markup.add(
+                InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-amount:{method}"),
+                InlineKeyboardButton("Далее >>", callback_data=f"transaction-withdraw-confirm:{method}")
+            )
+
+            return markup
+        else:
+            return InlineKeyboardMarkup(row_width=2).add(
+                InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-amount:{method}"),
+                InlineKeyboardButton("Обновить", callback_data=f"transaction-withdraw-details:{method}")
+            )
+
+    @staticmethod
+    def transaction_withdraw_confirm(method: str) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton("✅ Подтвердить вывод", callback_data=f"transaction-withdraw-create:{method}"),
+            InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-details:{method}")
+        )
+
+    @staticmethod
     def admin(
             pvb_active: bool, pvp_active: bool, pvpc_active: bool, pvpf_active: bool, transactions_active: bool
     ) -> InlineKeyboardMarkup:
@@ -371,7 +431,7 @@ class Markups:
         )
 
     @staticmethod
-    def admin_deposit_confirm(transaction_id: int, done: bool = False) -> InlineKeyboardMarkup:
+    def admin_transaction_confirm(transaction_id: int, done: bool = False) -> InlineKeyboardMarkup:
         if done:
             return InlineKeyboardMarkup().add(
                 InlineKeyboardButton(f"✅ Обработана", callback_data=f"None")
@@ -379,7 +439,7 @@ class Markups:
 
         return InlineKeyboardMarkup(row_width=1).add(
             InlineKeyboardButton(
-                f"✅ Подтвердить и зачислить", callback_data=f"admin-transaction-approve:{transaction_id}"
+                f"✅ Подтвердить", callback_data=f"admin-transaction-approve:{transaction_id}"
             ),
             InlineKeyboardButton(f"🛑 Отклонить", callback_data=f"admin-transaction-reject:{transaction_id}")
         )
