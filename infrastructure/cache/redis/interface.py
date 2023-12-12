@@ -13,6 +13,12 @@ class RedisInterface:
         # noinspection PyTypeChecker
         self.__client: Redis = Redis.from_url(settings.redis_dsn, db=database)
 
+    def flush_all(self) -> None:
+        self.__client.flushall()
+
+    def flush_app_db(self) -> None:
+        self.__client.flushdb()
+
     def set(self, key: str, value: str) -> None:
         self.__client.set(key, value)
 

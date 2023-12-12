@@ -12,6 +12,8 @@ from infrastructure.handlers import (
     AdminHandler,
     BalanceHandler,
     CallbackHandler,
+    ClearAllCacheHandler,
+    ClearAppCacheHandler,
     GroupDiceHandler,
     GroupTextHandler,
     LotteryHandler,
@@ -62,6 +64,20 @@ def process_webhook(raw_update: dict) -> JSONResponse:
 @bot.message_handler(commands=["admin"], chat_types=["private"])
 def cmd_admin(msg: Message) -> None:
     AdminHandler(
+        user_id=msg.from_user.id
+    ).handle()
+
+
+@bot.message_handler(commands=["clear_app_cache"], chat_types=["private"])
+def cmd_admin(msg: Message) -> None:
+    ClearAppCacheHandler(
+        user_id=msg.from_user.id
+    ).handle()
+
+
+@bot.message_handler(commands=["clear_all_cache"], chat_types=["private"])
+def cmd_admin(msg: Message) -> None:
+    ClearAllCacheHandler(
         user_id=msg.from_user.id
     ).handle()
 

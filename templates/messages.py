@@ -534,7 +534,8 @@ class Messages:
                f"ставка (минимальная, максимальная), чат (раунды)\n\n" \
                f"Чтобы увидеть синтаксис команды и текущие значения изменяемых ею параметров, " \
                f"необходимо написать только её имя без параметров, " \
-               f"например, - {cursive('комиссия')}"
+               f"например, - {cursive('комиссия')}\n\n" \
+               f"Команды очистки кэша:\n  - {code('/clear_app_cache')}\n  - {code('/clear_all_cache')}"
 
     @staticmethod
     def admin_stats(
@@ -660,3 +661,11 @@ class Messages:
     @staticmethod
     def admin_transaction_not_found() -> str:
         return "❌ Транзакция не найдена, либо уже обработана"
+
+    @staticmethod
+    def admin_app_cache_cleared() -> str:
+        return "✅ Кэш приложения очищен"
+
+    @staticmethod
+    def admin_all_cache_cleared() -> str:
+        return "✅ Кэш приложения и очереди задач очищен"
