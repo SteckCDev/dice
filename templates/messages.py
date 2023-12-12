@@ -635,6 +635,10 @@ class Messages:
         return "❌ Транзакция уже обработана"
 
     @staticmethod
+    def admin_transaction_canceled_by_user(transaction_id: int) -> str:
+        return f"🔔 Транзакция #{transaction_id:03} отменена пользователем"
+
+    @staticmethod
     def admin_transaction_deposit_confirm(
             transaction_id: int,
             user_tg_id: int,

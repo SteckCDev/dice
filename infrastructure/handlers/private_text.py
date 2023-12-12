@@ -1,4 +1,5 @@
 import re
+import json
 import html
 
 from telebot.types import CallbackQuery
@@ -69,12 +70,16 @@ class PrivateTextHandler(BaseTeleBotHandler):
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
     def __callback_path_startswith(self, pattern: str) -> bool:
-        call: CallbackQuery = CallbackQuery.de_json(self.user_cache.callback_json)
+        call: CallbackQuery = CallbackQuery.de_json(
+            json.loads(self.user_cache.callback_json)
+        )
 
         return call.data.startswith(pattern)
 
     def __update_message(self) -> None:
-        call: CallbackQuery = CallbackQuery.de_json(self.user_cache.callback_json)
+        call: CallbackQuery = CallbackQuery.de_json(
+            json.loads(self.user_cache.callback_json)
+        )
 
         CallbackHandler(
             call_id=call.id,

@@ -522,6 +522,11 @@ class CallbackHandler(BaseTeleBotHandler):
                 )
             )
 
+            self._bot.send_message(
+                settings.admin_tg_id,
+                Messages.admin_transaction_canceled_by_user(transaction.id)
+            )
+
             self.edit_message_in_context(
                 Messages.transaction_canceled(),
                 Markups.back_to("transaction-history")
