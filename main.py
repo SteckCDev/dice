@@ -53,14 +53,17 @@ def process_webhook(raw_update: dict) -> JSONResponse:
         bot.process_new_updates([update])
 
     return JSONResponse(
-        content={"status": "OK"},
-        status_code=200
+        content={
+            "status": "OK"
+        }
     )
 
 
 @bot.message_handler(commands=["admin"], chat_types=["private"])
-def cmd_admin(_msg: Message) -> None:
-    AdminHandler().handle()
+def cmd_admin(msg: Message) -> None:
+    AdminHandler(
+        user_id=msg.from_user.id
+    ).handle()
 
 
 @bot.message_handler(commands=["start"], chat_types=["private"])

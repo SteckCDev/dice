@@ -42,6 +42,14 @@ class PVPRepository(ABC):
         ...
 
     @abstractmethod
+    def get_bet_sum(self) -> int:
+        ...
+
+    @abstractmethod
+    def get_count(self) -> int:
+        ...
+
+    @abstractmethod
     def get_count_for_tg_id_and_result(self, tg_id: int, user_won: bool | None) -> int:
         ...
 

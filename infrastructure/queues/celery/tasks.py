@@ -8,8 +8,6 @@ from core.services import (
     PVPCService,
     UserService,
 )
-from core.services.pvp import TTL_OF_CREATED
-from core.services.pvpc import TTL_AFTER_CREATION
 from infrastructure.api_services.telebot import TeleBotAPI
 from infrastructure.repositories import (
     ImplementedAdminRepository,
@@ -62,7 +60,7 @@ def setup_beat(sender: Celery, **_kwargs) -> None:
         sig=pvp_finish_started.s()
     )
     sender.add_periodic_task(
-        schedule=60,
+        schedule=120,
         sig=pvp_close_expired.s()
     )
     sender.add_periodic_task(
@@ -70,7 +68,7 @@ def setup_beat(sender: Celery, **_kwargs) -> None:
         sig=pvpc_finish_started.s()
     )
     sender.add_periodic_task(
-        schedule=60,
+        schedule=120,
         sig=pvpc_close_expired.s()
     )
 

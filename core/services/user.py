@@ -30,6 +30,9 @@ class UserService:
     def get_by_tg_id(self, tg_id: int) -> UserDTO | None:
         return self.__repo.get_by_tg_id(tg_id)
 
+    def get_count(self) -> int:
+        return self.__repo.get_count()
+
     def update(self, dto: UpdateUserDTO) -> None:
         self.__repo.update(dto)
 

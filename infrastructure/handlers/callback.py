@@ -191,7 +191,7 @@ class CallbackHandler(BaseTeleBotHandler):
                 )
 
         elif self.path_args[0] == "pvb-history":
-            wins_percent: float = self.__pvb_service.get_wins_percent_for_tg_id(self.user.tg_id)
+            wins_percent: float = self.__pvb_service.get_result_percent_for_tg_id_or_bot(self.user.tg_id)
             games_pvb: list[PVBDTO] | None = self.__pvb_service.get_last_5_for_tg_id(self.user.tg_id)
 
             self.edit_message_in_context(
@@ -790,6 +790,89 @@ class CallbackHandler(BaseTeleBotHandler):
                 )
             )
 
+        elif self.path_args[0] == "admin-stats":
+            self.edit_message_in_context(
+                Messages.admin_stats(
+                    users_count=self.__user_service.get_count(),
+                    pvb_fees_income=0,
+                    pvp_fees_income=0,
+                    pvpc_fees_income=0,
+                    withdraws_final_outcome=0,
+                    pvb_count=self.__pvb_service.get_count(),
+                    pvp_count=self.__pvp_service.get_count(),
+                    pvpc_count=self.__pvpc_service.get_count(),
+                    pvb_total_bank=self.__pvb_service.get_bet_sum(),
+                    pvp_total_bank=self.__pvp_service.get_bet_sum(),
+                    pvpc_total_bank=self.__pvpc_service.get_bet_sum(),
+                    pvb_bot_income=self.__pvb_service.get_bet_sum_for_result(False),
+                    pvb_bot_wins_percent=self.__pvb_service.get_result_percent_for_tg_id_or_bot(None),
+                    pvb_bot_defeats_percent=self.__pvb_service.get_result_percent_for_tg_id_or_bot(None, False),
+                    pvb_draws_percent=self.__pvb_service.get_result_percent_for_tg_id_or_bot(None, None),
+                ),
+                Markups.back_to("admin")
+            )
+
+        elif self.path_args[0] == "admin-transactions":
+            pending_transactions: list[TransactionDTO] | None = self.__transaction_service.get_all_for_status(
+                TransactionStatus.CREATED
+            )
+
+            self.edit_message_in_context(
+                Messages.admin_transactions(),
+                Markups.admin_transactions(pending_transactions)
+            )
+
+        elif self.path_args[0] == "admin-transactions-manage":
+            transaction_id: int = int(self.path_args[1])
+
+            transaction: TransactionDTO | None = self.__transaction_service.get_by_id(transaction_id)
+
+            if transaction is None or transaction.status != TransactionStatus.CREATED:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.admin_transaction_already_processed()
+                )
+                return
+
+            if transaction.type == "deposit":
+                self._bot.send_message(
+                    settings.admin_tg_id,
+                    Messages.admin_transaction_deposit_confirm(
+                        transaction.id,
+                        self.user.tg_id,
+                        self.user.tg_name,
+                        transaction.created_at,
+                        transaction.method,
+                        transaction.rub,
+                        transaction.btc
+                    ),
+                    Markups.admin_transaction_confirm(transaction.id)
+                )
+            else:
+                amount_with_fee: int = int((self.user_cache.withdraw_amount / 100) * (100 - transaction.fee))
+                btc_equivalent_with_fee: Decimal | None = (
+                        transaction.btc / 100
+                    ) * (100 - transaction.fee) if transaction.btc else None
+
+                self._bot.send_message(
+                    settings.admin_tg_id,
+                    Messages.admin_transaction_withdraw_confirm(
+                        transaction.id,
+                        self.user.tg_id,
+                        self.user.tg_name,
+                        transaction.created_at,
+                        transaction.method,
+                        transaction.rub,
+                        transaction.fee,
+                        amount_with_fee,
+                        transaction.recipient_details,
+                        transaction.recipient_bank,
+                        transaction.btc,
+                        btc_equivalent_with_fee
+                    ),
+                    Markups.admin_transaction_confirm(transaction.id)
+                )
+
         elif self.path_args[0] in (
                 "admin-transaction-approve",
                 "admin-transaction-reject"
@@ -856,7 +939,7 @@ class CallbackHandler(BaseTeleBotHandler):
                 btc_equivalent_with_fee: Decimal | None = None
 
                 if transaction.btc:
-                    btc_equivalent_with_fee: Decimal | None = (transaction.btc / 100) * (100 - transaction.fee)
+                    btc_equivalent_with_fee = (transaction.btc / 100) * (100 - transaction.fee)
 
                 self.edit_message_in_context(
                     Messages.admin_transaction_withdraw_confirm(

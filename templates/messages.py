@@ -401,7 +401,7 @@ class Messages:
 
     @staticmethod
     def transaction_deposit_amount(min_deposit: int, amount: int, btc_equivalent: Decimal | None = None) -> str:
-        btc_caption = f"🪙 Эквивалент в BTC: {btc_equivalent}\n\n" if btc_equivalent else ""
+        btc_caption = f"🪙 Эквивалент в BTC: {btc_equivalent:.8f}\n\n" if btc_equivalent else ""
         enter_amount_tip = cursive(f"Введите сумму от {min_deposit} RUB") if amount < min_deposit else ""
 
         return f"{Messages.__transaction_deposit_header()}\n\n" \
@@ -414,7 +414,7 @@ class Messages:
         amount_caption = f"{amount} RUB"
 
         if btc_equivalent is not None:
-            amount_caption += f" ({btc_equivalent} BTC)"
+            amount_caption += f" ({btc_equivalent:.8f} BTC)"
 
         return f"{Messages.__transaction_deposit_header()}\n\n" \
                f"Вы подтверждаете, что хотите пополнить баланс на сумму {bold(amount_caption)}?"
@@ -457,7 +457,7 @@ class Messages:
             amount: int,
             btc_equivalent: Decimal | None = None
     ) -> str:
-        btc_caption = f"🪙 Эквивалент в BTC: {btc_equivalent}\n" if btc_equivalent else ""
+        btc_caption = f"🪙 Эквивалент в BTC: {btc_equivalent:.8f}\n" if btc_equivalent else ""
 
         if balance < min_withdraw:
             enter_amount_tip = cursive(f"\nМинимальная сумма вывода {min_withdraw} RUB")
@@ -515,7 +515,7 @@ class Messages:
         details_caption = f"💳 Реквизиты: {bold(details)}\n🏦 Банк: {bold(bank)}"
 
         if method == "btc":
-            amount_with_fee_caption += f" ({btc_equivalent} BTC)"
+            amount_with_fee_caption += f" ({btc_equivalent:.8f} BTC)"
             details_caption = f"🪙 Адрес биткоин-кошелька: {bold(details)}"
 
         return f"{Messages.__transaction_withdraw_header()}\n\n" \
@@ -537,6 +537,47 @@ class Messages:
                f"например, - {cursive('комиссия')}"
 
     @staticmethod
+    def admin_stats(
+            users_count: int,
+            pvb_fees_income: int,
+            pvp_fees_income: int,
+            pvpc_fees_income: int,
+            withdraws_final_outcome: int,
+            pvb_count: int,
+            pvp_count: int,
+            pvpc_count: int,
+            pvb_total_bank: int,
+            pvp_total_bank: int,
+            pvpc_total_bank: int,
+            pvb_bot_income: int,
+            pvb_bot_wins_percent: float,
+            pvb_bot_defeats_percent: float,
+            pvb_draws_percent: float
+    ) -> str:
+        income = pvb_bot_income + pvb_fees_income + pvp_fees_income + pvpc_fees_income - withdraws_final_outcome
+        bank = pvb_total_bank + pvp_total_bank + pvpc_total_bank
+
+        return f"{bold('🎲 Дайс / Админ-панель - статистика')}\n\n" \
+               f"🙋‍ Всего пользователей: {bold(users_count)}\n\n" \
+               f"💰 Прибыль: {bold(income)} + x RUB\n\n" \
+               f"🎲 Всего игр: {bold(pvb_count + pvp_count + pvpc_count)}\n" \
+               f"  - 🤖 PVB: {bold(pvb_count)}\n" \
+               f"  - 👥 PVP: {bold(pvp_count)}\n" \
+               f"  - ⚔️ PVPC: {bold(pvpc_count)}\n\n" \
+               f"💵 Общая сумма ставок: {bold(bank)} RUB\n" \
+               f"  - 🤖 PVB: {bold(pvb_total_bank)} RUB\n" \
+               f"  - 👥 PVP: {bold(pvp_total_bank)} RUB\n" \
+               f"  - ⚔️ PVPC: {bold(pvpc_total_bank)} RUB\n\n" \
+               f"💵 (PVB) Выигрыш бота: {bold(pvb_bot_income)} RUB\n" \
+               f"🏆 (PVB) Процент побед бота: {bold(f'{pvb_bot_wins_percent:.1f}')}%\n" \
+               f"💀 (PVB) Процент поражений бота: {bold(f'{pvb_bot_defeats_percent:.1f}')}%\n" \
+               f"🤝 (PVB) Процент ничьих: {bold(f'{pvb_draws_percent:.1f}')}%"
+
+    @staticmethod
+    def admin_transactions() -> str:
+        return f"{bold('🎲 Дайс / Админ-панель - транзакции')}"
+
+    @staticmethod
     def admin_mailing() -> str:
         return f"{bold('🎲 Дайс / Рассылка')}\n\n" \
                f"{cursive('>[текст рассылки]')}"
@@ -549,6 +590,10 @@ class Messages:
     @staticmethod
     def admin_config_adjusted() -> str:
         return "✅ Параметр изменён"
+
+    @staticmethod
+    def admin_transaction_already_processed() -> str:
+        return "❌ Транзакция уже обработана"
 
     @staticmethod
     def admin_transaction_deposit_confirm(
@@ -565,7 +610,7 @@ class Messages:
         amount_caption = bold(f"{amount} RUB ")
 
         if method == "btc":
-            amount_caption += f"({btc_equivalent} BTC)"
+            amount_caption += f"({btc_equivalent:.8f} BTC)"
 
         status_emoji = "💵" if done else "⏳"
 
@@ -599,8 +644,8 @@ class Messages:
         details_caption = f"💳 Реквизиты: {bold(details)}\n🏦 Банк: {bold(bank)}"
 
         if method == "btc":
-            amount_caption += f"({btc_equivalent} BTC)"
-            amount_with_fee_caption += f" ({btc_equivalent_with_fee} BTC)"
+            amount_caption += f"({btc_equivalent:.8f} BTC)"
+            amount_with_fee_caption += f" ({btc_equivalent_with_fee:.8f} BTC)"
             details_caption = f"🪙 Адрес биткоин-кошелька: {bold(details)}"
 
         return f"{bold(f'{status_emoji} Транзакция #{transaction_id:03} - вывод')}\n\n" \

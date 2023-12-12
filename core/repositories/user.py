@@ -14,11 +14,15 @@ class UserRepository(ABC):
         ...
 
     @abstractmethod
+    def get_all(self) -> list[UserDTO] | None:
+        ...
+
+    @abstractmethod
     def get_by_tg_id(self, tg_id: int) -> UserDTO | None:
         ...
 
     @abstractmethod
-    def get_all(self) -> list[UserDTO] | None:
+    def get_count(self) -> int:
         ...
 
     @abstractmethod

@@ -24,7 +24,23 @@ class PVBRepository(ABC):
         ...
 
     @abstractmethod
+    def get_bet_sum(self) -> int:
+        ...
+
+    @abstractmethod
+    def get_bet_sum_for_result(self, player_won: bool | None) -> int:
+        ...
+
+    @abstractmethod
+    def get_count(self) -> int:
+        ...
+
+    @abstractmethod
     def get_count_for_tg_id(self, tg_id: int) -> int:
+        ...
+
+    @abstractmethod
+    def get_count_for_result(self, player_won: bool | None) -> int:
         ...
 
     @abstractmethod

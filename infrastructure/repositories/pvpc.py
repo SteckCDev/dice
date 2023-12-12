@@ -2,6 +2,7 @@ from typing import Type
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
+from sqlalchemy.sql import func
 
 from core.repositories import PVPCRepository
 from core.schemas.pvpc import (
@@ -63,6 +64,16 @@ class PostgresRedisPVPCRepository(PVPCRepository):
             return [
                 PVPCDTO(**game.__dict__) for game in games
             ]
+
+    def get_bet_sum(self) -> int:
+        with Session() as db:
+            return db.query(
+                func.sum(PVPCModel.bet)
+            ).one()[0]
+
+    def get_count(self) -> int:
+        with Session() as db:
+            return db.query(PVPCModel).count()
 
     def update(self, dto: UpdatePVPCDTO) -> None:
         with Session() as db:

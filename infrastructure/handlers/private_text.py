@@ -27,6 +27,7 @@ from templates import (
     Messages,
 )
 from templates import RegEx
+from .admin import AdminHandler
 from .lottery import LotteryHandler
 from .profile import ProfileHandler
 from .support import SupportHandler
@@ -184,6 +185,9 @@ class PrivateTextHandler(BaseTeleBotHandler):
 
         elif self.text == Menu.SUPPORT:
             SupportHandler(self.user_id).handle()
+
+        elif self.text == Menu.ADMIN:
+            AdminHandler(self.user_id).handle()
 
         elif self.is_admin and self.__process_admin():
             pass

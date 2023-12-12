@@ -1,6 +1,7 @@
 from typing import Type
 
 from sqlalchemy.orm import Query
+from sqlalchemy.sql import func
 
 from core.repositories import PVBRepository
 from core.schemas.pvb import (
@@ -48,9 +49,31 @@ class PostgresRedisPVBRepository(PVBRepository):
 
         return PVBDTO(**pvb.__dict__) if pvb else None
 
+    def get_bet_sum(self) -> int:
+        with Session() as db:
+            return db.query(
+                func.sum(PVBModel.bet)
+            ).one()[0]
+
+    def get_bet_sum_for_result(self, player_won: bool | None) -> int:
+        with Session() as db:
+            return db.query(
+                func.sum(PVBModel.bet)
+            ).filter(PVBModel.player_won == player_won).one()[0]
+
+    def get_count(self) -> int:
+        with Session() as db:
+            return db.query(PVBModel).count()
+
     def get_count_for_tg_id(self, tg_id: int) -> int:
         with Session() as db:
             return db.query(PVBModel).filter(PVBModel.player_tg_id == tg_id).count()
+
+    def get_count_for_result(self, player_won: bool | None) -> int:
+        with Session() as db:
+            return db.query(PVBModel).filter(
+                PVBModel.player_won == player_won
+            ).count()
 
     def get_count_for_tg_id_and_result(self, tg_id: int, player_won: bool | None) -> int:
         with Session() as db:

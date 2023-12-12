@@ -30,6 +30,14 @@ class PVPCRepository(ABC):
         ...
 
     @abstractmethod
+    def get_bet_sum(self) -> int:
+        ...
+
+    @abstractmethod
+    def get_count(self) -> int:
+        ...
+
+    @abstractmethod
     def update(self, dto: UpdatePVPCDTO) -> None:
         ...
 

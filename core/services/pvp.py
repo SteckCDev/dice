@@ -30,9 +30,9 @@ from core.states import PVPStatus
 from templates.messages import Messages
 
 
+TTL_AFTER_CREATION: Final[timedelta] = timedelta(minutes=2)
+TTL_AFTER_START: Final[timedelta] = timedelta(minutes=1)
 TIME_UNTIL_CANCELLATION_AVAILABLE: Final[timedelta] = timedelta(minutes=10)
-TIME_FOR_CREATOR_TO_THROW: Final[timedelta] = timedelta(minutes=1)
-TTL_OF_CREATED: Final[timedelta] = timedelta(minutes=2)
 
 
 class PVPService:
@@ -68,6 +68,12 @@ class PVPService:
 
     def get_last_5_for_tg_id(self, tg_id: int) -> list[PVPDTO] | None:
         return self.__repo.get_last_5_for_tg_id(tg_id)
+
+    def get_bet_sum(self) -> int:
+        return self.__repo.get_bet_sum()
+
+    def get_count(self) -> int:
+        return self.__repo.get_count()
 
     def update(self, dto: UpdatePVPDTO) -> None:
         self.__repo.update(dto)
@@ -285,7 +291,7 @@ class PVPService:
             return
 
         for pvp in games:
-            if pvp.started_at + TIME_FOR_CREATOR_TO_THROW > datetime.now():
+            if pvp.started_at + TTL_AFTER_START > datetime.now():
                 continue
 
             pvp.creator_dice = self.__bot.send_dice(pvp.creator_tg_id)
@@ -305,7 +311,7 @@ class PVPService:
             return
 
         for pvp in games:
-            if pvp.created_at + TTL_OF_CREATED > datetime.now():
+            if pvp.created_at + TTL_AFTER_CREATION > datetime.now():
                 continue
 
             creator: UserDTO = self.__user_service.get_by_tg_id(pvp.creator_tg_id)
@@ -334,6 +340,6 @@ class PVPService:
                     pvp.id,
                     pvp.beta_mode,
                     pvp.bet,
-                    TTL_OF_CREATED
+                    TTL_AFTER_CREATION
                 )
             )

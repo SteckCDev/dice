@@ -11,6 +11,7 @@ from infrastructure.repositories import (
     ImplementedUserRepository,
 )
 from templates import Markups, Messages
+from settings import settings
 
 
 class StartHandler(BaseTeleBotHandler):
@@ -46,5 +47,7 @@ class StartHandler(BaseTeleBotHandler):
         self._bot.send_message(
             self.chat_id,
             Messages.start(),
-            Markups.navigation()
+            Markups.navigation(
+                self.chat_id == settings.admin_tg_id
+            )
         )

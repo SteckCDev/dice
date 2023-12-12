@@ -7,6 +7,7 @@ from telebot.types import (
 
 from core.schemas.pvb import PVBDTO
 from core.schemas.pvp import PVPDTO, PVPDetailsDTO
+from core.schemas.transaction import TransactionDTO
 from core.schemas.user import UserDTO
 from settings import settings
 from .formatting.emojis import get_status_emoji, get_balance_emoji
@@ -21,13 +22,20 @@ class Markups:
         )
 
     @staticmethod
-    def navigation() -> ReplyKeyboardMarkup:
-        return ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(
+    def navigation(is_admin: bool) -> ReplyKeyboardMarkup:
+        markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(
             KeyboardButton(Menu.GAMES),
             KeyboardButton(Menu.PROFILE),
             KeyboardButton(Menu.LOTTERY),
             KeyboardButton(Menu.SUPPORT)
         )
+
+        if is_admin:
+            markup.add(
+                KeyboardButton(Menu.ADMIN)
+            )
+
+        return markup
 
     @staticmethod
     def games() -> InlineKeyboardMarkup:
@@ -395,11 +403,14 @@ class Markups:
     def admin(
             pvb_active: bool, pvp_active: bool, pvpc_active: bool, pvpf_active: bool, transactions_active: bool
     ) -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("📋 Общая статистика", callback_data="admin-total"),
+        markup = InlineKeyboardMarkup(row_width=2)
+
+        markup.add(
+            InlineKeyboardButton("📋 Статистика", callback_data="admin-stats"),
             InlineKeyboardButton("⏳ Транзакции", callback_data="admin-transactions"),
-            InlineKeyboardButton("🎲 Созданные игры", callback_data="admin-log-filtered"),
-            InlineKeyboardButton("📢 Рассылка", callback_data="admin-mailing"),
+            InlineKeyboardButton("📢 Рассылка", callback_data="admin-mailing")
+        )
+        markup.add(
             InlineKeyboardButton(
                 f"{get_status_emoji(pvb_active)} PVB",
                 callback_data=f"admin-switch-pvb"
@@ -413,14 +424,42 @@ class Markups:
                 callback_data=f"admin-switch-pvpc"
             ),
             InlineKeyboardButton(
-                f"{get_status_emoji(pvpf_active)} Автоматические игры PVP",
+                f"{get_status_emoji(pvpf_active)} PVPF",
                 callback_data=f"admin-switch-pvpf"
             ),
             InlineKeyboardButton(
                 f"{get_status_emoji(transactions_active)} Транзакции",
                 callback_data=f"admin-switch-transactions"
-            ),
+            )
         )
+
+        return markup
+
+    @staticmethod
+    def admin_transactions(pending_transactions: list[TransactionDTO] | None) -> InlineKeyboardMarkup:
+        markup = InlineKeyboardMarkup(row_width=1)
+
+        if pending_transactions is None:
+            markup.add(
+                InlineKeyboardButton("✅ Все транзакции обработаны", callback_data="None")
+            )
+        else:
+            for transaction in pending_transactions:
+                type_caption = "пополнение" if transaction.type == "deposit" else "списание"
+                method_caption = "картой" if transaction.method == "card" else "монетой"
+
+                markup.add(
+                    InlineKeyboardButton(
+                        f"⏳ #{transaction.id:03}: {type_caption} / {transaction.rub} RUB ({method_caption})",
+                        callback_data=f"admin-transactions-manage:{transaction.id}"
+                    )
+                )
+
+        markup.add(
+            InlineKeyboardButton("<< Назад", callback_data="admin")
+        )
+
+        return markup
 
     @staticmethod
     def admin_mailing() -> InlineKeyboardMarkup:

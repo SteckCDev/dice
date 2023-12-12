@@ -55,6 +55,10 @@ class PostgresRedisUserRepository(UserRepository):
 
         return UserDTO(**user.__dict__) if user else None
 
+    def get_count(self) -> int:
+        with Session() as db:
+            return db.query(UserModel).count()
+
     def update(self, dto: UpdateUserDTO) -> None:
         with Session() as db:
             db.query(UserModel).filter(UserModel.tg_id == dto.tg_id).update(dto.model_dump())

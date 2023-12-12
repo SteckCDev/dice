@@ -2,6 +2,7 @@ from typing import Type
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
+from sqlalchemy.sql import func
 
 from core.repositories import PVPRepository
 from core.schemas.pvp import (
@@ -94,6 +95,16 @@ class PostgresRedisPVPRepository(PVPRepository):
             return [
                 PVPDTO(**game.__dict__) for game in games
             ]
+
+    def get_bet_sum(self) -> int:
+        with Session() as db:
+            return db.query(
+                func.sum(PVPModel.bet)
+            ).one()[0]
+
+    def get_count(self) -> int:
+        with Session() as db:
+            return db.query(PVPModel).count()
 
     def get_count_for_tg_id_and_result(self, tg_id: int, user_won: bool | None) -> int:
         if user_won is None:

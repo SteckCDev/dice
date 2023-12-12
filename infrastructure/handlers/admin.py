@@ -20,8 +20,10 @@ from templates import Markups, Messages
 
 
 class AdminHandler(BaseTeleBotHandler):
-    def __init__(self) -> None:
+    def __init__(self, user_id: int) -> None:
         super().__init__()
+
+        self.user_id: int = user_id
 
         config_service: ConfigService = ConfigService(
             repository=ImplementedConfigRepository()
@@ -54,7 +56,7 @@ class AdminHandler(BaseTeleBotHandler):
         )
 
     def _prepare(self) -> bool:
-        return True
+        return self.user_id == settings.admin_tg_id
 
     def _process(self) -> None:
         self._bot.send_message(

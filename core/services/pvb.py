@@ -53,20 +53,44 @@ class PVBService:
     def get_by_id(self, _id: int) -> PVBDTO | None:
         return self.__repo.get_by_id(_id)
 
+    def get_bet_sum(self) -> int:
+        return self.__repo.get_bet_sum()
+
+    def get_bet_sum_for_result(self, player_won: bool | None) -> int:
+        return self.__repo.get_bet_sum_for_result(player_won)
+
+    def get_count(self) -> int:
+        return self.__repo.get_count()
+
     def get_count_for_tg_id(self, tg_id: int) -> int:
         return self.__repo.get_count_for_tg_id(tg_id)
+
+    def get_count_for_result(self, player_won: bool | None) -> int:
+        return self.__repo.get_count_for_result(player_won)
 
     def get_last_5_for_tg_id(self, tg_id: int) -> list[PVBDTO] | None:
         return self.__repo.get_last_5_for_tg_id(tg_id)
 
-    def get_wins_percent_for_tg_id(self, tg_id: int) -> float:
-        wins: int = self.__repo.get_count_for_tg_id_and_result(tg_id, True)
-        defeats: int = self.__repo.get_count_for_tg_id_and_result(tg_id, False)
-        draws: int = self.__repo.get_count_for_tg_id_and_result(tg_id, None)
+    def get_result_percent_for_tg_id_or_bot(self, tg_id: int | None, result: bool | None = True) -> float:
+        if tg_id is None:
+            wins: int = self.__repo.get_count_for_result(False)
+            defeats: int = self.__repo.get_count_for_result(True)
+            draws: int = self.__repo.get_count_for_result(None)
+        else:
+            wins: int = self.__repo.get_count_for_tg_id_and_result(tg_id, True)
+            defeats: int = self.__repo.get_count_for_tg_id_and_result(tg_id, False)
+            draws: int = self.__repo.get_count_for_tg_id_and_result(tg_id, None)
 
         total: int = wins + defeats + draws
 
-        return .0 if total == 0 else 100 / total * wins
+        if result is None:
+            criterion = draws
+        elif result:
+            criterion = wins
+        else:
+            criterion = defeats
+
+        return .0 if total == 0 else 100 / total * criterion
 
     def __validate_game_conditions(self, bet: int, selected_balance: int) -> None:
         config: ConfigDTO = self.__config_service.get()
