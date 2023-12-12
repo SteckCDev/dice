@@ -17,6 +17,8 @@ class PostgresRedisUserRepository(UserRepository):
     def __init__(self) -> None:
         self.__redis: RedisInterface = redis_instance
 
+        self.__max_fake_tg_id: int = 100
+
     def __init_cache(self, tg_id: int) -> None:
         initial_cache = UserCache(tg_id=tg_id)
 
@@ -54,6 +56,20 @@ class PostgresRedisUserRepository(UserRepository):
             user: Type[UserModel] | None = db.get(UserModel, tg_id)
 
         return UserDTO(**user.__dict__) if user else None
+
+    def get_max_fake_tg_id(self) -> int:
+        return self.__max_fake_tg_id
+
+    def get_fakes(self) -> list[UserDTO] | None:
+        with Session() as db:
+            fakes: list[Type[UserModel]] = db.query(UserModel).filter(
+                UserModel.tg_id < self.__max_fake_tg_id
+            ).all()
+
+        if len(fakes) == 0:
+            return
+
+        return [UserDTO(**user.__dict__) for user in fakes]
 
     def get_count(self) -> int:
         with Session() as db:

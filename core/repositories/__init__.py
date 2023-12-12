@@ -4,5 +4,6 @@ from .currency import CurrencyRepository
 from .pvb import PVBRepository
 from .pvp import PVPRepository
 from .pvpc import PVPCRepository
+from .pvpf import PVPFRepository
 from .transaction import TransactionRepository
 from .user import UserRepository

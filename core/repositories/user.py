@@ -21,6 +21,13 @@ class UserRepository(ABC):
     def get_by_tg_id(self, tg_id: int) -> UserDTO | None:
         ...
 
+    def get_max_fake_tg_id(self) -> int:
+        ...
+
+    @abstractmethod
+    def get_fakes(self) -> list[UserDTO] | None:
+        ...
+
     @abstractmethod
     def get_count(self) -> int:
         ...

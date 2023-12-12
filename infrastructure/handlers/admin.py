@@ -3,6 +3,7 @@ from core.services import (
     PVBService,
     PVPService,
     PVPCService,
+    PVPFService,
     TransactionService,
     UserService,
 )
@@ -12,6 +13,7 @@ from infrastructure.repositories import (
     ImplementedPVBRepository,
     ImplementedPVPRepository,
     ImplementedPVPCRepository,
+    ImplementedPVPFRepository,
     ImplementedTransactionRepository,
     ImplementedUserRepository,
 )
@@ -51,6 +53,13 @@ class AdminHandler(BaseTeleBotHandler):
             user_service=self.__user_service,
             config_service=config_service
         )
+        self.__pvpf_service: PVPFService = PVPFService(
+            repository=ImplementedPVPFRepository(),
+            bot=self._bot,
+            user_service=self.__user_service,
+            config_service=config_service,
+            pvp_service=self.__pvp_service
+        )
         self.__transaction_service: TransactionService = TransactionService(
             repository=ImplementedTransactionRepository()
         )
@@ -68,7 +77,7 @@ class AdminHandler(BaseTeleBotHandler):
                 self.__pvb_service.get_status(),
                 self.__pvp_service.get_status(),
                 self.__pvpc_service.get_status(),
-                False,
+                self.__pvpf_service.get_status(),
                 self.__transaction_service.get_status()
             )
         )

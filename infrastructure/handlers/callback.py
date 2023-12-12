@@ -43,6 +43,7 @@ from core.services import (
     PVBService,
     PVPService,
     PVPCService,
+    PVPFService,
     TransactionService,
     UserService,
 )
@@ -60,6 +61,7 @@ from infrastructure.repositories import (
     ImplementedPVBRepository,
     ImplementedPVPRepository,
     ImplementedPVPCRepository,
+    ImplementedPVPFRepository,
     ImplementedTransactionRepository,
     ImplementedUserRepository,
 )
@@ -114,6 +116,13 @@ class CallbackHandler(BaseTeleBotHandler):
             bot=self._bot,
             config_service=config_service,
             user_service=self.__user_service
+        )
+        self.__pvpf_service: PVPFService = PVPFService(
+            repository=ImplementedPVPFRepository(),
+            bot=self._bot,
+            user_service=self.__user_service,
+            config_service=config_service,
+            pvp_service=self.__pvp_service
         )
         self.__admin_service: AdminService = AdminService(
             repository=ImplementedAdminRepository(),
@@ -733,8 +742,8 @@ class CallbackHandler(BaseTeleBotHandler):
         elif self.path == "admin-switch-pvpc":
             self.__pvpc_service.toggle()
 
-        # elif self.path == "admin-switch-pvpf":
-        #     self.__pvpf_service.toggle()
+        elif self.path == "admin-switch-pvpf":
+            self.__pvpf_service.toggle()
 
         elif self.path == "admin-switch-transactions":
             self.__transaction_service.toggle()
@@ -747,7 +756,7 @@ class CallbackHandler(BaseTeleBotHandler):
                 self.__pvb_service.get_status(),
                 self.__pvp_service.get_status(),
                 self.__pvpc_service.get_status(),
-                False,
+                self.__pvpf_service.get_status(),
                 self.__transaction_service.get_status()
             )
         )
@@ -785,7 +794,7 @@ class CallbackHandler(BaseTeleBotHandler):
                     self.__pvb_service.get_status(),
                     self.__pvp_service.get_status(),
                     self.__pvpc_service.get_status(),
-                    False,
+                    self.__pvpf_service.get_status(),
                     self.__transaction_service.get_status()
                 )
             )

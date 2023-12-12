@@ -152,15 +152,16 @@ class PrivateDiceHandler(BaseTeleBotHandler):
                 )
             )
 
-            self._bot.send_message(
-                pvp_details.creator_tg_id,
-                Messages.pvp_started(
-                    pvp_details.id,
-                    pvp_details.beta_mode,
-                    pvp_details.bet,
-                    self.user.tg_name
+            if pvp_details.creator_tg_id >= self.__user_service.get_max_fake_tg_id():
+                self._bot.send_message(
+                    pvp_details.creator_tg_id,
+                    Messages.pvp_started(
+                        pvp_details.id,
+                        pvp_details.beta_mode,
+                        pvp_details.bet,
+                        self.user.tg_name
+                    )
                 )
-            )
 
     def _prepare(self) -> bool:
         if not self.is_direct:

@@ -1,5 +1,6 @@
 import math
 from datetime import datetime, timedelta
+from random import randint
 from typing import Final
 
 from core.abstract_bot import AbstractBotAPI
@@ -258,10 +259,12 @@ class PVPService:
             )
         )
 
-        self.__bot.send_message(
-            creator.tg_id,
-            Messages.pvp_finished(pvp, creator, opponent)
-        )
+        if creator.tg_id >= self.__user_service.get_max_fake_tg_id():
+            self.__bot.send_message(
+                creator.tg_id,
+                Messages.pvp_finished(pvp, creator, opponent)
+            )
+
         self.__bot.send_message(
             opponent.tg_id,
             Messages.pvp_finished(pvp, opponent, creator)
@@ -294,11 +297,15 @@ class PVPService:
             if pvp.started_at + TTL_AFTER_START > datetime.now():
                 continue
 
-            pvp.creator_dice = self.__bot.send_dice(pvp.creator_tg_id)
-            self.__bot.send_message(
-                pvp.creator_tg_id,
-                Messages.pvp_creator_late(pvp.id, pvp.beta_mode)
-            )
+            if pvp.creator_tg_id >= self.__user_service.get_max_fake_tg_id():
+                pvp.creator_dice = self.__bot.send_dice(pvp.creator_tg_id)
+
+                self.__bot.send_message(
+                    pvp.creator_tg_id,
+                    Messages.pvp_creator_late(pvp.id, pvp.beta_mode)
+                )
+            else:
+                pvp.creator_dice = randint(1, 6)
 
             creator: UserDTO = self.__user_service.get_by_tg_id(pvp.creator_tg_id)
 

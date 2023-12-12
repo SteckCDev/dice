@@ -4,6 +4,7 @@ from .currency import BlockchainInfoCurrencyRepository as __BlockchainInfoCurren
 from .pvb import PostgresRedisPVBRepository as __PostgresRedisPVBRepository
 from .pvp import PostgresRedisPVPRepository as __PostgresRedisPVPRepository
 from .pvpc import PostgresRedisPVPCRepository as __PostgresRedisPVPCRepository
+from .pvpf import RedisPVPFRepository as __RedisPVPFRepository
 from .transaction import PostgresRedisTransactionRepository as __PostgresRedisTransactionRepository
 from .user import PostgresRedisUserRepository as __PostgresRedisUserRepository
 
@@ -14,5 +15,6 @@ ImplementedCurrencyRepository = __BlockchainInfoCurrencyRepository
 ImplementedPVBRepository = __PostgresRedisPVBRepository
 ImplementedPVPRepository = __PostgresRedisPVPRepository
 ImplementedPVPCRepository = __PostgresRedisPVPCRepository
+ImplementedPVPFRepository = __RedisPVPFRepository
 ImplementedTransactionRepository = __PostgresRedisTransactionRepository
 ImplementedUserRepository = __PostgresRedisUserRepository

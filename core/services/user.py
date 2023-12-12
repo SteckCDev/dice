@@ -30,6 +30,12 @@ class UserService:
     def get_by_tg_id(self, tg_id: int) -> UserDTO | None:
         return self.__repo.get_by_tg_id(tg_id)
 
+    def get_max_fake_tg_id(self) -> int:
+        return self.__repo.get_max_fake_tg_id()
+
+    def get_fakes(self) -> list[UserDTO] | None:
+        return self.__repo.get_fakes()
+
     def get_count(self) -> int:
         return self.__repo.get_count()
 

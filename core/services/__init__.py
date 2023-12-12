@@ -4,5 +4,6 @@ from .currency import CurrencyService
 from .pvb import PVBService
 from .pvp import PVPService
 from .pvpc import PVPCService
+from .pvpf import PVPFService
 from .transaction import TransactionService
 from .user import UserService

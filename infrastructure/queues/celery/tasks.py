@@ -6,13 +6,16 @@ from core.services import (
     ConfigService,
     PVPService,
     PVPCService,
+    PVPFService,
     UserService,
 )
+from core.services.pvpf import ATTEMPT_FREQUENCY_SECONDS as PVPF_ATTEMPT_FREQUENCY_SECONDS
 from infrastructure.api_services.telebot import TeleBotAPI
 from infrastructure.repositories import (
     ImplementedAdminRepository,
     ImplementedPVPRepository,
     ImplementedPVPCRepository,
+    ImplementedPVPFRepository,
     ImplementedUserRepository,
     ImplementedConfigRepository,
 )
@@ -45,6 +48,13 @@ pvpc_service: PVPCService = PVPCService(
     config_service=config_service,
     user_service=user_service
 )
+pvpf_service: PVPFService = PVPFService(
+    repository=ImplementedPVPFRepository(),
+    bot=bot,
+    config_service=config_service,
+    user_service=user_service,
+    pvp_service=pvp_service
+)
 admin_service: AdminService = AdminService(
     repository=ImplementedAdminRepository(),
     bot=bot,
@@ -64,6 +74,10 @@ def setup_beat(sender: Celery, **_kwargs) -> None:
         sig=pvp_close_expired.s()
     )
     sender.add_periodic_task(
+        schedule=PVPF_ATTEMPT_FREQUENCY_SECONDS,
+        sig=pvpf_create.s()
+    )
+    sender.add_periodic_task(
         schedule=5,
         sig=pvpc_finish_started.s()
     )
@@ -81,6 +95,11 @@ def pvp_finish_started() -> None:
 @celery_instance.task
 def pvp_close_expired() -> None:
     pvp_service.auto_close_expired_games()
+
+
+@celery_instance.task
+def pvpf_create() -> None:
+    pvpf_service.auto_create_game()
 
 
 @celery_instance.task
