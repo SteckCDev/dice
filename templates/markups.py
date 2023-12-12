@@ -293,10 +293,54 @@ class Markups:
 
     @staticmethod
     def transaction() -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup(row_width=2).add(
+        markup = InlineKeyboardMarkup(row_width=2)
+
+        markup.add(
+            InlineKeyboardButton("📄 История", callback_data="transaction-history")
+        )
+        markup.add(
             InlineKeyboardButton("⬅ Вывести", callback_data="transaction-withdraw"),
             InlineKeyboardButton("➡ Пополнить", callback_data="transaction-deposit"),
             InlineKeyboardButton("<< Назад", callback_data="profile")
+        )
+
+        return markup
+
+    @staticmethod
+    def transaction_history(transactions: list[TransactionDTO] | None) -> InlineKeyboardMarkup:
+        markup = InlineKeyboardMarkup(row_width=1)
+
+        if transactions is None:
+            markup.add(
+                InlineKeyboardButton("Нет созданных транзакций", callback_data="None")
+            )
+        else:
+            for transaction in transactions:
+                type_caption = "Пополнение" if transaction.type == "deposit" else "Списание"
+                method_caption = "карта" if transaction.method == "card" else "биткоин"
+                callback = "None"
+
+                if transaction.type == "withdraw" and transaction.status == 0:
+                    callback = f"transaction-history-manage:{transaction.id}"
+
+                markup.add(
+                    InlineKeyboardButton(
+                        f"💵 {type_caption} {transaction.rub} RUB ({method_caption})",
+                        callback_data=callback
+                    )
+                )
+
+        markup.add(
+            InlineKeyboardButton("<< Назад", callback_data="profile")
+        )
+
+        return markup
+
+    @staticmethod
+    def transaction_history_manage(transaction_id: int) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton("🛑 Отменить", callback_data=f"transaction-history-cancel:{transaction_id}"),
+            InlineKeyboardButton("<< Назад", callback_data="transaction-history")
         )
 
     @staticmethod

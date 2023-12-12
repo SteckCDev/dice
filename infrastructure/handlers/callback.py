@@ -51,6 +51,7 @@ from core.states import (
     NumbersRelation,
     PVPStatus,
     TransactionStatus,
+    WithdrawStatus,
 )
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.queues.celery.tasks import mailing
@@ -453,6 +454,73 @@ class CallbackHandler(BaseTeleBotHandler):
                 Markups.transaction()
             )
 
+        elif self.path_args[0] == "transaction-history":
+            transactions: list[TransactionDTO] | None = self.__transaction_service.get_last_5_for_tg_id(
+                self.user.tg_id
+            )
+
+            self.edit_message_in_context(
+                Messages.transaction_history(),
+                Markups.transaction_history(transactions)
+            )
+
+        elif self.path_args[0] == "transaction-history-manage":
+            transaction_id: int = int(self.path_args[1])
+
+            transaction: TransactionDTO | None = self.__transaction_service.get_by_id(transaction_id)
+
+            if transaction is None:
+                return
+
+            amount_with_fee: int = int((transaction.rub / 100) * (100 - transaction.fee))
+
+            self.edit_message_in_context(
+                Messages.transaction_history_manage(
+                    transaction.method,
+                    transaction.rub,
+                    transaction.fee,
+                    amount_with_fee,
+                    transaction.recipient_details,
+                    transaction.recipient_bank,
+                    transaction.btc
+                ),
+                Markups.transaction_history_manage(transaction.id)
+            )
+
+        elif self.path_args[0] == "transaction-history-cancel":
+            transaction_id: int = int(self.path_args[1])
+
+            transaction: TransactionDTO | None = self.__transaction_service.get_by_id(transaction_id)
+
+            if transaction is None or transaction.status != TransactionStatus.CREATED:
+                self._bot.answer_callback(
+                    self.call_id,
+                    Messages.transaction_already_processed()
+                )
+                return
+
+            if transaction.user_tg_id != self.user.tg_id:
+                return
+
+            transaction.status = WithdrawStatus.CANCELED_BY_USER
+            self.user.balance += transaction.rub
+
+            self.__transaction_service.update(
+                UpdateTransactionDTO(
+                    **transaction.model_dump()
+                )
+            )
+            self.__user_service.update(
+                UpdateUserDTO(
+                    **self.user.model_dump()
+                )
+            )
+
+            self.edit_message_in_context(
+                Messages.transaction_canceled(),
+                Markups.back_to("transaction-history")
+            )
+
     def __process_deposit(self) -> None:
         self.user_cache.numbers_relation = NumbersRelation.DEPOSIT_AMOUNT
         self.__user_service.update_cache(self.user_cache)
@@ -565,7 +633,7 @@ class CallbackHandler(BaseTeleBotHandler):
         method: str = self.path_args[1]
 
         btc_equivalent: Decimal | None = None if method == "card" else self.__currency_service.rub_to_btc(
-            self.user_cache.deposit_amount
+            self.user_cache.withdraw_amount
         )
 
         if method == "btc" and btc_equivalent is None:
@@ -858,7 +926,7 @@ class CallbackHandler(BaseTeleBotHandler):
                     Markups.admin_transaction_confirm(transaction.id)
                 )
             else:
-                amount_with_fee: int = int((self.user_cache.withdraw_amount / 100) * (100 - transaction.fee))
+                amount_with_fee: int = int((transaction.rub / 100) * (100 - transaction.fee))
                 btc_equivalent_with_fee: Decimal | None = (
                         transaction.btc / 100
                     ) * (100 - transaction.fee) if transaction.btc else None
@@ -944,7 +1012,7 @@ class CallbackHandler(BaseTeleBotHandler):
                     Markups.admin_transaction_confirm(transaction.id, done=True)
                 )
             else:
-                amount_with_fee: int = int((self.user_cache.withdraw_amount / 100) * (100 - transaction.fee))
+                amount_with_fee: int = int((transaction.rub / 100) * (100 - transaction.fee))
                 btc_equivalent_with_fee: Decimal | None = None
 
                 if transaction.btc:

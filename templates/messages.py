@@ -376,6 +376,43 @@ class Messages:
                f"{cursive(f'Минимальная сумма вывода: {min_withdraw}')}"
 
     @staticmethod
+    def transaction_history() -> str:
+        return f"{bold('💰 Дайс / Транзакции')}\n\n" \
+               f"{cursive('Ваши последние 5 транзакций.')}" \
+               f"{cursive('Вы можете перейти только в те транзакции, которые можно отменить.')}"
+
+    @staticmethod
+    def transaction_history_manage(
+            method: str,
+            amount: int,
+            fee: int,
+            amount_with_fee: int,
+            details: str,
+            bank: str | None = None,
+            btc_equivalent: Decimal | None = None
+    ) -> str:
+        amount_with_fee_caption = bold(amount_with_fee)
+        details_caption = f"💳 Реквизиты: {bold(details)}\n🏦 Банк: {bold(bank)}"
+
+        if method == "btc":
+            amount_with_fee_caption += f" ({btc_equivalent:.8f} BTC)"
+            details_caption = f"🪙 Адрес биткоин-кошелька: {bold(details)}"
+
+        return f"{Messages.__transaction_withdraw_header()}\n\n" \
+               f"💵 К выводу: {bold(amount)}\n" \
+               f"💲 Комиссия: {bold(fee)}%\n" \
+               f"💵 К получению: {amount_with_fee_caption}\n" \
+               f"{details_caption}"
+
+    @staticmethod
+    def transaction_already_processed() -> str:
+        return "❌ Транзакция уже обработана"
+
+    @staticmethod
+    def transaction_canceled() -> str:
+        return "✅ Транзакция успешно отменена, баланс восстановлен"
+
+    @staticmethod
     def transaction_processed(transaction_id: int, succeed: bool) -> str:
         if succeed:
             return f"✅ Транзакция #{transaction_id:03} успешно обработана"

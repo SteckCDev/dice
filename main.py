@@ -236,6 +236,9 @@ def main() -> NoReturn:
     def polling() -> NoReturn:
         try:
             bot.remove_webhook()
+
+            print("Running using polling")
+
             bot.infinity_polling()
         except ApiTelegramException as exc:
             print(f"Polling start failed: {exc}")

@@ -30,5 +30,9 @@ class TransactionRepository(ABC):
         ...
 
     @abstractmethod
+    def get_last_5_for_tg_id(self, tg_id: int) -> list[TransactionDTO] | None:
+        ...
+
+    @abstractmethod
     def update(self, dto: UpdateTransactionDTO) -> None:
         ...

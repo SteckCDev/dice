@@ -65,6 +65,19 @@ class PostgresRedisTransactionRepository(TransactionRepository):
                 TransactionDTO(**transaction.__dict__) for transaction in transactions
             ]
 
+    def get_last_5_for_tg_id(self, tg_id: int) -> list[TransactionDTO] | None:
+        with Session() as db:
+            transactions: Query[Type[TransactionModel]] = db.query(TransactionModel).filter(
+                TransactionModel.user_tg_id == tg_id
+            ).order_by(TransactionModel.id.desc()).limit(5)
+
+            if transactions.count() == 0:
+                return
+
+            return [
+                TransactionDTO(**transaction.__dict__) for transaction in transactions
+            ]
+
     def update(self, dto: UpdateTransactionDTO) -> None:
         with Session() as db:
             db.query(TransactionModel).filter(TransactionModel.id == dto.id).update(dto.model_dump())
