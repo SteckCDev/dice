@@ -31,8 +31,6 @@ from core.states import PVPStatus
 from templates.messages import Messages
 
 
-TTL_AFTER_CREATION: Final[timedelta] = timedelta(minutes=2)
-TTL_AFTER_START: Final[timedelta] = timedelta(minutes=1)
 TIME_UNTIL_CANCELLATION_AVAILABLE: Final[timedelta] = timedelta(minutes=10)
 
 
@@ -293,8 +291,11 @@ class PVPService:
         if games is None:
             return
 
+        config: ConfigDTO = self.__config_service.get()
+        ttl_after_start: timedelta = timedelta(minutes=config.pvp_ttl_after_start)
+
         for pvp in games:
-            if pvp.started_at + TTL_AFTER_START > datetime.now():
+            if pvp.started_at + ttl_after_start > datetime.now():
                 continue
 
             if pvp.creator_tg_id >= self.__user_service.get_max_fake_tg_id():
@@ -317,8 +318,11 @@ class PVPService:
         if games is None:
             return
 
+        config: ConfigDTO = self.__config_service.get()
+        ttl_after_creation: timedelta = timedelta(minutes=config.pvp_ttl_after_creation)
+
         for pvp in games:
-            if pvp.created_at + TTL_AFTER_CREATION > datetime.now():
+            if pvp.created_at + ttl_after_creation > datetime.now():
                 continue
 
             creator: UserDTO = self.__user_service.get_by_tg_id(pvp.creator_tg_id)
@@ -347,6 +351,6 @@ class PVPService:
                     pvp.id,
                     pvp.beta_mode,
                     pvp.bet,
-                    TTL_AFTER_CREATION
+                    ttl_after_creation
                 )
             )

@@ -26,12 +26,27 @@ ADJUST_COMMANDS: Final[dict[str, tuple[str, ...]]] = {
         "минимальная",
         "максимальная"
     ),
+    "игроки": (
+        "отмена",
+        "завершение"
+    ),
     "чат": (
         "раунды",
+        "отмена",
+        "завершение"
     ),
     "транзакция": (
         "пополнение",
         "вывод"
+    ),
+    "фейк": (
+        "периодичность",
+        "минимальная",
+        "максимальная"
+    ),
+    "подписки": (
+        "добавить",
+        "удалить"
     )
 }
 
@@ -134,14 +149,39 @@ class AdminService:
                 
             else:
                 raise ValueError(tip)
-            
+
+        elif request_params[0] == "игроки":
+            syntax: str = "Синтаксис команды: [игроки] [отмена / завершение] [минуты]\n"
+            current: str = "Текущие значения: отмена ({pvp_ttl_after_creation}), завершение ({pvp_ttl_after_start})"
+            tip: str = syntax + current
+
+            tip = tip.format(
+                pvp_ttl_after_creation=self.__config.pvp_ttl_after_creation,
+                pvp_ttl_after_start=self.__config.pvp_ttl_after_start
+            )
+
+            if not len(request_params) == 3:
+                raise ValueError(tip)
+
+            if request_params[1] == "отмена":
+                self.__config.pvp_ttl_after_creation = request_params[2]
+
+            elif request_params[1] == "завершение":
+                self.__config.pvp_ttl_after_start = request_params[2]
+
+            else:
+                raise ValueError(tip)
+
         elif request_params[0] == "чат":
-            syntax: str = "Синтаксис команды: [чат] [раунды] [число]\n"
-            current: str = "Текущие значения: раунды({pvpc_max_rounds})"
+            syntax: str = "Синтаксис команды: [чат] [раунды / отмена / завершение] [число / минуты]\n"
+            current: str = "Текущие значения: раунды({pvpc_max_rounds}), отмена ({pvpc_ttl_after_creation}), " \
+                           "завершение ({pvpc_ttl_after_start})"
             tip: str = syntax + current
             
             tip = tip.format(
-                pvpc_max_rounds=self.__config.pvpc_max_rounds
+                pvpc_max_rounds=self.__config.pvpc_max_rounds,
+                pvpc_ttl_after_creation=self.__config.pvpc_ttl_after_creation,
+                pvpc_ttl_after_start=self.__config.pvpc_ttl_after_start
             )
             
             if not len(request_params) == 3:
@@ -149,6 +189,13 @@ class AdminService:
             
             if request_params[1] == "раунды":
                 self.__config.pvpc_max_rounds = request_params[2]
+
+            elif request_params[1] == "отмена":
+                self.__config.pvpc_ttl_after_creation = request_params[2]
+
+            elif request_params[1] == "завершение":
+                self.__config.pvpc_ttl_after_start = request_params[2]
+
             else:
                 raise ValueError(tip)
 
@@ -173,7 +220,78 @@ class AdminService:
 
             else:
                 raise ValueError(tip)
-            
+
+        elif request_params[0] == "фейк":
+            syntax: str = "Синтаксис команды: [фейк] [периодичность / минимальная / максимальная] [минуты / число]\n"
+            current: str = "Текущие значения: периодичность({pvpf_creation_periodicity}), " \
+                           "минимальная({pvpf_min_bet}), максимальная({pvpf_max_bet})"
+            tip: str = syntax + current
+
+            tip = tip.format(
+                pvpf_creation_periodicity=self.__config.pvpf_creation_periodicity,
+                pvpf_min_bet=self.__config.pvpf_min_bet,
+                pvpf_max_bet=self.__config.pvpf_max_bet
+            )
+
+            if not len(request_params) == 3:
+                raise ValueError(tip)
+
+            if request_params[1] == "периодичность":
+                self.__config.pvpf_creation_periodicity = request_params[2]
+
+            elif request_params[1] == "минимальная":
+                self.__config.min_bet = request_params[2]
+
+            elif request_params[1] == "максимальная":
+                self.__config.max_bet = request_params[2]
+
+            else:
+                raise ValueError(tip)
+
+        elif request_params[0] == "подписки":
+            syntax: str = "Синтаксис команды: [подписки] [добавить / удалить] [число]\n"
+            current: str = "Текущие значения: {chat_list}"
+            tip: str = syntax + current
+
+            chat_list: str = "не заданы"
+
+            if self.__config.required_chats:
+                chat_list = "\n"
+                for i, chat in enumerate(self.__config.required_chats, 1):
+                    chat_list += f"  {i}: {chat}\n"
+
+            tip = tip.format(
+                chat_list=chat_list
+            )
+
+            if not len(request_params) == 3:
+                raise ValueError(tip)
+
+            if request_params[1] == "добавить":
+                if not request_params[2][1:].isdigit():
+                    raise ValueError(tip)
+
+                if self.__config.required_chats:
+                    self.__config.required_chats.append(
+                        int(request_params[2])
+                    )
+                else:
+                    self.__config.required_chats = [int(request_params[2])]
+
+            elif request_params[1] == "удалить":
+                if not request_params[2].isdigit():
+                    raise ValueError(tip)
+
+                try:
+                    self.__config.required_chats.pop(
+                        int(request_params[2]) - 1
+                    )
+                except IndexError:
+                    raise ValueError(tip)
+
+            else:
+                raise ValueError(tip)
+
         else:
             return False
                 

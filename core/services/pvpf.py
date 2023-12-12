@@ -36,17 +36,16 @@ class PVPFService:
     def get_status(self) -> bool:
         return self.__repo.get_status()
 
-    def estimated_creation_frequency_seconds(self, probability: int | None = None) -> int:
-        if probability is None:
-            return ATTEMPT_FREQUENCY_SECONDS * self.config.pvpf_creation_probability
-
-        return ATTEMPT_FREQUENCY_SECONDS * probability
+    def calculate_creation_probability(self) -> int:
+        return self.config.pvpf_creation_periodicity * 60 // ATTEMPT_FREQUENCY_SECONDS
 
     def auto_create_game(self) -> None:
         if not self.__repo.get_status():
             return
 
-        skip: bool = randint(1, self.config.pvpf_creation_probability) != self.config.pvpf_creation_probability
+        probability: int = self.calculate_creation_probability()
+
+        skip: bool = randint(1, probability) != probability
 
         if skip:
             return

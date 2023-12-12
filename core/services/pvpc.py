@@ -295,8 +295,11 @@ class PVPCService:
         if pvpc_games is None:
             return
 
+        config: ConfigDTO = self.__config_service.get()
+        ttl_after_start: timedelta = timedelta(minutes=config.pvpc_ttl_after_start)
+
         for pvpc in pvpc_games:
-            if pvpc.started_at + TTL_AFTER_START >= datetime.now():
+            if pvpc.started_at + ttl_after_start >= datetime.now():
                 return
 
             creator: UserDTO = self.__user_service.get_by_tg_id(pvpc.creator_tg_id)
@@ -313,8 +316,11 @@ class PVPCService:
         if pvpc_games is None:
             return
 
+        config: ConfigDTO = self.__config_service.get()
+        ttl_after_creation: timedelta = timedelta(minutes=config.pvpc_ttl_after_creation)
+
         for pvpc in pvpc_games:
-            if pvpc.created_at + TTL_AFTER_CREATION >= datetime.now():
+            if pvpc.created_at + ttl_after_creation >= datetime.now():
                 return
 
             pvpc.status = PVPCStatus.CANCELED_BY_TTL

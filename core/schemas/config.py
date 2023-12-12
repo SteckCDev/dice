@@ -18,9 +18,13 @@ class Config(BaseModel):
     min_bet: int = 10
     max_bet: int = 20_000
     pvpc_max_rounds: int = 3
+    pvp_ttl_after_creation: int = 2
+    pvp_ttl_after_start: int = 1
+    pvpc_ttl_after_creation: int = 2
+    pvpc_ttl_after_start: int = 1
     pvpf_min_bet: int = 20
     pvpf_max_bet: int = 200
-    pvpf_creation_probability: int = 2
+    pvpf_creation_periodicity: int = 10
 
 
 class UpdateConfig(BaseModel):
@@ -42,9 +46,13 @@ class UpdateConfig(BaseModel):
     min_bet: int
     max_bet: int
     pvpc_max_rounds: int
+    pvp_ttl_after_creation: int
+    pvp_ttl_after_start: int
+    pvpc_ttl_after_creation: int
+    pvpc_ttl_after_start: int
     pvpf_min_bet: int
     pvpf_max_bet: int
-    pvpf_creation_probability: int
+    pvpf_creation_periodicity: int
 
     @field_validator("start_balance", "start_beta_balance")
     def validate_start_balance(cls, value: int) -> int:
@@ -96,6 +104,47 @@ class UpdateConfig(BaseModel):
 
         return value
 
+    @field_validator("pvpf_min_bet", "pvpf_max_bet")
+    def validate_pvpf_bet(cls, value: int) -> int:
+        if not isinstance(value, int) or value < 0:
+            raise ValueError("Ставка должна быть положительным числом")
+
+        return value
+
+    @field_validator("pvpf_min_bet")
+    def validate_pvpf_min_bet(cls, value: int, info: ValidationInfo) -> int:
+        if info.data.get("pvpf_max_bet"):
+            if value >= info.data["pvpf_max_bet"]:
+                raise ValueError("Минимальная ставка должна быть меньше максимальной")
+
+        return value
+
+    @field_validator("pvpf_max_bet")
+    def validate_pvpf_max_bet(cls, value: int, info: ValidationInfo) -> int:
+        if value <= info.data["pvpf_min_bet"]:
+            raise ValueError("Максимальная ставка должна быть больше минимальной")
+
+        return value
+
+    @field_validator("pvpf_creation_periodicity")
+    def validate_pvpf_periodicity(cls, value: int) -> int:
+        if not isinstance(value, int) or value < 10:
+            raise ValueError("Примерная периодичность должна быть не менее 10 минут")
+
+        return value
+
+    @field_validator(
+        "pvp_ttl_after_creation",
+        "pvp_ttl_after_start",
+        "pvpc_ttl_after_creation",
+        "pvpc_ttl_after_start"
+    )
+    def validate_ttls(cls, value: int) -> int:
+        if not isinstance(value, int) or value < 1:
+            raise ValueError("Время до отмены / завершения должно быть больше 1 минуты")
+
+        return value
+
     @staticmethod
     def get_first_error_msg(error: ValidationError) -> str:
         return error.errors()[0]["msg"]
@@ -117,6 +166,10 @@ class ConfigDTO(BaseModel):
     min_bet: int
     max_bet: int
     pvpc_max_rounds: int
+    pvp_ttl_after_creation: int
+    pvp_ttl_after_start: int
+    pvpc_ttl_after_creation: int
+    pvpc_ttl_after_start: int
     pvpf_min_bet: int
     pvpf_max_bet: int
-    pvpf_creation_probability: int
+    pvpf_creation_periodicity: int
