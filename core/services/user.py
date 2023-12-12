@@ -13,6 +13,8 @@ from core.services.config import ConfigService
 
 
 TERMS_AGREEMENT_LASTS_DAYS: Final[int] = 14
+MAX_BETA_BALANCE: Final[int] = 20_000
+BETA_BALANCE_STEP: Final[int] = 1_750
 
 
 class UserService:
@@ -83,3 +85,40 @@ class UserService:
                 return False
 
         return True
+
+    def auto_update_beta_balance(self) -> None:
+        """
+        if self._beta_updated == 0:
+            self._beta_updated = int(time())
+        else:
+            hours_passed = (int(time()) - self._beta_updated) // 3600
+
+            while self._beta_balance <= 18250 and hours_passed > 0:
+                self._beta_balance += 1750
+                hours_passed -= 1
+
+        base.query("UPDATE users SET beta_updated_on = ? WHERE tg_id = ?", (int(time()), self._id))
+        """
+
+        users: list[UserDTO] | None = self.__repo.get_all()
+
+        if users is None:
+            return
+
+        for user in users:
+            time_passed: timedelta = datetime.now() - user.beta_balance_updated_at
+            hours_passed: int = time_passed.seconds // 3600
+
+            if hours_passed == 0 or user.beta_balance > MAX_BETA_BALANCE - BETA_BALANCE_STEP:
+                continue
+
+            user.beta_balance += min(
+                (MAX_BETA_BALANCE - user.beta_balance) // BETA_BALANCE_STEP, hours_passed
+            ) * BETA_BALANCE_STEP
+            user.beta_balance_updated_at = datetime.now()
+
+            self.__repo.update(
+                UpdateUserDTO(
+                    **user.model_dump()
+                )
+            )

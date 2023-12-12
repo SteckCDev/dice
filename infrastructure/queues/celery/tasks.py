@@ -66,11 +66,15 @@ admin_service: AdminService = AdminService(
 @celery_instance.on_after_finalize.connect
 def setup_beat(sender: Celery, **_kwargs) -> None:
     sender.add_periodic_task(
-        schedule=5,
+        schedule=5 * 60,
+        sig=user_update_beta_balance.s()
+    )
+    sender.add_periodic_task(
+        schedule=10,
         sig=pvp_finish_started.s()
     )
     sender.add_periodic_task(
-        schedule=120,
+        schedule=2 * 60,
         sig=pvp_close_expired.s()
     )
     sender.add_periodic_task(
@@ -78,13 +82,18 @@ def setup_beat(sender: Celery, **_kwargs) -> None:
         sig=pvpf_create.s()
     )
     sender.add_periodic_task(
-        schedule=5,
+        schedule=10,
         sig=pvpc_finish_started.s()
     )
     sender.add_periodic_task(
-        schedule=120,
+        schedule=2 * 60,
         sig=pvpc_close_expired.s()
     )
+
+
+@celery_instance.task
+def user_update_beta_balance() -> None:
+    user_service.auto_update_beta_balance()
 
 
 @celery_instance.task
