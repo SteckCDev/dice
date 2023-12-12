@@ -197,7 +197,7 @@ def callback(call: CallbackQuery) -> None:
         message_id=call.message.message_id,
         user_id=call.from_user.id,
         user_name=call.from_user.username or call.from_user.first_name,
-        message=call.message
+        call=call
     ).handle()
 
 

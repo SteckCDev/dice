@@ -85,12 +85,15 @@ class Markups:
 
     @staticmethod
     def pvb_create(bots_turn_first: bool) -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("Обновить", callback_data="pvb-create"),
-            InlineKeyboardButton(f"🔁 Первый {'бот' if bots_turn_first else 'я'}", callback_data="pvb-switch-turn"),
+        markup = InlineKeyboardMarkup(row_width=2).add(
+            InlineKeyboardButton(f"🔁 Первый {'бот' if bots_turn_first else 'я'}", callback_data="pvb-switch-turn")
+        )
+        markup.add(
             InlineKeyboardButton("<< Назад", callback_data="pvb"),
             InlineKeyboardButton("🎲 Начать", callback_data=f"pvb-start")
         )
+
+        return markup
 
     @staticmethod
     def pvb_history(games_pvb: list[PVBDTO] | None) -> InlineKeyboardMarkup:
@@ -129,14 +132,17 @@ class Markups:
     @staticmethod
     def pvp(user_id: int, games_pvp: list[PVPDTO] | None, pages_total: int, page: int = 0) -> InlineKeyboardMarkup:
         if games_pvp is None:
-            return InlineKeyboardMarkup(row_width=2).add(
+            markup = InlineKeyboardMarkup(row_width=2).add(
                 InlineKeyboardButton("Рейтинг", callback_data="pvp-rating"),
                 InlineKeyboardButton("Мои игры", callback_data="pvp-history"),
                 InlineKeyboardButton("Инструкция", callback_data="pvp-instruction"),
-                InlineKeyboardButton("Обновить", callback_data=f"pvp:1"),
+            )
+            markup.add(
                 InlineKeyboardButton("<< Назад", callback_data="games"),
                 InlineKeyboardButton("🎲 Создать", callback_data="pvp-create"),
             )
+
+            return markup
 
         if page > pages_total:
             page = 1
@@ -196,7 +202,6 @@ class Markups:
 
         markup.add(
             InlineKeyboardButton("Инструкция", callback_data=f"pvp-instruction"),
-            InlineKeyboardButton("Обновить", callback_data=f"pvp:1")
         )
         markup.add(
             InlineKeyboardButton("<< Назад", callback_data="games"),
@@ -272,10 +277,9 @@ class Markups:
 
     @staticmethod
     def pvp_create() -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("<< Назад", callback_data="pvp"),
-            InlineKeyboardButton("Обновить", callback_data="pvp-create"),
-            InlineKeyboardButton("🎲 Создать игру", callback_data="pvp-confirm")
+        return InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton("🎲 Создать игру", callback_data="pvp-confirm"),
+            InlineKeyboardButton("<< Назад", callback_data="pvp")
         )
 
     @staticmethod
@@ -355,19 +359,13 @@ class Markups:
     def transaction_deposit_amount(method: str, min_deposit: int, amount: int) -> InlineKeyboardMarkup:
         if amount < min_deposit:
             return InlineKeyboardMarkup(row_width=2).add(
-                InlineKeyboardButton("<< Назад", callback_data="transaction-deposit"),
-                InlineKeyboardButton("Обновить", callback_data=f"transaction-deposit-amount:{method}")
+                InlineKeyboardButton("<< Назад", callback_data="transaction-deposit")
             )
 
-        markup = InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("Обновить", callback_data=f"transaction-deposit-amount:{method}")
-        )
-        markup.add(
+        return InlineKeyboardMarkup(row_width=2).add(
             InlineKeyboardButton("<< Назад", callback_data="transaction-deposit"),
             InlineKeyboardButton("Далее >>", callback_data=f"transaction-deposit-amount-confirm:{method}")
         )
-
-        return markup
 
     @staticmethod
     def transaction_deposit_confirm_amount(method: str) -> InlineKeyboardMarkup:
@@ -395,19 +393,13 @@ class Markups:
     def transaction_withdraw_amount(method: str, amount: int, balance: int, min_withdraw: int) -> InlineKeyboardMarkup:
         if amount > balance or amount < min_withdraw:
             return InlineKeyboardMarkup(row_width=2).add(
-                InlineKeyboardButton("<< Назад", callback_data="transaction-withdraw"),
-                InlineKeyboardButton("Обновить", callback_data=f"transaction-withdraw-amount:{method}")
+                InlineKeyboardButton("<< Назад", callback_data="transaction-withdraw")
             )
 
-        markup = InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("Обновить", callback_data=f"transaction-withdraw-amount:{method}")
-        )
-        markup.add(
+        return InlineKeyboardMarkup(row_width=2).add(
             InlineKeyboardButton("<< Назад", callback_data="transaction-withdraw"),
             InlineKeyboardButton("Далее >>", callback_data=f"transaction-withdraw-details:{method}")
         )
-
-        return markup
 
     @staticmethod
     def transaction_withdraw_details(
@@ -419,21 +411,13 @@ class Markups:
         btc_condition = method == "btc" and withdraw_details
 
         if card_condition or btc_condition:
-            markup = InlineKeyboardMarkup(row_width=2)
-
-            markup.add(
-                InlineKeyboardButton("Обновить", callback_data=f"transaction-withdraw-details:{method}"),
-            )
-            markup.add(
+            return InlineKeyboardMarkup(row_width=2).add(
                 InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-amount:{method}"),
                 InlineKeyboardButton("Далее >>", callback_data=f"transaction-withdraw-confirm:{method}")
             )
-
-            return markup
         else:
             return InlineKeyboardMarkup(row_width=2).add(
-                InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-amount:{method}"),
-                InlineKeyboardButton("Обновить", callback_data=f"transaction-withdraw-details:{method}")
+                InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-amount:{method}")
             )
 
     @staticmethod

@@ -1,6 +1,8 @@
 import re
 import html
 
+from telebot.types import CallbackQuery
+
 from core.schemas.config import (
     ConfigDTO,
 )
@@ -20,6 +22,7 @@ from infrastructure.repositories import (
     ImplementedConfigRepository,
     ImplementedUserRepository,
 )
+from infrastructure.handlers.callback import CallbackHandler
 from settings import settings
 from templates import (
     Markups,
@@ -65,6 +68,24 @@ class PrivateTextHandler(BaseTeleBotHandler):
         self.user: UserDTO = self.__user_service.get_by_tg_id(user_id)
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
+    def __callback_path_startswith(self, pattern: str) -> bool:
+        call: CallbackQuery = CallbackQuery.de_json(self.user_cache.callback_json)
+
+        return call.data.startswith(pattern)
+
+    def __update_message(self) -> None:
+        call: CallbackQuery = CallbackQuery.de_json(self.user_cache.callback_json)
+
+        CallbackHandler(
+            call_id=call.id,
+            path=call.data,
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            user_id=call.from_user.id,
+            user_name=call.from_user.username or call.from_user.first_name,
+            call=call
+        ).handle()
+
     def __process_admin(self) -> bool:
         if self.text[0] == ">" and len(self.text) > 1:
             self.__admin_service.set_mailing_text(self.text[1:])
@@ -84,20 +105,32 @@ class PrivateTextHandler(BaseTeleBotHandler):
         return False
 
     def __set_withdraw_details(self) -> None:
+        if not self.__callback_path_startswith("transaction-withdraw-details"):
+            return
+
         self.user_cache.withdraw_details = self.text
         self.__user_service.update_cache(self.user_cache)
+
+        self.__update_message()
 
     def __set_withdraw_bank(self) -> None:
         if len(self.text) > 32 or len(self.text) < 2:
             return
 
+        if not self.__callback_path_startswith("transaction-withdraw-details"):
+            return
+
         self.user_cache.withdraw_bank = self.text
         self.__user_service.update_cache(self.user_cache)
+
+        self.__update_message()
 
     def __set_amount(self) -> None:
         amount: int = int(self.text)
 
-        if self.user_cache.numbers_relation == NumbersRelation.DEPOSIT_AMOUNT:
+        if self.user_cache.numbers_relation == NumbersRelation.DEPOSIT_AMOUNT and self.__callback_path_startswith(
+            "transaction-deposit-amount"
+        ):
             if amount < self.config.min_deposit:
                 self._bot.send_message(
                     self.user_id,
@@ -107,7 +140,9 @@ class PrivateTextHandler(BaseTeleBotHandler):
 
             self.user_cache.deposit_amount = amount
 
-        elif self.user_cache.numbers_relation == NumbersRelation.WITHDRAW_AMOUNT:
+        elif self.user_cache.numbers_relation == NumbersRelation.WITHDRAW_AMOUNT and self.__callback_path_startswith(
+            "transaction-withdraw-amount"
+        ):
             if amount < self.config.min_withdraw:
                 self._bot.send_message(
                     self.user_id,
@@ -124,7 +159,7 @@ class PrivateTextHandler(BaseTeleBotHandler):
 
             self.user_cache.withdraw_amount = amount
 
-        else:
+        elif self.__callback_path_startswith("pvb-create") or self.__callback_path_startswith("pvp-create"):
             if amount < self.config.min_bet or amount > self.config.max_bet:
                 self._bot.send_message(
                     self.user_id,
@@ -147,7 +182,11 @@ class PrivateTextHandler(BaseTeleBotHandler):
             else:
                 self.user_cache.pvp_bet = amount
 
+        else:
+            return
+
         self.__user_service.update_cache(self.user_cache)
+        self.__update_message()
 
     def _prepare(self) -> bool:
         if not self.__user_service.is_subscribed_to_chats(self.user_id):

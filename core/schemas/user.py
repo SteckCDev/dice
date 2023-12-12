@@ -49,6 +49,7 @@ class UpdateUserDTO(BaseModel):
 
 class UserCache(BaseModel):
     tg_id: int
+    callback_json: str | None = None
     numbers_relation: NumbersRelation = NumbersRelation.PVB_BET
     beta_mode: bool = False
     pvb_bet: int = 0
@@ -66,6 +67,7 @@ class UserCache(BaseModel):
 
 class UserCacheDTO(BaseModel):
     tg_id: int
+    callback_json: str | None
     numbers_relation: NumbersRelation
     beta_mode: bool
     pvb_bet: int

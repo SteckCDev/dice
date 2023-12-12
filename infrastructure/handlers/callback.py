@@ -1,9 +1,10 @@
 import html
 import math
+import json
 from datetime import datetime
 from decimal import Decimal
 
-from telebot.types import Message
+from telebot.types import Message, CallbackQuery
 
 from core.exceptions import (
     BalanceIsNotEnoughError,
@@ -79,7 +80,7 @@ class CallbackHandler(BaseTeleBotHandler):
             message_id: int,
             user_id: int,
             user_name: str,
-            message: Message
+            call: CallbackQuery
     ) -> None:
         super().__init__()
 
@@ -88,7 +89,7 @@ class CallbackHandler(BaseTeleBotHandler):
         self.path_args: list[str] = path.split(":")
         self.chat_id: int = chat_id
         self.message_id: int = message_id
-        self.message: Message = message
+        self.message: Message = call.message
 
         self.edit_message_in_context = self._bot.get_edit_message_for_context(self.chat_id, self.message_id)
 
@@ -148,6 +149,11 @@ class CallbackHandler(BaseTeleBotHandler):
             )
         )
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
+
+        self.user_cache.callback_json = json.dumps(call.json)
+        self.__user_service.update_cache(
+            self.user_cache
+        )
 
     def __process_pvb(self) -> None:
         self.user_cache.numbers_relation = NumbersRelation.PVB_BET
