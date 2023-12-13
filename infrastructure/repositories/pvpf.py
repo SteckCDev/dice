@@ -8,7 +8,7 @@ class RedisPVPFRepository(PVPFRepository):
 
     def toggle(self) -> bool:
         cached_state: bool | None = self.__redis.get_bool(RedisKey.PVPF_ACTIVE)
-        state: bool = True if cached_state is None else not cached_state
+        state: bool = False if cached_state is None else not cached_state
 
         self.__redis.set_bool(RedisKey.PVPF_ACTIVE, state)
 
@@ -18,7 +18,7 @@ class RedisPVPFRepository(PVPFRepository):
         state: bool | None = self.__redis.get_bool(RedisKey.PVPF_ACTIVE)
 
         if state is None:
-            self.__redis.set_bool(RedisKey.PVPF_ACTIVE, True)
-            return True
+            self.__redis.set_bool(RedisKey.PVPF_ACTIVE, False)
+            return False
 
         return state

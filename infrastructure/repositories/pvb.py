@@ -19,7 +19,7 @@ class PostgresRedisPVBRepository(PVBRepository):
 
     def toggle(self) -> bool:
         cached_state: bool | None = self.__redis.get_bool(RedisKey.PVB_ACTIVE)
-        state: bool = True if cached_state is None else not cached_state
+        state: bool = False if cached_state is None else not cached_state
 
         self.__redis.set_bool(RedisKey.PVB_ACTIVE, state)
 
@@ -29,8 +29,8 @@ class PostgresRedisPVBRepository(PVBRepository):
         state: bool | None = self.__redis.get_bool(RedisKey.PVB_ACTIVE)
 
         if state is None:
-            self.__redis.set_bool(RedisKey.PVB_ACTIVE, True)
-            return True
+            self.__redis.set_bool(RedisKey.PVB_ACTIVE, False)
+            return False
 
         return state
 
