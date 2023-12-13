@@ -69,17 +69,44 @@ class PrivateTextHandler(BaseTeleBotHandler):
         self.user: UserDTO = self.__user_service.get_by_tg_id(user_id)
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
-    def __callback_path_startswith(self, pattern: str) -> bool:
+    def __callback_path_startswith(self, *patterns: str) -> bool:
+        if self.user_cache.callback_json is None:
+            return False
+
         call: CallbackQuery = CallbackQuery.de_json(
             json.loads(self.user_cache.callback_json)
         )
 
-        return call.data.startswith(pattern)
+        return call.data.startswith(patterns)
 
     def __update_message(self) -> None:
+        if self.user_cache.callback_json is None:
+            return
+
         call: CallbackQuery = CallbackQuery.de_json(
             json.loads(self.user_cache.callback_json)
         )
+
+        if call.data in ("pvb-switch-turn", "pvb-start"):
+            message_id: int = call.message.message_id
+
+            if call.data == "pvb-start" and self.user_cache.last_message_id:
+                message_id = self.user_cache.last_message_id
+
+            self._bot.edit_message(
+                call.message.chat.id,
+                message_id,
+                Messages.pvb_create(
+                    self.user_cache.pvb_bots_turn_first,
+                    self.user_cache.beta_mode,
+                    self.__user_service.get_user_selected_balance(self.user.tg_id),
+                    self.user_cache.pvb_bet,
+                    self.config.min_bet,
+                    self.config.max_bet
+                ),
+                Markups.pvb_create(self.user_cache.pvb_bots_turn_first)
+            )
+            return
 
         CallbackHandler(
             call_id=call.id,
@@ -164,7 +191,7 @@ class PrivateTextHandler(BaseTeleBotHandler):
 
             self.user_cache.withdraw_amount = amount
 
-        elif self.__callback_path_startswith("pvb-create") or self.__callback_path_startswith("pvp-create"):
+        elif self.__callback_path_startswith("pvb-create", "pvb-switch-turn", "pvb-start"):
             if amount < self.config.min_bet or amount > self.config.max_bet:
                 self._bot.send_message(
                     self.user_id,

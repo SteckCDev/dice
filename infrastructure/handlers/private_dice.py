@@ -104,7 +104,7 @@ class PrivateDiceHandler(BaseTeleBotHandler):
             )
         )
 
-        self._bot.send_message(
+        self.user_cache.last_message_id = self._bot.send_message(
             self.user.tg_id,
             Messages.pvb_create(
                 self.user_cache.pvb_bots_turn_first,
@@ -116,6 +116,8 @@ class PrivateDiceHandler(BaseTeleBotHandler):
             ),
             Markups.pvb_create(self.user_cache.pvb_bots_turn_first)
         )
+
+        self.__user_service.update_cache(self.user_cache)
 
     def __pvp(self) -> None:
         try:

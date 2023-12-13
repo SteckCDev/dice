@@ -51,7 +51,6 @@ class Markups:
 
         return InlineKeyboardMarkup(row_width=1).add(
             InlineKeyboardButton("💳 Транзакции", callback_data="transaction"),
-            InlineKeyboardButton("📋 Топ-5 лучших", callback_data="top5"),
             InlineKeyboardButton(f"{get_balance_emoji(beta_mode)} {beta_caption}", callback_data=f"switch-beta")
         )
 

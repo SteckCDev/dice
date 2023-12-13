@@ -1,3 +1,4 @@
+from time import sleep
 from typing import Any, Final
 
 from pydantic import ValidationError
@@ -324,8 +325,11 @@ class AdminService:
         return self.__repo.get_mailing_text()
 
     def mailing(self, admin_tg_id: int, to_except: tuple[Exception | Any]) -> None:
-        users: list[UserDTO] = self.__user_service.get_all()
+        users: list[UserDTO] | None = self.__user_service.get_all()
         mail: str | None = self.__repo.get_mailing_text()
+
+        if users is None:
+            return
 
         if mail is None:
             self.__bot.send_message(admin_tg_id, "Не задан текст рассылки")
@@ -334,11 +338,15 @@ class AdminService:
         succeed: int = 0
         failed: int = 0
 
-        for user in users:
+        for i, user in enumerate(users):
             try:
                 self.__bot.send_message(user.tg_id, mail)
                 succeed += 1
             except to_except:
                 failed += 1
+                sleep(3)
+
+            if not i % 20:
+                sleep(1)
 
         self.__bot.send_message(admin_tg_id, f"Успешно отправлено: {succeed}\nНе удалось: {failed}")
