@@ -32,7 +32,7 @@ class PostgresRedisPVPRepository(PVPRepository):
         state: bool | None = self.__redis.get_bool(RedisKey.PVP_ACTIVE)
 
         if state is None:
-            self.__redis.set_bool(RedisKey.PVPC_ACTIVE, False)
+            self.__redis.set_bool(RedisKey.PVP_ACTIVE, False)
             return False
 
         return state
