@@ -1,0 +1,4 @@
+meta:
+  environment: db
+  toolchain:
+    name: redis

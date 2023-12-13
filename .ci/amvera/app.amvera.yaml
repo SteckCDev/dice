@@ -1,0 +1,11 @@
+---
+meta:
+  environment: python
+  toolchain:
+    name: pip
+    version: 3.11.6
+build:
+  requirementsPath: requirements.txt
+run:
+  command: alembic upgrade head && python main.py
+  containerPort: 443

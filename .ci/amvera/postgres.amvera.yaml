@@ -1,0 +1,7 @@
+meta:
+  environment: db
+  toolchain:
+    name: postgresql
+    version: 15
+run:
+  args: listen_addresses=0.0.0.0

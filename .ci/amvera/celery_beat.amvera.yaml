@@ -1,0 +1,10 @@
+---
+meta:
+  environment: python
+  toolchain:
+    name: pip
+    version: 3.11.6
+build:
+  requirementsPath: requirements.txt
+run:
+  command: celery -A infrastructure.queues.celery.instance beat -l INFO

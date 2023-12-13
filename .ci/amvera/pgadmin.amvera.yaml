@@ -1,0 +1,5 @@
+meta:
+  environment: db
+  toolchain:
+    name: pgadmin
+    version: 7.1
