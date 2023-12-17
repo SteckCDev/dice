@@ -93,7 +93,7 @@ class AdminService:
                 self.__config.card_details = " ".join(_request_params[2:])
 
             elif _request_params[1] == "биткоин":
-                # using original params with raw case, because segwit bitcoin addresses are case-sensetive
+                # using original params with raw case, because segwit bitcoin addresses are case-sensitive
                 self.__config.btc_details = " ".join(request_params[2:])
 
             else:
@@ -241,10 +241,10 @@ class AdminService:
                 raise ValueError(tip)
 
             if _request_params[1] == "пополнение":
-                self.__config.min_bet = _request_params[2]
+                self.__config.min_deposit = _request_params[2]
 
             elif _request_params[1] == "вывод":
-                self.__config.max_bet = _request_params[2]
+                self.__config.min_withdraw = _request_params[2]
 
             else:
                 raise ValueError(tip)
@@ -268,10 +268,10 @@ class AdminService:
                 self.__config.pvpf_creation_periodicity = _request_params[2]
 
             elif _request_params[1] == "минимальная":
-                self.__config.min_bet = _request_params[2]
+                self.__config.pvpf_min_bet = _request_params[2]
 
             elif _request_params[1] == "максимальная":
-                self.__config.max_bet = _request_params[2]
+                self.__config.pvpf_max_bet = _request_params[2]
 
             else:
                 raise ValueError(tip)
