@@ -585,16 +585,22 @@ class Messages:
             pvb_count: int,
             pvp_count: int,
             pvpc_count: int,
-            pvb_total_bank: int,
-            pvp_total_bank: int,
-            pvpc_total_bank: int,
-            pvb_bot_income: int,
+            pvb_total_bank: int | None,
+            pvp_total_bank: int | None,
+            pvpc_total_bank: int | None,
+            pvb_bot_income: int | None,
             pvb_bot_wins_percent: float,
             pvb_bot_defeats_percent: float,
             pvb_draws_percent: float
     ) -> str:
-        income = pvb_bot_income + pvb_fees_income + pvp_fees_income + pvpc_fees_income - withdraws_final_outcome
-        bank = pvb_total_bank + pvp_total_bank + pvpc_total_bank
+        _pvb_bot_income = 0 if pvb_bot_income is None else pvb_bot_income
+        income = _pvb_bot_income + pvb_fees_income + pvp_fees_income + pvpc_fees_income - withdraws_final_outcome
+
+        _pvb_total_bank = 0 if pvb_total_bank is None else pvb_total_bank
+        _pvp_total_bank = 0 if pvp_total_bank is None else pvp_total_bank
+        _pvpc_total_bank = 0 if pvpc_total_bank is None else pvpc_total_bank
+
+        bank = _pvb_total_bank + _pvp_total_bank + _pvpc_total_bank
 
         return f"{bold('🎲 Дайс / Админ-панель - статистика')}\n\n" \
                f"🙋‍ Всего пользователей: {bold(users_count)}\n\n" \
@@ -604,9 +610,9 @@ class Messages:
                f"  - 👥 PVP: {bold(pvp_count)}\n" \
                f"  - ⚔️ PVPC: {bold(pvpc_count)}\n\n" \
                f"💵 Общая сумма ставок: {bold(bank)} RUB\n" \
-               f"  - 🤖 PVB: {bold(pvb_total_bank)} RUB\n" \
-               f"  - 👥 PVP: {bold(pvp_total_bank)} RUB\n" \
-               f"  - ⚔️ PVPC: {bold(pvpc_total_bank)} RUB\n\n" \
+               f"  - 🤖 PVB: {bold(_pvb_total_bank)} RUB\n" \
+               f"  - 👥 PVP: {bold(_pvp_total_bank)} RUB\n" \
+               f"  - ⚔️ PVPC: {bold(_pvpc_total_bank)} RUB\n\n" \
                f"💵 (PVB) Выигрыш бота: {bold(pvb_bot_income)} RUB\n" \
                f"🏆 (PVB) Процент побед бота: {bold(f'{pvb_bot_wins_percent:.1f}')}%\n" \
                f"💀 (PVB) Процент поражений бота: {bold(f'{pvb_bot_defeats_percent:.1f}')}%\n" \

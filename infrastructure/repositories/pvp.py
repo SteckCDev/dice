@@ -96,7 +96,7 @@ class PostgresRedisPVPRepository(PVPRepository):
                 PVPDTO(**game.__dict__) for game in games
             ]
 
-    def get_bet_sum(self) -> int:
+    def get_bet_sum(self) -> int | None:
         with Session() as db:
             return db.query(
                 func.sum(PVPModel.bet)

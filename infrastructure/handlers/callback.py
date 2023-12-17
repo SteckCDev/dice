@@ -1066,6 +1066,14 @@ class CallbackHandler(BaseTeleBotHandler):
             )
             return False
 
+        if self.path.startswith("pvb") and not self.__user_service.is_terms_and_conditions_agreed(self.user.tg_id):
+            self._bot.send_message(
+                self.chat_id,
+                Messages.terms_and_conditions(),
+                Markups.terms_and_conditions()
+            )
+            return False
+
         pvb_requested_and_disabled: bool = self.path.startswith("pvb") and not self.__pvb_service.get_status()
         pvpc_requested_and_disabled: bool = self.path.startswith("pvpc") and not self.__pvpc_service.get_status()
         pvp_requested_and_disabled: bool = self.path.startswith("pvp") and \

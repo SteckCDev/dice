@@ -13,8 +13,9 @@ from settings import settings
 config = context.config
 
 section = config.config_ini_section
+# replacing % with %% so percent-char escaped and password can be parsed
 config.set_section_option(
-    section, "POSTGRES_DSN", settings.postgres_dsn
+    section, "POSTGRES_DSN", settings.postgres_dsn.replace("%", "%%")
 )
 
 # Interpret the config file for Python logging.

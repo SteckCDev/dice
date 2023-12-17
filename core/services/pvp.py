@@ -68,7 +68,7 @@ class PVPService:
     def get_last_5_for_tg_id(self, tg_id: int) -> list[PVPDTO] | None:
         return self.__repo.get_last_5_for_tg_id(tg_id)
 
-    def get_bet_sum(self) -> int:
+    def get_bet_sum(self) -> int | None:
         return self.__repo.get_bet_sum()
 
     def get_count(self) -> int:

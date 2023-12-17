@@ -53,10 +53,10 @@ class PVBService:
     def get_by_id(self, _id: int) -> PVBDTO | None:
         return self.__repo.get_by_id(_id)
 
-    def get_bet_sum(self) -> int:
+    def get_bet_sum(self) -> int | None:
         return self.__repo.get_bet_sum()
 
-    def get_bet_sum_for_result(self, player_won: bool | None) -> int:
+    def get_bet_sum_for_result(self, player_won: bool | None) -> int | None:
         return self.__repo.get_bet_sum_for_result(player_won)
 
     def get_count(self) -> int:
@@ -112,6 +112,7 @@ class PVBService:
         )
 
         user_cache.pvb_in_process = True
+        self.__user_service.update_cache(user_cache)
 
         if user_cache.pvb_bots_turn_first:
             self.__bot.send_message(
@@ -120,17 +121,26 @@ class PVBService:
             )
 
             user_cache.pvb_bot_dice = self.__bot.send_dice(user_cache.tg_id)
+            self.__user_service.update_cache(user_cache)
 
             time.sleep(DICE_SPIN_ANIMATION_DURATION)
-
-        self.__user_service.update_cache(user_cache)
 
         self.__bot.send_message(
             user_cache.tg_id,
             Messages.pvb_your_turn()
         )
 
-    def finish_game(self, user: UserDTO, user_cache: UserCacheDTO, user_dice: int) -> PVBDTO:
+    def finish_game(self, user: UserDTO, user_cache: UserCacheDTO, user_dice: int) -> PVBDTO | None:
+        cached_pvb_bot_dice: int | None = user_cache.pvb_bot_dice
+
+        user_cache.pvb_in_process = False
+        user_cache.pvb_bot_dice = None
+
+        self.__user_service.update_cache(user_cache)
+
+        if user_cache.pvb_bots_turn_first and cached_pvb_bot_dice is None:
+            return
+
         time.sleep(DICE_SPIN_ANIMATION_DURATION)
 
         if not user_cache.pvb_bots_turn_first:
@@ -139,13 +149,15 @@ class PVBService:
                 Messages.pvb_bots_turn()
             )
 
-            user_cache.pvb_bot_dice = self.__bot.send_dice(user_cache.tg_id)
+            bot_dice: int = self.__bot.send_dice(user_cache.tg_id)
 
             time.sleep(DICE_SPIN_ANIMATION_DURATION)
+        else:
+            bot_dice: int = cached_pvb_bot_dice
 
         player_won: bool | None = None
 
-        if user_cache.pvb_bot_dice > user_dice:
+        if bot_dice > user_dice:
             player_won = False
 
             if user_cache.beta_mode:
@@ -153,7 +165,7 @@ class PVBService:
             else:
                 user.balance -= user_cache.pvb_bet
 
-        elif user_cache.pvb_bot_dice < user_dice:
+        elif bot_dice < user_dice:
             player_won = True
 
             winnings: int = math.floor(user_cache.pvb_bet / 100 * (100 - self.__config_service.get().pvb_fee))
@@ -168,20 +180,16 @@ class PVBService:
                 player_tg_id=user.tg_id,
                 player_won=player_won,
                 player_dice=user_dice,
-                bot_dice=user_cache.pvb_bot_dice,
+                bot_dice=bot_dice,
                 bet=user_cache.pvb_bet,
                 beta_mode=user_cache.beta_mode
             )
         )
-
-        user_cache.pvb_bot_dice = None
-        user_cache.pvb_in_process = False
 
         self.__user_service.update(
             UpdateUserDTO(
                 **user.model_dump()
             )
         )
-        self.__user_service.update_cache(user_cache)
 
         return game

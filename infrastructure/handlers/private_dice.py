@@ -90,7 +90,10 @@ class PrivateDiceHandler(BaseTeleBotHandler):
         )
 
     def __pvb(self) -> None:
-        game: PVBDTO = self.__pvb_service.finish_game(self.user, self.user_cache, self.user_dice)
+        game: PVBDTO | None = self.__pvb_service.finish_game(self.user, self.user_cache, self.user_dice)
+
+        if game is None:
+            return
 
         selected_balance: int = self.__user_service.get_user_selected_balance(self.user.tg_id)
 

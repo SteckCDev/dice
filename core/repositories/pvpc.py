@@ -30,7 +30,7 @@ class PVPCRepository(ABC):
         ...
 
     @abstractmethod
-    def get_bet_sum(self) -> int:
+    def get_bet_sum(self) -> int | None:
         ...
 
     @abstractmethod

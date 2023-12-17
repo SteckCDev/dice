@@ -49,13 +49,13 @@ class PostgresRedisPVBRepository(PVBRepository):
 
         return PVBDTO(**pvb.__dict__) if pvb else None
 
-    def get_bet_sum(self) -> int:
+    def get_bet_sum(self) -> int | None:
         with Session() as db:
             return db.query(
                 func.sum(PVBModel.bet)
             ).one()[0]
 
-    def get_bet_sum_for_result(self, player_won: bool | None) -> int:
+    def get_bet_sum_for_result(self, player_won: bool | None) -> int | None:
         with Session() as db:
             return db.query(
                 func.sum(PVBModel.bet)

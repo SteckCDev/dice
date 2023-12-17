@@ -68,7 +68,7 @@ class PVPCService:
     def get_for_tg_id_and_status(self, user_tg_id: int, status: PVPCStatus) -> PVPCDTO | None:
         return self.__repo.get_for_tg_id_and_status(user_tg_id, status)
 
-    def get_bet_sum(self) -> int:
+    def get_bet_sum(self) -> int | None:
         return self.__repo.get_bet_sum()
 
     def get_count(self) -> int:

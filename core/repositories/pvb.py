@@ -24,11 +24,11 @@ class PVBRepository(ABC):
         ...
 
     @abstractmethod
-    def get_bet_sum(self) -> int:
+    def get_bet_sum(self) -> int | None:
         ...
 
     @abstractmethod
-    def get_bet_sum_for_result(self, player_won: bool | None) -> int:
+    def get_bet_sum_for_result(self, player_won: bool | None) -> int | None:
         ...
 
     @abstractmethod
