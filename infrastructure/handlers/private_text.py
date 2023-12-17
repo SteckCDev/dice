@@ -191,7 +191,7 @@ class PrivateTextHandler(BaseTeleBotHandler):
 
             self.user_cache.withdraw_amount = amount
 
-        elif self.__callback_path_startswith("pvb-create", "pvb-switch-turn", "pvb-start"):
+        elif self.__callback_path_startswith("pvb-create", "pvb-switch-turn", "pvb-start", "pvp-create"):
             if amount < self.config.min_bet or amount > self.config.max_bet:
                 self._bot.send_message(
                     self.user_id,
