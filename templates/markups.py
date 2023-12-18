@@ -135,6 +135,7 @@ class Markups:
                 InlineKeyboardButton("Рейтинг", callback_data="pvp-rating"),
                 InlineKeyboardButton("Мои игры", callback_data="pvp-history"),
                 InlineKeyboardButton("Инструкция", callback_data="pvp-instruction"),
+                InlineKeyboardButton("Обновить", callback_data="pvp"),
             )
             markup.add(
                 InlineKeyboardButton("<< Назад", callback_data="games"),
@@ -201,6 +202,7 @@ class Markups:
 
         markup.add(
             InlineKeyboardButton("Инструкция", callback_data=f"pvp-instruction"),
+            InlineKeyboardButton("Обновить", callback_data="pvp"),
         )
         markup.add(
             InlineKeyboardButton("<< Назад", callback_data="games"),

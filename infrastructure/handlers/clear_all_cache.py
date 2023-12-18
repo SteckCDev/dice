@@ -1,13 +1,5 @@
-from core.services import (
-    ConfigService,
-    UserService,
-)
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.cache.redis import RedisInterface, redis_instance
-from infrastructure.repositories import (
-    ImplementedConfigRepository,
-    ImplementedUserRepository,
-)
 from settings import settings
 from templates import Messages
 
@@ -19,15 +11,6 @@ class ClearAllCacheHandler(BaseTeleBotHandler):
         self.user_id: int = user_id
 
         self.__redis: RedisInterface = redis_instance
-
-        config_service: ConfigService = ConfigService(
-            repository=ImplementedConfigRepository()
-        )
-        self.__user_service: UserService = UserService(
-            repository=ImplementedUserRepository(),
-            bot=self._bot,
-            config_service=config_service
-        )
 
     def _prepare(self) -> bool:
         return self.user_id == settings.admin_tg_id
