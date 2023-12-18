@@ -5,16 +5,16 @@ from core.schemas.transaction import (
     CreateTransactionDTO,
     UpdateTransactionDTO,
 )
-from core.states import TransactionStatus
+from core.states import TransactionStateDirection, TransactionStatus
 
 
 class TransactionRepository(ABC):
     @abstractmethod
-    def toggle(self) -> bool:
+    def toggle(self, state_direction: TransactionStateDirection) -> bool:
         ...
 
     @abstractmethod
-    def get_status(self) -> bool:
+    def get_status(self, state_direction: TransactionStateDirection) -> bool:
         ...
 
     @abstractmethod

@@ -430,7 +430,15 @@ class Markups:
 
     @staticmethod
     def admin(
-            pvb_active: bool, pvp_active: bool, pvpc_active: bool, pvpf_active: bool, transactions_active: bool
+            pvb_active: bool,
+            pvp_active: bool,
+            pvpc_active: bool,
+            pvpf_active: bool,
+            transactions_active: bool,
+            deposit_card_active: bool,
+            deposit_btc_active: bool,
+            withdraw_card_active: bool,
+            withdraw_btc_active: bool
     ) -> InlineKeyboardMarkup:
         markup = InlineKeyboardMarkup(row_width=2)
 
@@ -455,6 +463,22 @@ class Markups:
             InlineKeyboardButton(
                 f"{get_status_emoji(pvpf_active)} PVPF",
                 callback_data=f"admin-switch-pvpf"
+            ),
+            InlineKeyboardButton(
+                f"{get_status_emoji(deposit_btc_active)} Deposit / BTC",
+                callback_data=f"admin-switch-transactions-deposit-btc"
+            ),
+            InlineKeyboardButton(
+                f"{get_status_emoji(deposit_card_active)} Deposit / Card",
+                callback_data=f"admin-switch-transactions-deposit-card"
+            ),
+            InlineKeyboardButton(
+                f"{get_status_emoji(withdraw_btc_active)} Withdraw / BTC",
+                callback_data=f"admin-switch-transactions-withdraw-btc"
+            ),
+            InlineKeyboardButton(
+                f"{get_status_emoji(withdraw_card_active)} Withdraw / Card",
+                callback_data=f"admin-switch-transactions-withdraw-card"
             ),
             InlineKeyboardButton(
                 f"{get_status_emoji(transactions_active)} Транзакции",

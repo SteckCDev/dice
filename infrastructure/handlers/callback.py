@@ -50,9 +50,11 @@ from core.services import (
     TransactionService,
     UserService,
 )
+from core.services.admin import ADJUSTABLE_COMMANDS
 from core.states import (
     NumbersRelation,
     PVPStatus,
+    TransactionStateDirection,
     TransactionStatus,
     WithdrawStatus,
 )
@@ -828,18 +830,35 @@ class CallbackHandler(BaseTeleBotHandler):
             self.__pvpf_service.toggle()
 
         elif self.path == "admin-switch-transactions":
-            self.__transaction_service.toggle()
+            self.__transaction_service.toggle(TransactionStateDirection.SELF)
+
+        elif self.path == "admin-switch-transactions-deposit-card":
+            self.__transaction_service.toggle(TransactionStateDirection.DEPOSIT_CARD)
+
+        elif self.path == "admin-switch-transactions-deposit-btc":
+            self.__transaction_service.toggle(TransactionStateDirection.DEPOSIT_BTC)
+
+        elif self.path == "admin-switch-transactions-withdraw-card":
+            self.__transaction_service.toggle(TransactionStateDirection.WITHDRAW_CARD)
+
+        elif self.path == "admin-switch-transactions-withdraw-btc":
+            self.__transaction_service.toggle(TransactionStateDirection.WITHDRAW_BTC)
 
         self.edit_message_in_context(
             Messages.admin(
-                self.__user_service.get_cached_users_count()
+                self.__user_service.get_cached_users_count(),
+                ADJUSTABLE_COMMANDS
             ),
             Markups.admin(
                 self.__pvb_service.get_status(),
                 self.__pvp_service.get_status(),
                 self.__pvpc_service.get_status(),
                 self.__pvpf_service.get_status(),
-                self.__transaction_service.get_status()
+                self.__transaction_service.get_status(TransactionStateDirection.SELF),
+                self.__transaction_service.get_status(TransactionStateDirection.DEPOSIT_CARD),
+                self.__transaction_service.get_status(TransactionStateDirection.DEPOSIT_BTC),
+                self.__transaction_service.get_status(TransactionStateDirection.WITHDRAW_CARD),
+                self.__transaction_service.get_status(TransactionStateDirection.WITHDRAW_BTC),
             )
         )
 
@@ -870,14 +889,19 @@ class CallbackHandler(BaseTeleBotHandler):
         if self.path_args[0] == "admin":
             self.edit_message_in_context(
                 Messages.admin(
-                    self.__user_service.get_cached_users_count()
+                    self.__user_service.get_cached_users_count(),
+                    ADJUSTABLE_COMMANDS
                 ),
                 Markups.admin(
                     self.__pvb_service.get_status(),
                     self.__pvp_service.get_status(),
                     self.__pvpc_service.get_status(),
                     self.__pvpf_service.get_status(),
-                    self.__transaction_service.get_status()
+                    self.__transaction_service.get_status(TransactionStateDirection.SELF),
+                    self.__transaction_service.get_status(TransactionStateDirection.DEPOSIT_CARD),
+                    self.__transaction_service.get_status(TransactionStateDirection.DEPOSIT_BTC),
+                    self.__transaction_service.get_status(TransactionStateDirection.WITHDRAW_CARD),
+                    self.__transaction_service.get_status(TransactionStateDirection.WITHDRAW_BTC)
                 )
             )
 
@@ -1089,12 +1113,47 @@ class CallbackHandler(BaseTeleBotHandler):
             )
             return False
 
-        if self.path.startswith("transaction") and not self.__transaction_service.get_status():
+        if self.path.startswith("transaction") and not self.__transaction_service.get_status(
+                TransactionStateDirection.SELF
+        ):
             self._bot.answer_callback(
                 self.call_id,
                 Messages.transactions_disabled()
             )
             return False
+
+        if self.path.startswith(
+                ("transaction-deposit", "transaction-withdraw")
+        ):
+            if self.path.startswith("transaction-deposit"):
+                card_state_for_type: TransactionStateDirection = TransactionStateDirection.DEPOSIT_CARD
+                btc_state_for_type: TransactionStateDirection = TransactionStateDirection.DEPOSIT_BTC
+            else:
+                card_state_for_type: TransactionStateDirection = TransactionStateDirection.WITHDRAW_CARD
+                btc_state_for_type: TransactionStateDirection = TransactionStateDirection.WITHDRAW_BTC
+
+            card_state: bool = self.__transaction_service.get_status(card_state_for_type)
+            btc_state: bool = self.__transaction_service.get_status(btc_state_for_type)
+
+            if not card_state and not btc_state:
+                self.edit_message_in_context(
+                    Messages.transactions_direction_disabled(),
+                    Markups.back_to("transaction")
+                )
+                return False
+
+            elif len(self.path_args) >= 2 and (
+                    (self.path_args[1] == "card" and not card_state) or (self.path_args[1] == "btc" and not btc_state)
+            ):
+                back_to: str = "transaction-deposit" if self.path.startswith(
+                    "transaction-deposit"
+                ) else "transaction-withdraw"
+
+                self.edit_message_in_context(
+                    Messages.transactions_direction_disabled(),
+                    Markups.back_to(back_to)
+                )
+                return False
 
         return True
         

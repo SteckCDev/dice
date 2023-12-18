@@ -8,7 +8,7 @@ from core.schemas.transaction import (
     CreateTransactionDTO,
     UpdateTransactionDTO,
 )
-from core.states import TransactionStatus
+from core.states import TransactionStateDirection, TransactionStatus
 from infrastructure.cache.redis import RedisInterface, RedisKey, redis_instance
 from infrastructure.database import Session
 from infrastructure.database.models import TransactionModel
@@ -18,19 +18,44 @@ class PostgresRedisTransactionRepository(TransactionRepository):
     def __init__(self) -> None:
         self.__redis: RedisInterface = redis_instance
 
-    def toggle(self) -> bool:
-        cached_state: bool | None = self.__redis.get_bool(RedisKey.TRANSACTIONS_ACTIVE)
+    @staticmethod
+    def __get_key_from_sub_service_id(state_direction: TransactionStateDirection) -> str:
+        match state_direction:
+            case TransactionStateDirection.SELF:
+                return RedisKey.TRANSACTIONS_ACTIVE
+
+            case TransactionStateDirection.DEPOSIT_CARD:
+                return RedisKey.TRANSACTIONS_DEPOSIT_CARD_ACTIVE
+
+            case TransactionStateDirection.DEPOSIT_BTC:
+                return RedisKey.TRANSACTIONS_DEPOSIT_BTC_ACTIVE
+
+            case TransactionStateDirection.WITHDRAW_CARD:
+                return RedisKey.TRANSACTIONS_WITHDRAW_CARD_ACTIVE
+
+            case TransactionStateDirection.WITHDRAW_BTC:
+                return RedisKey.TRANSACTIONS_WITHDRAW_BTC_ACTIVE
+
+            case _:
+                raise ValueError(f"No such direction with {state_direction}")
+
+    def toggle(self, state_direction: TransactionStateDirection) -> bool:
+        key_str: str = self.__get_key_from_sub_service_id(state_direction)
+
+        cached_state: bool | None = self.__redis.get_bool(key_str)
         state: bool = False if cached_state is None else not cached_state
 
-        self.__redis.set_bool(RedisKey.TRANSACTIONS_ACTIVE, state)
+        self.__redis.set_bool(key_str, state)
 
         return state
 
-    def get_status(self) -> bool:
-        state: bool | None = self.__redis.get_bool(RedisKey.TRANSACTIONS_ACTIVE)
+    def get_status(self, state_direction: TransactionStateDirection) -> bool:
+        key_str: str = self.__get_key_from_sub_service_id(state_direction)
+
+        state: bool | None = self.__redis.get_bool(key_str)
 
         if state is None:
-            self.__redis.set_bool(RedisKey.TRANSACTIONS_ACTIVE, False)
+            self.__redis.set_bool(key_str, False)
             return False
 
         return state

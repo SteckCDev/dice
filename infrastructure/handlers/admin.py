@@ -7,6 +7,8 @@ from core.services import (
     TransactionService,
     UserService,
 )
+from core.services.admin import ADJUSTABLE_COMMANDS
+from core.states import TransactionStateDirection
 from infrastructure.api_services.telebot import BaseTeleBotHandler
 from infrastructure.repositories import (
     ImplementedConfigRepository,
@@ -71,13 +73,18 @@ class AdminHandler(BaseTeleBotHandler):
         self._bot.send_message(
             settings.admin_tg_id,
             Messages.admin(
-                self.__user_service.get_cached_users_count()
+                self.__user_service.get_cached_users_count(),
+                ADJUSTABLE_COMMANDS
             ),
             Markups.admin(
                 self.__pvb_service.get_status(),
                 self.__pvp_service.get_status(),
                 self.__pvpc_service.get_status(),
                 self.__pvpf_service.get_status(),
-                self.__transaction_service.get_status()
+                self.__transaction_service.get_status(TransactionStateDirection.SELF),
+                self.__transaction_service.get_status(TransactionStateDirection.DEPOSIT_CARD),
+                self.__transaction_service.get_status(TransactionStateDirection.DEPOSIT_BTC),
+                self.__transaction_service.get_status(TransactionStateDirection.WITHDRAW_CARD),
+                self.__transaction_service.get_status(TransactionStateDirection.WITHDRAW_BTC),
             )
         )

@@ -11,7 +11,7 @@ from core.services.config import ConfigService
 from core.services.user import UserService
 
 
-ADJUST_COMMANDS: Final[dict[str, tuple[str, ...]]] = {
+ADJUSTABLE_COMMANDS: Final[dict[str, tuple[str, ...]]] = {
     "реквизиты": (
         "карта",
         "биткоин"

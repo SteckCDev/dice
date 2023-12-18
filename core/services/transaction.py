@@ -6,18 +6,18 @@ from core.schemas.transaction import (
     CreateTransactionDTO,
     UpdateTransactionDTO,
 )
-from core.states import TransactionStatus
+from core.states import TransactionStateDirection, TransactionStatus
 
 
 class TransactionService:
     def __init__(self, repository: TransactionRepository) -> None:
         self.__repo: TransactionRepository = repository
 
-    def toggle(self) -> bool:
-        return self.__repo.toggle()
+    def toggle(self, state_direction: TransactionStateDirection) -> bool:
+        return self.__repo.toggle(state_direction)
 
-    def get_status(self) -> bool:
-        return self.__repo.get_status()
+    def get_status(self, state_direction: TransactionStateDirection) -> bool:
+        return self.__repo.get_status(state_direction)
 
     def create(self, dto: CreateTransactionDTO) -> TransactionDTO:
         return self.__repo.create(dto)
