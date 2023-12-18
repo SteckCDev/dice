@@ -306,6 +306,14 @@ class Messages:
         return "❌ Вы уже состоите в игре"
 
     @staticmethod
+    def pvpc_min_bet_set(min_bet: int) -> str:
+        return f"🔔 Минимальная ставка установлена на {min_bet}"
+
+    @staticmethod
+    def pvpc_max_bet_set(max_bet: int) -> str:
+        return f"🔔 Максимальная ставка установлена на {max_bet}"
+
+    @staticmethod
     def pvpc_create() -> str:
         return f"{bold('🔔 Чтобы создать игру используйте шаблон')}\n\n" \
                f"{cursive('дайс ставка количество_раундов')}"
@@ -575,11 +583,11 @@ class Messages:
             subcommands_caption = ", ".join(subcommands)
             commands_with_subcommands.append(f"{command} ({subcommands_caption})")
 
-        commands_caption = ", ".join(commands_with_subcommands)
+        commands_caption = "\n - ".join(commands_with_subcommands)
 
         return f"{bold('🎲 Дайс / Админ-панель')}\n\n" \
                f"🙋 Пользователей с момента запуска: {bold(users_since_launch)}\n\n" \
-               f"{bold('Доступные команды:')} " \
+               f"{bold('Доступные команды:')}\n - " \
                f"{commands_caption}\n\n" \
                f"Чтобы увидеть синтаксис команды и текущие значения изменяемых ею параметров, " \
                f"необходимо написать только её имя без параметров, " \

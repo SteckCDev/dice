@@ -74,6 +74,18 @@ class PVPCService:
     def get_count(self) -> int:
         return self.__repo.get_count()
 
+    def set_min_bet_in_chat(self, chat_tg_id: int, min_bet: int) -> None:
+        self.__repo.set_min_bet_in_chat(chat_tg_id, min_bet)
+
+    def get_min_bet_for_chat(self, chat_tg_id: int) -> int | None:
+        return self.__repo.get_min_bet_for_chat(chat_tg_id)
+
+    def set_max_bet_in_chat(self, chat_tg_id: int, max_bet: int) -> None:
+        self.__repo.set_max_bet_in_chat(chat_tg_id, max_bet)
+
+    def get_max_bet_for_chat(self, chat_tg_id: int) -> int | None:
+        return self.__repo.get_max_bet_for_chat(chat_tg_id)
+
     def create_game(self, user: UserDTO, chat_id: int, bet: int, rounds: int) -> PVPCDTO:
         pvpc: PVPCDTO = self.__repo.create(
             CreatePVPCDTO(

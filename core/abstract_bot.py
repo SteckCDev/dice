@@ -50,3 +50,7 @@ class AbstractBotAPI(ABC):
     @abstractmethod
     def is_user_subscribed(self, chat_id: int, user_tg_id: int) -> bool:
         ...
+
+    @abstractmethod
+    def is_user_admin(self, chat_id: int, user_tg_id: int) -> bool:
+        ...

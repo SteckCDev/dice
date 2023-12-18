@@ -115,3 +115,6 @@ class TeleBotAPI(AbstractBotAPI):
                 return False
 
         return True
+
+    def is_user_admin(self, chat_id: int, user_tg_id: int) -> bool:
+        return self.__bot.get_chat_member(chat_id, user_tg_id).status in ("administrator", "creator")

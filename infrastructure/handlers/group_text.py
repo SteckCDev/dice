@@ -31,6 +31,7 @@ class GroupTextHandler(BaseTeleBotHandler):
         super().__init__()
 
         self.text: str = text
+        self.args: list[str] = text.split()
         self.chat_id: int = chat_id
         self.message: Message = message
 
@@ -60,6 +61,47 @@ class GroupTextHandler(BaseTeleBotHandler):
         )
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
+    def __create_game(self) -> None:
+        bet, rounds = [int(arg) for arg in self.text.split()[1:]]
+
+        pvpc: PVPCDTO = self.__pvpc_service.create_game(self.user, self.chat_id, bet, rounds)
+
+        self._bot.reply(
+            self.message,
+            Messages.pvpc_join(
+                pvpc.id,
+                pvpc.bet,
+                pvpc.rounds
+            ),
+            Markups.pvpc_join(pvpc.id)
+        )
+
+    def __set_bet_limit(self) -> None:
+        limit_name, limit = self.args[1:]
+
+        if limit_name.startswith(
+                ("мин", "min")
+        ):
+            self.__pvpc_service.set_min_bet_in_chat(
+                self.chat_id,
+                int(limit)
+            )
+
+            self._bot.reply(
+                self.message,
+                Messages.pvpc_min_bet_set(limit)
+            )
+        else:
+            self.__pvpc_service.set_max_bet_in_chat(
+                self.chat_id,
+                int(limit)
+            )
+
+            self._bot.reply(
+                self.message,
+                Messages.pvpc_max_bet_set(limit)
+            )
+
     def _prepare(self) -> bool:
         if not self.text.lower().startswith(("dice", "дайс")):
             return False
@@ -67,9 +109,13 @@ class GroupTextHandler(BaseTeleBotHandler):
         if not self.__pvpc_service.get_status():
             return False
 
-        args: list[str] = self.text.split()
+        # skip checks below because they are meant for game creation, not bet limits management
+        if len(self.args) == 3 and self.args[1].startswith(
+                ("мин", "min", "макс", "max")
+        ) and self.args[2].isdigit() and self._bot.is_user_admin(self.chat_id, self.user.tg_id):
+            return True
 
-        if len(args) != 3:
+        if len(self.args) != 3:
             self._bot.reply(
                 self.message,
                 Messages.pvpc_create()
@@ -86,8 +132,8 @@ class GroupTextHandler(BaseTeleBotHandler):
             )
             return False
 
-        bet: str = args[1]
-        rounds: str = args[2]
+        bet: str = self.args[1]
+        rounds: str = self.args[2]
 
         if not bet.isdigit() or not rounds.isdigit():
             self._bot.reply(
@@ -99,12 +145,17 @@ class GroupTextHandler(BaseTeleBotHandler):
         bet: int = int(bet)
         rounds: int = int(rounds)
 
-        if bet < self.config.min_bet or bet > self.config.max_bet:
+        special_min_bet: int | None = self.__pvpc_service.get_min_bet_for_chat(self.chat_id)
+        special_max_bet: int | None = self.__pvpc_service.get_max_bet_for_chat(self.chat_id)
+        min_bet: int = special_min_bet if special_min_bet else self.config.min_bet
+        max_bet: int = special_max_bet if special_max_bet else self.config.max_bet
+
+        if bet < min_bet or bet > max_bet:
             self._bot.reply(
                 self.message,
                 Messages.bet_out_of_limits(
-                    self.config.min_bet,
-                    self.config.max_bet
+                    min_bet,
+                    max_bet
                 )
             )
             return False
@@ -128,16 +179,14 @@ class GroupTextHandler(BaseTeleBotHandler):
         return True
 
     def _process(self) -> None:
-        bet, rounds = [int(arg) for arg in self.text.split()[1:]]
+        is_args_fit_for_adjust: bool = self.args[1].startswith(
+                ("мин", "min", "макс", "max")
+        ) and self.args[2].isdigit() and int(self.args[2]) > 0
 
-        pvpc: PVPCDTO = self.__pvpc_service.create_game(self.user, self.chat_id, bet, rounds)
+        is_args_fit_for_creation: bool = self.args[1].isdigit() and self.args[2].isdigit()
 
-        self._bot.reply(
-            self.message,
-            Messages.pvpc_join(
-                pvpc.id,
-                pvpc.bet,
-                pvpc.rounds
-            ),
-            Markups.pvpc_join(pvpc.id)
-        )
+        if is_args_fit_for_adjust and self._bot.is_user_admin(self.chat_id, self.user.tg_id):
+            self.__set_bet_limit()
+
+        elif is_args_fit_for_creation:
+            self.__create_game()

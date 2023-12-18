@@ -91,3 +91,29 @@ class PostgresRedisPVPCRepository(PVPCRepository):
                 return
 
             return PVPCDTO(**pvpc.__dict__)
+
+    def set_min_bet_in_chat(self, chat_tg_id: int, min_bet: int) -> None:
+        self.__redis.set(
+            RedisKey.PVPC_CHAT_MIN_BET_TEMPLATE.format(chat_tg_id=chat_tg_id),
+            str(min_bet)
+        )
+
+    def get_min_bet_for_chat(self, chat_tg_id: int) -> int | None:
+        min_bet: str | None = self.__redis.get(
+            RedisKey.PVPC_CHAT_MIN_BET_TEMPLATE.format(chat_tg_id=chat_tg_id)
+        )
+
+        return int(min_bet) if min_bet else None
+
+    def set_max_bet_in_chat(self, chat_tg_id: int, max_bet: int) -> None:
+        self.__redis.set(
+            RedisKey.PVPC_CHAT_MAX_BET_TEMPLATE.format(chat_tg_id=chat_tg_id),
+            str(max_bet)
+        )
+
+    def get_max_bet_for_chat(self, chat_tg_id: int) -> int | None:
+        max_bet: str | None = self.__redis.get(
+            RedisKey.PVPC_CHAT_MAX_BET_TEMPLATE.format(chat_tg_id=chat_tg_id)
+        )
+
+        return int(max_bet) if max_bet else None
