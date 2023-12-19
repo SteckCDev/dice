@@ -86,6 +86,24 @@ class UserService:
 
         return True
 
+    def get_required_chats_title_and_invite_link(self) -> list[tuple[str, str]] | None:
+        required_chats: list[int] | None = self.__config_service.get().required_chats
+
+        if required_chats is None:
+            return
+
+        chats_info: list[tuple[str, str]] = list()
+
+        for chat_id in required_chats:
+            chat_info: tuple[str, str] | None = self.__bot.get_chat_title_and_invite_link(chat_id)
+
+            if chat_info is None:
+                continue
+
+            chats_info.append(chat_info)
+
+        return chats_info if chats_info else None
+
     def auto_update_beta_balance(self) -> None:
         """
         if self._beta_updated == 0:

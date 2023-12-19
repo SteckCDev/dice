@@ -16,6 +16,11 @@ from core.exceptions import (
     PVPCAlreadyInGameError,
     PVPCNotFoundForUserError,
 )
+from core.schemas.details import (
+    DetailsDTO,
+    CreateDetailsDTO,
+    UpdateDetailsDTO,
+)
 from core.schemas.config import (
     ConfigDTO,
 )
@@ -43,6 +48,7 @@ from core.services import (
     AdminService,
     ConfigService,
     CurrencyService,
+    DetailsService,
     PVBService,
     PVPService,
     PVPCService,
@@ -64,6 +70,7 @@ from infrastructure.repositories import (
     ImplementedAdminRepository,
     ImplementedConfigRepository,
     ImplementedCurrencyRepository,
+    ImplementedDetailsRepository,
     ImplementedPVBRepository,
     ImplementedPVPRepository,
     ImplementedPVPCRepository,
@@ -141,6 +148,9 @@ class CallbackHandler(BaseTeleBotHandler):
         )
         self.__transaction_service: TransactionService = TransactionService(
             repository=ImplementedTransactionRepository()
+        )
+        self.__details_service: DetailsService = DetailsService(
+            repository=ImplementedDetailsRepository()
         )
 
         self.config: ConfigDTO = config_service.get()
@@ -648,6 +658,9 @@ class CallbackHandler(BaseTeleBotHandler):
 
         method: str = self.path_args[1]
 
+        if method not in ("card", "btc"):
+            return
+
         btc_equivalent: Decimal | None = None if method == "card" else self.__currency_service.rub_to_btc(
             self.user_cache.withdraw_amount
         )
@@ -676,7 +689,54 @@ class CallbackHandler(BaseTeleBotHandler):
                 )
             )
 
-        elif self.path_args[0] == "transaction-withdraw-details":
+        elif self.path_args[0] in (
+                "transaction-withdraw-details",
+                "transaction-withdraw-details-create",
+                "transaction-withdraw-details-save"
+        ):
+            path_has_details_id: bool = len(self.path_args) == 3 and self.path_args[2].isdigit()
+
+            if self.path_args[0].endswith("create"):
+                self.__details_service.create(
+                    CreateDetailsDTO(
+                        user_tg_id=self.user.tg_id,
+                        method=method,
+                        withdraw_details=self.user_cache.withdraw_details,
+                        withdraw_bank=self.user_cache.withdraw_bank if method == "card" else None
+                    )
+                )
+
+            elif self.path_args[0].endswith("save") and path_has_details_id:
+                _id: int = int(self.path_args[2])
+
+                details_to_use: DetailsDTO | None = self.__details_service.get_by_id(_id)
+
+                if details_to_use and details_to_use.user_tg_id == self.user.tg_id:
+                    self.__details_service.update(
+                        UpdateDetailsDTO(
+                            id=details_to_use.id,
+                            withdraw_details=self.user_cache.withdraw_details,
+                            withdraw_bank=self.user_cache.withdraw_bank if method == "card" else None
+                        )
+                    )
+
+            elif path_has_details_id:
+                _id: int = int(self.path_args[2])
+
+                details_to_use: DetailsDTO | None = self.__details_service.get_by_id(_id)
+
+                if details_to_use:
+                    self.user_cache.withdraw_details = details_to_use.withdraw_details
+
+                    if method == "card":
+                        self.user_cache.withdraw_bank = details_to_use.withdraw_bank
+
+                    self.__user_service.update_cache(self.user_cache)
+
+            saved_details: DetailsDTO | None = self.__details_service.get_all_for_tg_id_and_method(
+                self.user.tg_id, method
+            )
+
             self.edit_message_in_context(
                 Messages.transaction_withdraw_details(
                     method,
@@ -686,7 +746,56 @@ class CallbackHandler(BaseTeleBotHandler):
                 Markups.transaction_withdraw_details(
                     method,
                     self.user_cache.withdraw_details,
+                    self.user_cache.withdraw_bank,
+                    saved_details
+                )
+            )
+
+        elif self.path_args[0] == "transaction-withdraw-details-add":
+            self.edit_message_in_context(
+                Messages.transaction_withdraw_details(
+                    method,
+                    self.user_cache.withdraw_details,
                     self.user_cache.withdraw_bank
+                ),
+                Markups.transaction_withdraw_details_add(
+                    method,
+                    self.user_cache.withdraw_details,
+                    self.user_cache.withdraw_bank
+                )
+            )
+
+        elif self.path_args[0] in (
+                "transaction-withdraw-details-manage",
+                "transaction-withdraw-details-edit"
+        ):
+            if len(self.path_args) != 3 or not self.path_args[2].isdigit():
+                return
+
+            _id = int(self.path_args[2])
+
+            saved_details: DetailsDTO | None = self.__details_service.get_by_id(_id)
+
+            if saved_details is None or saved_details.user_tg_id != self.user.tg_id:
+                return
+
+            if self.path_args[0].endswith("manage"):
+                self.user_cache.withdraw_details = saved_details.withdraw_details
+
+                if method == "card":
+                    self.user_cache.withdraw_bank = saved_details.withdraw_bank
+
+                self.__user_service.update_cache(self.user_cache)
+
+            self.edit_message_in_context(
+                Messages.transaction_withdraw_details(
+                    method,
+                    self.user_cache.withdraw_details,
+                    self.user_cache.withdraw_bank
+                ),
+                Markups.transaction_withdraw_details_manage(
+                    method,
+                    saved_details.id
                 )
             )
 
@@ -1082,7 +1191,9 @@ class CallbackHandler(BaseTeleBotHandler):
         if not self.__user_service.is_subscribed_to_chats(self.user.tg_id):
             self._bot.send_message(
                 self.user.tg_id,
-                Messages.force_to_subscribe()
+                Messages.force_to_subscribe(
+                    self.__user_service.get_required_chats_title_and_invite_link()
+                )
             )
             return False
 

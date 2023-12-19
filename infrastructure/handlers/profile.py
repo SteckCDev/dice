@@ -56,6 +56,15 @@ class ProfileHandler(BaseTeleBotHandler):
         self.user_cache: UserCacheDTO = self.__user_service.get_cache_by_tg_id(user_id)
 
     def _prepare(self) -> bool:
+        if not self.__user_service.is_subscribed_to_chats(self.user.tg_id):
+            self._bot.send_message(
+                self.user.tg_id,
+                Messages.force_to_subscribe(
+                    self.__user_service.get_required_chats_title_and_invite_link()
+                )
+            )
+            return False
+
         if self.user_cache.pvb_in_process:
             self._bot.send_message(
                 self.user_id,

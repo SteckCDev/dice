@@ -46,6 +46,15 @@ class BalanceHandler(BaseTeleBotHandler):
         )
 
     def _prepare(self) -> bool:
+        if not self.__user_service.is_subscribed_to_chats(self.user.tg_id):
+            self._bot.send_message(
+                self.user.tg_id,
+                Messages.force_to_subscribe(
+                    self.__user_service.get_required_chats_title_and_invite_link()
+                )
+            )
+            return False
+
         return True
 
     def _process(self) -> None:

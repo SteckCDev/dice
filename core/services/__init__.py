@@ -1,6 +1,7 @@
 from .admin import AdminService
 from .config import ConfigService
 from .currency import CurrencyService
+from .details import DetailsService
 from .pvb import PVBService
 from .pvp import PVPService
 from .pvpc import PVPCService

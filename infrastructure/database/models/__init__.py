@@ -1,3 +1,4 @@
+from .details import DetailsModel
 from .pvb import PVBModel
 from .pvp import PVPModel
 from .pvpc import PVPCModel

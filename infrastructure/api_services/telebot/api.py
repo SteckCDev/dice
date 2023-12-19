@@ -2,7 +2,7 @@ from typing import Callable, Final, Any
 
 from telebot import TeleBot
 from telebot.apihelper import ApiTelegramException
-from telebot.types import Message, ReplyKeyboardMarkup, InlineKeyboardMarkup
+from telebot.types import Message, ReplyKeyboardMarkup, InlineKeyboardMarkup, Chat
 
 from core.abstract_bot import AbstractBotAPI
 
@@ -71,7 +71,8 @@ class TeleBotAPI(AbstractBotAPI):
         message: Message = self.__bot.send_message(
             chat_id=chat_id,
             text=text,
-            reply_markup=markup
+            reply_markup=markup,
+            disable_web_page_preview=True
         )
 
         return message.message_id
@@ -109,12 +110,21 @@ class TeleBotAPI(AbstractBotAPI):
 
     def is_user_subscribed(self, chat_id: int, user_tg_id: int) -> bool:
         try:
-            self.__bot.get_chat_member(chat_id, user_tg_id)
+            return self.__bot.get_chat_member(chat_id, user_tg_id).status != "left"
         except ApiTelegramException as exc:
             if exc.result_json.get("description") == "Bad Request: user not found":
                 return False
 
         return True
+
+    def get_chat_title_and_invite_link(self, chat_id: int) -> tuple[str, str] | None:
+        try:
+            chat: Chat = self.__bot.get_chat(chat_id)
+
+            return chat.title, chat.invite_link
+
+        except ApiTelegramException:
+            return
 
     def is_user_admin(self, chat_id: int, user_tg_id: int) -> bool:
         return self.__bot.get_chat_member(chat_id, user_tg_id).status in ("administrator", "creator")

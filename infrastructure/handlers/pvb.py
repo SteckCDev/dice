@@ -44,7 +44,9 @@ class PVBHandler(BaseTeleBotHandler):
         if not self.__user_service.is_subscribed_to_chats(self.user_id):
             self._bot.send_message(
                 self.chat_id,
-                Messages.force_to_subscribe()
+                Messages.force_to_subscribe(
+                    self.__user_service.get_required_chats_title_and_invite_link()
+                )
             )
             return False
 

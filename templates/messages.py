@@ -93,10 +93,20 @@ class Messages:
         return "🛑 Вход с намагниченными кубиками запрещён!"
 
     @staticmethod
-    def force_to_subscribe() -> str:
-        return f"🔔 Для взаимодействия с ботом необходимо состоять в следующих чатах:\n" \
-               f" 1. {link('первый чат', 'https://google.com')}\n" \
-               f" 2. {link('второй чат', 'https://google.com')}"
+    def force_to_subscribe(chats_info: list[tuple[str, str]] | None) -> str:
+        if chats_info is None:
+            return f"🔔 У нас возникли трудности с формированием списка обязательных подписок, " \
+                   f"пожалуйста, обратитесь в поддержку"
+
+        chats_links: list = list()
+
+        for i, (chat_title, chat_invite_link) in enumerate(chats_info, 1):
+            chats_links.append(f"{i}. {link(chat_title, chat_invite_link)}")
+
+        chat_links_caption: str = "\n".join(chats_links)
+
+        return f"🔔 Для взаимодействия с ботом необходимо состоять в следующих чатах:\n\n" \
+               f"{chat_links_caption}"
 
     @staticmethod
     def terms_and_conditions() -> str:
@@ -525,16 +535,18 @@ class Messages:
 
     @staticmethod
     def transaction_withdraw_details(method: str, withdraw_details: str | None, withdraw_bank: str | None) -> str:
+        fill_tip = "Пожалуйста, пишите данные по очереди."
+
         if method == "card":
             if withdraw_details is None and withdraw_bank is None:
-                fill_tip = "Пожалуйста, пишите данные по очереди."
                 details_caption = f"Укажите название банка и реквизиты (номер телефона, либо номер карты).\n{fill_tip}"
             elif withdraw_details is None:
                 details_caption = "Укажите реквизиты (номер телефона, либо номер карты)."
             elif withdraw_bank is None:
                 details_caption = "Укажите название банка."
             else:
-                details_caption = ""
+                details_caption = f"Для изменения указанных платёжных данных напишите другое название банка " \
+                                  f"или другие реквизиты.\n{fill_tip}"
 
             return f"{Messages.__transaction_withdraw_header()}\n\n" \
                    f"🏦 Банк: {bold(withdraw_bank if withdraw_bank else 'не указан')}\n" \
@@ -543,11 +555,13 @@ class Messages:
         else:
             if withdraw_details is None:
                 details_caption = "Укажите адрес биткоин-кошелька."
+                withdraw_details_caption = "не указан"
             else:
-                details_caption = ""
+                details_caption = "Для изменения указанных платёжных данных напишите другой адрес биткоин-кошелька"
+                withdraw_details_caption = str(withdraw_details)
 
             return f"{Messages.__transaction_withdraw_header()}\n\n" \
-                   f"🪙 Адрес кошелька: {bold(withdraw_details)}\n\n" \
+                   f"🪙 Адрес кошелька: {bold(withdraw_details_caption)}\n\n" \
                    f"{cursive(details_caption)}"
 
     @staticmethod

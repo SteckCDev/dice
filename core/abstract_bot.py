@@ -52,5 +52,9 @@ class AbstractBotAPI(ABC):
         ...
 
     @abstractmethod
+    def get_chat_title_and_invite_link(self, chat_id: int) -> tuple[str, str] | None:
+        ...
+
+    @abstractmethod
     def is_user_admin(self, chat_id: int, user_tg_id: int) -> bool:
         ...

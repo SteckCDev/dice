@@ -108,6 +108,16 @@ class PrivateTextHandler(BaseTeleBotHandler):
             )
             return
 
+        elif call.data.startswith("transaction-withdraw-details-manage"):
+            call.data = call.data.replace("manage", "edit")
+
+        elif call.data.startswith(
+                ("transaction-withdraw-details-save", "transaction-withdraw-details-create")
+        ):
+            args = call.data.split(":")
+            method: str | None = args[1] if len(args) >= 2 else None
+            call.data = f"transaction-withdraw-details:{method}"
+
         CallbackHandler(
             call_id=call.id,
             path=call.data,
@@ -137,7 +147,9 @@ class PrivateTextHandler(BaseTeleBotHandler):
         return False
 
     def __set_withdraw_details(self) -> None:
-        if not self.__callback_path_startswith("transaction-withdraw-details"):
+        if not self.__callback_path_startswith(
+                "transaction-withdraw-details",
+        ):
             return
 
         self.user_cache.withdraw_details = self.text
@@ -149,7 +161,9 @@ class PrivateTextHandler(BaseTeleBotHandler):
         if len(self.text) > 32 or len(self.text) < 2:
             return
 
-        if not self.__callback_path_startswith("transaction-withdraw-details"):
+        if not self.__callback_path_startswith(
+                "transaction-withdraw-details",
+        ):
             return
 
         self.user_cache.withdraw_bank = self.text
@@ -224,7 +238,9 @@ class PrivateTextHandler(BaseTeleBotHandler):
         if not self.__user_service.is_subscribed_to_chats(self.user_id):
             self._bot.send_message(
                 self.user_id,
-                Messages.force_to_subscribe()
+                Messages.force_to_subscribe(
+                    self.__user_service.get_required_chats_title_and_invite_link()
+                )
             )
             return False
 

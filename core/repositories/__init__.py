@@ -1,6 +1,7 @@
 from .admin import AdminRepository
 from .config import ConfigRepository
 from .currency import CurrencyRepository
+from .details import DetailsRepository
 from .pvb import PVBRepository
 from .pvp import PVPRepository
 from .pvpc import PVPCRepository

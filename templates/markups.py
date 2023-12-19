@@ -5,6 +5,7 @@ from telebot.types import (
     InlineKeyboardButton
 )
 
+from core.schemas.details import DetailsDTO
 from core.schemas.pvb import PVBDTO
 from core.schemas.pvp import PVPDTO, PVPDetailsDTO
 from core.schemas.transaction import TransactionDTO
@@ -406,6 +407,50 @@ class Markups:
     def transaction_withdraw_details(
             method: str,
             withdraw_details: str | None,
+            withdraw_bank: str | None,
+            saved_details: list[DetailsDTO] | None
+    ) -> InlineKeyboardMarkup:
+        markup = InlineKeyboardMarkup(row_width=2)
+
+        if saved_details is None or len(saved_details) < 3:
+            markup.add(
+                InlineKeyboardButton(
+                    "🔹 Добавить новый банк" if method == "card" else "🔹 Добавить новый кошелёк",
+                    callback_data=f"transaction-withdraw-details-add:{method}"
+                ),
+            )
+
+        if saved_details:
+            for details in saved_details:
+                if details.method != method:
+                    continue
+
+                markup.add(
+                    InlineKeyboardButton(
+                        f"{details.withdraw_bank}" if method == "card" else f"{details.withdraw_details}",
+                        callback_data=f"transaction-withdraw-details-manage:{method}:{details.id}"
+                    )
+                )
+
+        card_condition = method == "card" and withdraw_details and withdraw_bank
+        btc_condition = method == "btc" and withdraw_details
+
+        if card_condition or btc_condition:
+            markup.add(
+                InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-amount:{method}"),
+                InlineKeyboardButton("Далее >>", callback_data=f"transaction-withdraw-confirm:{method}")
+            )
+        else:
+            markup.add(
+                InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-amount:{method}")
+            )
+
+        return markup
+
+    @staticmethod
+    def transaction_withdraw_details_add(
+            method: str,
+            withdraw_details: str | None,
             withdraw_bank: str | None
     ) -> InlineKeyboardMarkup:
         card_condition = method == "card" and withdraw_details and withdraw_bank
@@ -413,13 +458,26 @@ class Markups:
 
         if card_condition or btc_condition:
             return InlineKeyboardMarkup(row_width=2).add(
-                InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-amount:{method}"),
-                InlineKeyboardButton("Далее >>", callback_data=f"transaction-withdraw-confirm:{method}")
+                InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-details:{method}"),
+                InlineKeyboardButton(
+                    "Создать",
+                    callback_data=f"transaction-withdraw-details-create:{method}"
+                ),
             )
         else:
             return InlineKeyboardMarkup(row_width=2).add(
-                InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-amount:{method}")
+                InlineKeyboardButton("<< Назад", callback_data=f"transaction-withdraw-details:{method}")
             )
+
+    @staticmethod
+    def transaction_withdraw_details_manage(method: str, _id: int) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton(
+                "Сохранить изменения",
+                callback_data=f"transaction-withdraw-details-save:{method}:{_id}"
+            ),
+            InlineKeyboardButton("Использовать", callback_data=f"transaction-withdraw-details:{method}:{_id}")
+        )
 
     @staticmethod
     def transaction_withdraw_confirm(method: str) -> InlineKeyboardMarkup:
