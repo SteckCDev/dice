@@ -142,8 +142,12 @@ class PVPService:
             )
         )
 
-    def cancel_by_creator(self, pvp_id: int) -> None:
+    def cancel_by_creator(self, pvp_id: int, requested_by_tg_id: int) -> None:
         pvp: PVPDTO = self.__repo.get_by_id(pvp_id)
+
+        if requested_by_tg_id != pvp.creator_tg_id:
+            return
+
         pvp.status = PVPStatus.CANCELED_BY_CREATOR
 
         self.__repo.update(

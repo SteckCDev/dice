@@ -291,7 +291,7 @@ class CallbackHandler(BaseTeleBotHandler):
 
             _id = int(self.path_args[1])
 
-            self.__pvp_service.cancel_by_creator(_id)
+            self.__pvp_service.cancel_by_creator(_id, self.user.tg_id)
 
             self.edit_message_in_context(
                 Messages.pvp_cancel(_id),
@@ -490,7 +490,7 @@ class CallbackHandler(BaseTeleBotHandler):
 
             transaction: TransactionDTO | None = self.__transaction_service.get_by_id(transaction_id)
 
-            if transaction is None:
+            if transaction is None or transaction.user_tg_id != self.user.tg_id:
                 return
 
             amount_with_fee: int = int((transaction.rub / 100) * (100 - transaction.fee))
@@ -513,14 +513,14 @@ class CallbackHandler(BaseTeleBotHandler):
 
             transaction: TransactionDTO | None = self.__transaction_service.get_by_id(transaction_id)
 
+            if transaction.user_tg_id != self.user.tg_id:
+                return
+
             if transaction is None or transaction.status != TransactionStatus.CREATED:
                 self._bot.answer_callback(
                     self.call_id,
                     Messages.transaction_already_processed()
                 )
-                return
-
-            if transaction.user_tg_id != self.user.tg_id:
                 return
 
             transaction.status = WithdrawStatus.CANCELED_BY_USER
@@ -564,6 +564,9 @@ class CallbackHandler(BaseTeleBotHandler):
         # "transaction-deposit-create:{method}"
 
         method: str = self.path_args[1]
+
+        if method not in ("card", "btc"):
+            return
 
         btc_equivalent: Decimal | None = None if method == "card" else self.__currency_service.rub_to_btc(
             self.user_cache.deposit_amount
